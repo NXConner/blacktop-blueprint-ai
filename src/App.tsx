@@ -12,6 +12,7 @@ import WeatherStation from "./pages/WeatherStation";
 import CostControl from "./pages/CostControl";
 import MobileApp from "./pages/MobileApp";
 import AIOptimization from "./pages/AIOptimization";
+import ReportingAnalytics from "./pages/ReportingAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/cost-control" element={<CostControl />} />
           <Route path="/mobile-app" element={<MobileApp />} />
           <Route path="/ai-optimization" element={<AIOptimization />} />
+          <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
