@@ -32,6 +32,12 @@ export * from "./micro-interactions"
 // Data Visualization
 export * from "./data-visualization"
 
+// Contextual Backgrounds
+export * from "./contextual-backgrounds"
+
+// Advanced Typography
+export * from "./advanced-typography"
+
 // Form Components
 export * from "./form"
 export * from "./checkbox"
