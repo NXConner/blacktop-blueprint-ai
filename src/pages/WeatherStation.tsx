@@ -385,7 +385,7 @@ const WeatherStation: React.FC = () => {
                       <Badge variant="default" className="text-xs">Active</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <div>High: > 85°F • Low: < 35°F</div>
+                      <div>High: &gt; 85°F • Low: &lt; 35°F</div>
                       <div>Optimal range: 50°F - 80°F</div>
                     </div>
                   </div>
@@ -396,8 +396,8 @@ const WeatherStation: React.FC = () => {
                       <Badge variant="default" className="text-xs">Active</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <div>Heavy rain: > 0.5" per hour</div>
-                      <div>Storm warning: > 1.0" per hour</div>
+                      <div>Heavy rain: &gt; 0.5&quot; per hour</div>
+                      <div>Storm warning: &gt; 1.0&quot; per hour</div>
                     </div>
                   </div>
                   
@@ -407,8 +407,8 @@ const WeatherStation: React.FC = () => {
                       <Badge variant="default" className="text-xs">Active</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <div>High wind: > 20 mph sustained</div>
-                      <div>Critical: > 35 mph sustained</div>
+                      <div>High wind: &gt; 20 mph sustained</div>
+                      <div>Critical: &gt; 35 mph sustained</div>
                     </div>
                   </div>
                 </div>
