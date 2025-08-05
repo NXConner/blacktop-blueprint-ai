@@ -30,34 +30,36 @@ const App = () => (
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <ParticleSystem 
-            intensity="medium" 
-            interactive={true}
-            className="animate-fade-in"
-          />
-          <BrowserRouter>
-            <Navigation />
-            <main className="lg:ml-72 pt-16 relative z-10">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/overwatch" element={<OverWatch />} />
-                <Route path="/pavement-scan" element={<PavementScan />} />
-                <Route path="/atlas-hub" element={<AtlasHub />} />
-                <Route path="/crew-management" element={<CrewManagement />} />
-                <Route path="/weather-station" element={<WeatherStation />} />
-                <Route path="/cost-control" element={<CostControl />} />
-                <Route path="/mobile-app" element={<MobileApp />} />
-                <Route path="/ai-optimization" element={<AIOptimization />} />
-                <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
-                <Route path="/security-compliance" element={<SecurityCompliance />} />
-                <Route path="/settings" element={<Settings />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-          </BrowserRouter>
+            <>
+              <Toaster />
+              <Sonner />
+              <ParticleSystem 
+                intensity="medium" 
+                interactive={true}
+                className="animate-fade-in"
+              />
+              <BrowserRouter>
+                <Navigation />
+                <main className="lg:ml-72 pt-16 relative z-10">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/overwatch" element={<OverWatch />} />
+                    <Route path="/pavement-scan" element={<PavementScan />} />
+                    <Route path="/atlas-hub" element={<AtlasHub />} />
+                    <Route path="/crew-management" element={<CrewManagement />} />
+                    <Route path="/weather-station" element={<WeatherStation />} />
+                    <Route path="/cost-control" element={<CostControl />} />
+                    <Route path="/mobile-app" element={<MobileApp />} />
+                    <Route path="/ai-optimization" element={<AIOptimization />} />
+                    <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
+                    <Route path="/security-compliance" element={<SecurityCompliance />} />
+                    <Route path="/settings" element={<Settings />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+              </BrowserRouter>
+            </>
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
