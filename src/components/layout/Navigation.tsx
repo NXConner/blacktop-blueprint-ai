@@ -105,6 +105,12 @@ const navigationItems: NavigationItem[] = [
     badge: 'SEC',
     description: 'System security management'
   },
+  { 
+    name: 'Settings', 
+    href: '/settings', 
+    icon: Settings,
+    description: 'System configuration and preferences'
+  },
 ];
 
 interface NavigationProps {
