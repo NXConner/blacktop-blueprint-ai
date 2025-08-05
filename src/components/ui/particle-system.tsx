@@ -92,7 +92,7 @@ export function ParticleSystem({
     const canvas = canvasRef.current;
     if (!canvas) return particle;
 
-    let newParticle = { ...particle };
+    const newParticle = { ...particle };
     
     // Update position
     newParticle.x += newParticle.vx * deltaTime;
@@ -124,12 +124,13 @@ export function ParticleSystem({
         newParticle.vy *= 0.999;
         break;
         
-      case 'pulse':
+      case 'pulse': {
         // Pulsing size and opacity
         const pulse = Math.sin(newParticle.life * 0.02);
         newParticle.size = particle.size * (1 + pulse * 0.3);
         newParticle.opacity = Math.abs(pulse) * 0.4 + 0.1;
         break;
+      }
     }
     
     // Wrap around screen edges
@@ -155,7 +156,7 @@ export function ParticleSystem({
     
     // Draw particle based on type
     switch (particle.type) {
-      case 'glow':
+      case 'glow': {
         // Soft circular glow
         const gradient = ctx.createRadialGradient(
           particle.x, particle.y, 0,
@@ -171,6 +172,7 @@ export function ParticleSystem({
           particle.size * 4
         );
         break;
+      }
         
       case 'spark':
         // Sharp diamond shape

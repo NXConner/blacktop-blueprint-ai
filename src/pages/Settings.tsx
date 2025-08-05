@@ -152,7 +152,7 @@ export default function Settings() {
   }, []);
 
   // Update settings and mark as changed
-  const updateSetting = (key: keyof SettingsState, value: any) => {
+  const updateSetting = (key: keyof SettingsState, value: SettingsState[keyof SettingsState]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
