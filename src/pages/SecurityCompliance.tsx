@@ -192,7 +192,7 @@ const SecurityCompliance: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Badge variant={getThreatLevelBadge(systemStatus.threat_level) as any} className={`glass-card ${getThreatLevelColor(systemStatus.threat_level)}`}>
+            <Badge variant={getThreatLevelBadge(systemStatus.threat_level) as "default" | "destructive" | "outline" | "secondary"} className={`glass-card ${getThreatLevelColor(systemStatus.threat_level)}`}>
               <AlertTriangle className="w-4 h-4 mr-2" />
               Threat Level: {systemStatus.threat_level.toUpperCase()}
             </Badge>

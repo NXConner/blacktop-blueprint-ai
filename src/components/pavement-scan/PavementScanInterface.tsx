@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -360,7 +360,7 @@ const PavementScanInterface: React.FC<ScanInterfaceProps> = ({
         )}
       </Card>
 
-      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)} className="space-y-6">
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'live' | 'analysis' | 'history')} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="live">Live Scanning</TabsTrigger>
           <TabsTrigger value="analysis">Analysis Results</TabsTrigger>
@@ -579,7 +579,7 @@ const PavementScanInterface: React.FC<ScanInterfaceProps> = ({
                           <div className="font-medium capitalize">{defect.type}</div>
                           <div className="text-xs text-muted-foreground">{defect.description}</div>
                         </div>
-                        <Badge variant={getSeverityBadge(defect.severity) as any}>
+                        <Badge variant={getSeverityBadge(defect.severity) as "default" | "destructive" | "outline" | "secondary"}>
                           {defect.severity}
                         </Badge>
                       </div>

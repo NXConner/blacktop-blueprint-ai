@@ -807,7 +807,7 @@ const ReportingEngine: React.FC<ReportingEngineProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant={getStatusBadge(template.status) as any} className={getStatusColor(template.status)}>
+                      <Badge variant={getStatusBadge(template.status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(template.status)}>
                         {template.status}
                       </Badge>
                       {template.is_automated && (

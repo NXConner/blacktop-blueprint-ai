@@ -121,7 +121,7 @@ const WeatherStation: React.FC = () => {
               {systemStatus.stations_online} Stations Online
             </Badge>
             <Badge 
-              variant={getHealthBadge(systemStatus.system_health) as any}
+              variant={getHealthBadge(systemStatus.system_health) as "default" | "destructive" | "outline" | "secondary"}
               className={`glass-card ${getHealthColor(systemStatus.system_health)}`}
             >
               <Shield className="w-4 h-4 mr-2" />

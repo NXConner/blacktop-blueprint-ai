@@ -574,10 +574,10 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant={getSeverityBadge(threat.severity) as any} className={getSeverityColor(threat.severity)}>
+                                              <Badge variant={getSeverityBadge(threat.severity) as "default" | "destructive" | "outline" | "secondary"} className={getSeverityColor(threat.severity)}>
                         {threat.severity}
                       </Badge>
-                      <Badge variant={getStatusBadge(threat.status) as any} className={getStatusColor(threat.status)}>
+                                              <Badge variant={getStatusBadge(threat.status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(threat.status)}>
                         {threat.status.replace('_', ' ')}
                       </Badge>
                     </div>
@@ -672,7 +672,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({
                       </div>
                     </div>
 
-                    <Badge variant={getStatusBadge(item.status) as any} className={getStatusColor(item.status)}>
+                                            <Badge variant={getStatusBadge(item.status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(item.status)}>
                       {item.status.replace('_', ' ')}
                     </Badge>
                   </div>
@@ -759,10 +759,10 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant={getStatusBadge(audit.status) as any} className={getStatusColor(audit.status)}>
+                                              <Badge variant={getStatusBadge(audit.status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(audit.status)}>
                         {audit.status.replace('_', ' ')}
                       </Badge>
-                      <Badge variant={getSeverityBadge(audit.risk_level) as any} className={getSeverityColor(audit.risk_level)}>
+                                              <Badge variant={getSeverityBadge(audit.risk_level) as "default" | "destructive" | "outline" | "secondary"} className={getSeverityColor(audit.risk_level)}>
                         {audit.risk_level} risk
                       </Badge>
                     </div>
@@ -959,7 +959,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({
                     <Key className="w-4 h-4 text-warning" />
                     <span className="font-medium">SSL Certificate</span>
                   </div>
-                  <Badge variant={getStatusBadge(securityMetrics.certificate_status) as any} className={getStatusColor(securityMetrics.certificate_status)}>
+                                        <Badge variant={getStatusBadge(securityMetrics.certificate_status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(securityMetrics.certificate_status)}>
                     {securityMetrics.certificate_status}
                   </Badge>
                 </div>
@@ -969,7 +969,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({
                     <Archive className="w-4 h-4 text-primary" />
                     <span className="font-medium">Backup Status</span>
                   </div>
-                  <Badge variant={getStatusBadge(securityMetrics.backup_status) as any} className={getStatusColor(securityMetrics.backup_status)}>
+                                        <Badge variant={getStatusBadge(securityMetrics.backup_status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(securityMetrics.backup_status)}>
                     {securityMetrics.backup_status}
                   </Badge>
                 </div>

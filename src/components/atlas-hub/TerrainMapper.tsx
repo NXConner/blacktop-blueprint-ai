@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -102,20 +102,9 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
   });
 
   const [measurementMode, setMeasurementMode] = useState<'none' | 'distance' | 'area' | 'volume'>('none');
-  const [measurements, setMeasurements] = useState<any[]>([]);
+  const [measurements, setMeasurements] = useState<Array<Record<string, unknown>>>([]);
 
-  useEffect(() => {
-    if (projectId) {
-      loadProjectPointClouds();
-    }
-    initializeCanvas();
-  }, [projectId]);
-
-  useEffect(() => {
-    renderTerrain();
-  }, [visualizations, viewSettings, selectedPointCloud]);
-
-  const loadProjectPointClouds = async () => {
+  const loadProjectPointClouds = useCallback(async () => {
     if (!projectId) return;
     
     try {
@@ -129,9 +118,9 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
     } catch (error) {
       console.error('Failed to load point clouds:', error);
     }
-  };
+  }, [projectId]);
 
-  const initializeCanvas = () => {
+  const initializeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -144,9 +133,11 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
 
     // Initial render
     renderTerrain();
-  };
+  }, []);
 
-  const renderTerrain = () => {
+  const renderTerrain = useCallback(() => {
+
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -190,7 +181,18 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
     });
 
     ctx.restore();
-  };
+  }, [visualizations, viewSettings, selectedPointCloud, measurements]);
+
+  useEffect(() => {
+    if (projectId) {
+      loadProjectPointClouds();
+    }
+    initializeCanvas();
+  }, [projectId, loadProjectPointClouds, initializeCanvas]);
+
+  useEffect(() => {
+    renderTerrain();
+  }, [renderTerrain]);
 
   const renderGrid = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
@@ -356,7 +358,7 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
     }
   };
 
-  const renderMeasurement = (ctx: CanvasRenderingContext2D, measurement: any) => {
+  const renderMeasurement = (ctx: CanvasRenderingContext2D, measurement: Record<string, unknown>) => {
     // Render measurement overlays
     ctx.strokeStyle = '#ef4444';
     ctx.fillStyle = '#ef4444';
