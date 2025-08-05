@@ -20,6 +20,7 @@ import AIOptimization from "./pages/AIOptimization";
 import ReportingAnalytics from "./pages/ReportingAnalytics";
 import SecurityCompliance from "./pages/SecurityCompliance";
 import Settings from "./pages/Settings";
+import Catalog from "./pages/Catalog";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,8 @@ const App = () => (
                     <Route path="/ai-optimization" element={<AIOptimization />} />
                     <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
                     <Route path="/security-compliance" element={<SecurityCompliance />} />
+                    <Route path="/catalog" element={<Catalog />} />
+                    <Route path="/marketplace" element={<Catalog />} />
                     <Route path="/settings" element={<Settings />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
