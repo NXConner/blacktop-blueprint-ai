@@ -19,7 +19,8 @@ import {
   Bell,
   LogIn,
   LogOut,
-  User
+  User,
+  Package
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -104,6 +105,13 @@ const navigationItems: NavigationItem[] = [
     icon: Shield,
     badge: 'SEC',
     description: 'System security management'
+  },
+  { 
+    name: 'Marketplace', 
+    href: '/catalog', 
+    icon: Package,
+    badge: 'NEW',
+    description: 'Browse and install addon modules'
   },
   { 
     name: 'Settings', 
