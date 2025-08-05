@@ -657,10 +657,232 @@
   }
 }
 
+/* Enhanced Grid Utilities */
+@layer utilities {
+  .grid-auto-fit {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .grid-auto-fill {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  /* Enhanced Spacing */
+  .space-y-8 > * + * {
+    margin-top: 2rem;
+  }
+
+  .space-y-12 > * + * {
+    margin-top: 3rem;
+  }
+
+  /* Performance Optimization Classes */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  .hardware-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+  }
+
+  /* Layout Utilities */
+  .container-fluid {
+    width: 100%;
+    max-width: none;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .aspect-golden {
+    aspect-ratio: 1.618 / 1;
+  }
+
+  /* Enhanced Scrollbar for Glass Components */
+  .glass-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--glass) / 0.3);
+    border-radius: 4px;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--gradient-primary);
+    border-radius: 4px;
+    box-shadow: var(--glow-soft);
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--gradient-accent);
+    box-shadow: var(--glow-accent);
+  }
+
+  /* Interactive States */
+  .interactive-scale {
+    transition: transform 0.2s ease;
+  }
+
+  .interactive-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* Text Utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* Performance Optimizations */
+@layer base {
+  /* Reduce paint and layout thrashing */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Optimize animations for performance */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Enable hardware acceleration for smooth animations */
+  .animate-float,
+  .animate-glow,
+  .animate-pulse,
+  .animate-spin,
+  .glass-card,
+  .btn-enhanced {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Optimize rendering for glass effects */
+  .glass-card,
+  .glass-elevated,
+  .glass-intense {
+    contain: layout style paint;
+  }
+}
+
+/* Enhanced Component Styles */
+@layer components {
+  /* Improved Glass Effects with better performance */
+  .glass-optimized {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--shadow-glass);
+    will-change: transform, opacity;
+    contain: layout style paint;
+  }
+
+  /* Enhanced Interactive Elements */
+  .interactive-element {
+    transition: var(--transition-smooth);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .interactive-element:hover {
+    transform: translateY(-1px);
+  }
+
+  .interactive-element:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* Status Indicator Animations */
+  .status-online {
+    background: hsl(var(--success));
+    box-shadow: 0 0 10px hsl(var(--success) / 0.5);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .status-offline {
+    background: hsl(var(--muted));
+    opacity: 0.6;
+  }
+
+  .status-warning {
+    background: hsl(var(--warning));
+    box-shadow: 0 0 10px hsl(var(--warning) / 0.5);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .status-error {
+    background: hsl(var(--destructive));
+    box-shadow: 0 0 10px hsl(var(--destructive) / 0.5);
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  /* Enhanced Metric Cards */
+  .metric-card {
+    @apply glass-card p-6 transition-all duration-300 hover:glow-primary hover:-translate-y-1;
+    contain: layout style paint;
+  }
+
+  .metric-card .metric-value {
+    @apply text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+
+  .metric-card .metric-trend-up {
+    @apply text-success;
+  }
+
+  .metric-card .metric-trend-down {
+    @apply text-destructive;
+  }
+
+  /* Enhanced Navigation */
+  .nav-item {
+    @apply glass-card px-4 py-2 transition-all duration-300 hover:glow-primary hover:scale-105;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-item.active {
+    @apply glow-primary text-primary border-primary/20;
+  }
+
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .nav-item:hover::before {
+    left: 100%;
+  }
+}
+
 /* Media Queries for Enhanced Responsiveness */
 @media (max-width: 768px) {
   .glass-card {
-    backdrop-filter: blur(15px);
+    backdrop-filter: blur(12px);
   }
 
   .animate-float {
@@ -668,6 +890,59 @@
   }
 
   .hover-lift:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+  }
+
+  .metric-card {
+    padding: 1rem;
+  }
+
+  .interactive-element:hover {
+    transform: none;
+  }
+
+  .glass-elevated {
+    backdrop-filter: blur(16px);
+  }
+}
+
+@media (max-width: 480px) {
+  .glass-card {
+    backdrop-filter: blur(8px);
+    padding: 1rem;
+  }
+
+  .metric-card .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .nav-item {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* High-resolution display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .glass-card {
+    backdrop-filter: blur(20px) saturate(200%);
+  }
+
+  .text-glow-primary,
+  .text-glow-accent {
+    text-shadow: 
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 30px currentColor;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .status-online {
+    box-shadow: 0 0 15px hsl(var(--success) / 0.8);
   }
 }
