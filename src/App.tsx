@@ -13,6 +13,7 @@ import CostControl from "./pages/CostControl";
 import MobileApp from "./pages/MobileApp";
 import AIOptimization from "./pages/AIOptimization";
 import ReportingAnalytics from "./pages/ReportingAnalytics";
+import SecurityCompliance from "./pages/SecurityCompliance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/mobile-app" element={<MobileApp />} />
           <Route path="/ai-optimization" element={<AIOptimization />} />
           <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
+          <Route path="/security-compliance" element={<SecurityCompliance />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

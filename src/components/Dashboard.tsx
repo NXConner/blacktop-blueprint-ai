@@ -159,6 +159,9 @@ const Dashboard = () => {
           <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/reporting-analytics'}>
             Reports & Analytics
           </Button>
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/security-compliance'}>
+            Security & Compliance
+          </Button>
         </div>
       </div>
 
