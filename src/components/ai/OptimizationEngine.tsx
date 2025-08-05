@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ interface OptimizationScenario {
   type: 'route' | 'resource' | 'schedule' | 'cost' | 'hybrid';
   status: 'idle' | 'analyzing' | 'optimizing' | 'complete' | 'error';
   progress: number;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   results?: OptimizationResult;
   created_at: string;
   execution_time?: number;
@@ -127,11 +127,7 @@ const OptimizationEngine: React.FC<OptimizationEngineProps> = ({
   const [optimizationType, setOptimizationType] = useState<string>('hybrid');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadOptimizationData();
-  }, [selectedProject]);
-
-  const loadOptimizationData = async () => {
+  const loadOptimizationData = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -164,7 +160,11 @@ const OptimizationEngine: React.FC<OptimizationEngineProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedProject]);
+
+  useEffect(() => {
+    loadOptimizationData();
+  }, [loadOptimizationData]);
 
   const loadAIMetrics = async () => {
     // Simulate AI model metrics
@@ -243,7 +243,7 @@ const OptimizationEngine: React.FC<OptimizationEngineProps> = ({
     const newScenario: OptimizationScenario = {
       id: Date.now().toString(),
       name: `${optimizationType.charAt(0).toUpperCase() + optimizationType.slice(1)} Optimization - ${new Date().toLocaleTimeString()}`,
-      type: optimizationType as any,
+      type: optimizationType as 'route' | 'resource' | 'schedule' | 'cost' | 'hybrid',
       status: 'idle',
       progress: 0,
       parameters: generateOptimizationParameters(optimizationType),
@@ -334,7 +334,7 @@ const OptimizationEngine: React.FC<OptimizationEngineProps> = ({
       setOptimizationScenarios(prev =>
         prev.map(s =>
           s.id === scenarioId
-            ? { ...s, progress, status: status as any }
+            ? { ...s, progress, status: status as 'idle' | 'analyzing' | 'optimizing' | 'complete' | 'error' }
             : s
         )
       );
@@ -666,7 +666,7 @@ const OptimizationEngine: React.FC<OptimizationEngineProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant={getStatusBadge(scenario.status) as any} className={getStatusColor(scenario.status)}>
+                      <Badge variant={getStatusBadge(scenario.status) as "default" | "destructive" | "outline" | "secondary"} className={getStatusColor(scenario.status)}>
                         {scenario.status}
                       </Badge>
                       {scenario.status === 'idle' && (

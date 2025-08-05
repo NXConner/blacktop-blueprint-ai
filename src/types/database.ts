@@ -171,7 +171,7 @@ export interface PavementScan {
   roughness_index?: number;
   rutting_depth?: number;
   image_urls?: string[];
-  analysis_data?: any;
+  analysis_data?: Record<string, unknown>;
   ai_confidence_score?: number;
   created_at: string;
 }
@@ -182,8 +182,8 @@ export interface AtlasPointCloud {
   scan_location: GeoCoordinate;
   point_cloud_file_url: string;
   mesh_file_url?: string;
-  elevation_data?: any;
-  terrain_analysis?: any;
+  elevation_data?: Record<string, unknown>;
+  terrain_analysis?: Record<string, unknown>;
   capture_timestamp: string;
   processing_status: 'pending' | 'processing' | 'completed' | 'failed';
   created_at: string;
@@ -240,7 +240,7 @@ export interface SystemStatus {
   status: 'online' | 'offline' | 'degraded' | 'maintenance';
   last_heartbeat: string;
   error_message?: string;
-  performance_metrics?: any;
+  performance_metrics?: Record<string, unknown>;
   updated_at: string;
 }
 
@@ -250,7 +250,7 @@ export interface UserActivity {
   action: string;
   entity_type?: string;
   entity_id?: string;
-  details?: any;
+  details?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   created_at: string;

@@ -143,7 +143,7 @@ const WeatherMonitor: React.FC<WeatherMonitorProps> = ({
         wind_speed: Math.round(5 + Math.random() * 20),
         humidity: Math.round(40 + Math.random() * 40),
         uv_index: Math.round(1 + Math.random() * 10),
-        work_suitability: suitability as any
+        work_suitability: suitability as 'excellent' | 'good' | 'fair' | 'poor' | 'hazardous'
       });
     }
     
@@ -471,7 +471,7 @@ const WeatherMonitor: React.FC<WeatherMonitorProps> = ({
               <Card key={index} className="glass-card p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">{impact.operation}</h3>
-                  <Badge variant={getStatusBadge(impact.current_status) as any}>
+                  <Badge variant={getStatusBadge(impact.current_status) as "default" | "destructive" | "outline" | "secondary"}>
                     {impact.current_status}
                   </Badge>
                 </div>

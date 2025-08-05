@@ -89,7 +89,7 @@ export const vehiclesApi = {
     }
   },
 
-  async getFleetStatus(companyId?: string): Promise<ApiResponse<any[]>> {
+  async getFleetStatus(companyId?: string): Promise<ApiResponse<Vehicle[]>> {
     try {
       let query = supabase.from('fleet_status').select('*');
       
@@ -191,7 +191,7 @@ export const employeesApi = {
 
 // Crews API
 export const crewsApi = {
-  async getAll(companyId?: string): Promise<ApiResponse<any[]>> {
+  async getAll(companyId?: string): Promise<ApiResponse<Crew[]>> {
     try {
       let query = supabase.from('crew_availability').select('*');
       
@@ -259,7 +259,7 @@ export const projectsApi = {
     }
   },
 
-  async getActive(companyId?: string): Promise<ApiResponse<any[]>> {
+  async getActive(companyId?: string): Promise<ApiResponse<Project[]>> {
     try {
       let query = supabase.from('active_projects').select('*');
       
@@ -347,7 +347,7 @@ export const gpsApi = {
     }
   },
 
-  async getCurrentLocations(): Promise<ApiResponse<any[]>> {
+  async getCurrentLocations(): Promise<ApiResponse<GPSTracking[]>> {
     try {
       const { data, error } = await supabase
         .rpc('get_latest_vehicle_locations');
@@ -508,7 +508,7 @@ export const costApi = {
     }
   },
 
-  async getCostSummary(projectId: string): Promise<ApiResponse<any>> {
+  async getCostSummary(projectId: string): Promise<ApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .rpc('get_project_cost_summary', { project_id: projectId });
@@ -625,7 +625,7 @@ export const systemApi = {
     }
   },
 
-  async updateHeartbeat(component: string, status: string, metrics?: any): Promise<ApiResponse<SystemStatus>> {
+  async updateHeartbeat(component: string, status: string, metrics?: Record<string, unknown>): Promise<ApiResponse<SystemStatus>> {
     try {
       const { data, error } = await supabase
         .from('system_status')

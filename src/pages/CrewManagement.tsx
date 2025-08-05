@@ -91,7 +91,7 @@ const CrewManagement: React.FC = () => {
               {systemStatus.workers_deployed} Deployed
             </Badge>
             <Badge 
-              variant={getHealthBadge(systemStatus.system_health) as any}
+              variant={getHealthBadge(systemStatus.system_health) as "default" | "destructive" | "outline" | "secondary"}
               className={`glass-card ${getHealthColor(systemStatus.system_health)}`}
             >
               <Activity className="w-4 h-4 mr-2" />
