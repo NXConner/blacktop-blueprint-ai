@@ -121,10 +121,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       onClick?.(event)
     }
 
-    const Comp = asChild ? Slot : "button"
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={buttonRef}
+          onClick={handleClick}
+          {...props}
+        >
+          {props.children}
+        </Slot>
+      )
+    }
     
     return (
-      <Comp
+      <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={buttonRef}
         onClick={handleClick}
@@ -152,7 +163,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {(variant === "glow" || variant === "neon" || variant === "floating") && (
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
         )}
-      </Comp>
+      </button>
     )
   }
 )
