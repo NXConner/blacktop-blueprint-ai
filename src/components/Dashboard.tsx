@@ -144,8 +144,8 @@ const Dashboard = () => {
           <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/crew-management'}>
             Deploy Crew
           </Button>
-          <Button variant="outline" className="glass-card">
-            Weather Radar
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/weather-station'}>
+            Weather Station
           </Button>
           <Button variant="outline" className="glass-card">
             Cost Analysis
