@@ -9,6 +9,7 @@ import PavementScan from "./pages/PavementScan";
 import AtlasHub from "./pages/AtlasHub";
 import CrewManagement from "./pages/CrewManagement";
 import WeatherStation from "./pages/WeatherStation";
+import CostControl from "./pages/CostControl";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/atlas-hub" element={<AtlasHub />} />
           <Route path="/crew-management" element={<CrewManagement />} />
           <Route path="/weather-station" element={<WeatherStation />} />
+          <Route path="/cost-control" element={<CostControl />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
