@@ -73,8 +73,6 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadFleetData();
   const loadFleetData = useCallback(async () => {
     try {
       const response = await api.vehicles.getFleetStatus(companyId);
@@ -110,6 +108,10 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
       setIsLoading(false);
     }
   }, [companyId]);
+
+  useEffect(() => {
+    loadFleetData();
+  }, [loadFleetData]);
 
   const filterVehicles = useCallback(() => {
     let filtered = vehicles;

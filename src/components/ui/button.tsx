@@ -84,7 +84,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       
       // Create a subtle click sound using Web Audio API
       try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
         const oscillator = audioContext.createOscillator()
         const gainNode = audioContext.createGain()
         
