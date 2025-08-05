@@ -138,6 +138,9 @@ const Dashboard = () => {
           <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/pavement-scan'}>
             PavementScan Pro
           </Button>
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/atlas-hub'}>
+            Atlas Hub
+          </Button>
           <Button variant="outline" className="glass-card">
             Deploy Crew
           </Button>
