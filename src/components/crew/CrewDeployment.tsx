@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -97,13 +97,7 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadCrewData();
-    const interval = setInterval(loadCrewData, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
-  }, [companyId]);
-
-  const loadCrewData = async () => {
+  const loadCrewData = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -165,7 +159,13 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    loadCrewData();
+    const interval = setInterval(loadCrewData, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [loadCrewData]);
 
   const calculateMetrics = (crewData: CrewWithMembers[]) => {
     const totalWorkers = crewData.reduce((sum, crew) => sum + crew.members.length, 0);
@@ -447,7 +447,7 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Badge variant={getStatusBadge(crew.status) as any}>
+                        <Badge variant={getStatusBadge(crew.status) as "default" | "destructive" | "outline" | "secondary"}>
                           {crew.status}
                         </Badge>
                         {crew.active_session && (

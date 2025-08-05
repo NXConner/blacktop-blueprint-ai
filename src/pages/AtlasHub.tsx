@@ -271,7 +271,7 @@ const AtlasHub: React.FC = () => {
                               Captured: {new Date(cloud.capture_timestamp).toLocaleString()}
                             </div>
                           </div>
-                          <Badge variant={getProcessingStatusBadge(cloud.processing_status) as any}>
+                          <Badge variant={getProcessingStatusBadge(cloud.processing_status) as "default" | "destructive" | "outline" | "secondary"}>
                             {cloud.processing_status}
                           </Badge>
                         </div>

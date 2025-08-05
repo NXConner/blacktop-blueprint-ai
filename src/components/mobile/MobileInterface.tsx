@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -303,7 +303,7 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
 
     const report: FieldReport = {
       id: Date.now().toString(),
-      type: newReport.type as any,
+      type: newReport.type as 'progress' | 'issue' | 'completion' | 'weather' | 'safety',
       title: newReport.title,
       description: newReport.description,
       location: currentLocation ? 
@@ -312,7 +312,7 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
       timestamp: new Date().toISOString(),
       photos: newReport.photos || [],
       voice_notes: newReport.voice_notes || [],
-      priority: newReport.priority as any,
+      priority: newReport.priority as 'low' | 'medium' | 'high' | 'critical',
       status: 'submitted'
     };
 
@@ -522,7 +522,7 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
             <h3 className="font-semibold mb-3">Create Field Report</h3>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <Select value={newReport.type} onValueChange={(value) => setNewReport(prev => ({ ...prev, type: value as any }))}>
+                <Select value={newReport.type} onValueChange={(value) => setNewReport(prev => ({ ...prev, type: value as 'progress' | 'issue' | 'completion' | 'weather' | 'safety' }))}>
                   <SelectTrigger className="glass-card">
                     <SelectValue />
                   </SelectTrigger>
@@ -535,7 +535,7 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
                   </SelectContent>
                 </Select>
 
-                <Select value={newReport.priority} onValueChange={(value) => setNewReport(prev => ({ ...prev, priority: value as any }))}>
+                <Select value={newReport.priority} onValueChange={(value) => setNewReport(prev => ({ ...prev, priority: value as 'low' | 'medium' | 'high' | 'critical' }))}>
                   <SelectTrigger className="glass-card">
                     <SelectValue />
                   </SelectTrigger>

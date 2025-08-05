@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -106,11 +106,7 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
   const [viewPeriod, setViewPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadCostData();
-  }, [selectedProject, dateRange]);
-
-  const loadCostData = async () => {
+  const loadCostData = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -148,7 +144,11 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedProject, dateRange]);
+
+  useEffect(() => {
+    loadCostData();
+  }, [loadCostData]);
 
   const generateCostMetrics = () => {
     const totalBudget = 250000 + Math.random() * 500000;
@@ -494,7 +494,7 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{item.category}</span>
                       <div className="flex items-center gap-2">
-                        <Badge variant={getStatusBadge(item.status) as any} className="text-xs">
+                        <Badge variant={getStatusBadge(item.status) as "default" | "destructive" | "outline" | "secondary"} className="text-xs">
                           {item.status.replace('_', ' ')}
                         </Badge>
                         <span className={`text-sm font-bold ${getVarianceColor(item.variance)}`}>

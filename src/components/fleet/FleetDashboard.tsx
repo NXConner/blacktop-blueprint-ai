@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,20 +75,12 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
 
   useEffect(() => {
     loadFleetData();
-    const interval = setInterval(loadFleetData, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
-  }, [companyId]);
-
-  useEffect(() => {
-    filterVehicles();
-  }, [vehicles, searchTerm, statusFilter, typeFilter]);
-
-  const loadFleetData = async () => {
+  const loadFleetData = useCallback(async () => {
     try {
       const response = await api.vehicles.getFleetStatus(companyId);
       if (response.success) {
         const vehiclesWithLocation = await Promise.all(
-          response.data.map(async (vehicle: any) => {
+          response.data.map(async (vehicle: Vehicle) => {
             // Get current location
             const locationResponse = await api.gps.getVehicleHistory(vehicle.id, 1);
             const currentLocation = locationResponse.success && locationResponse.data.length > 0
@@ -117,24 +109,9 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const calculateFleetMetrics = (vehicleData: VehicleWithStatus[]) => {
-    const metrics: FleetMetrics = {
-      totalVehicles: vehicleData.length,
-      activeVehicles: vehicleData.filter(v => v.status === 'in_use').length,
-      maintenanceVehicles: vehicleData.filter(v => v.status === 'maintenance').length,
-      availableVehicles: vehicleData.filter(v => v.status === 'available').length,
-      avgFuelLevel: vehicleData.reduce((sum, v) => sum + v.current_fuel_level, 0) / vehicleData.length,
-      totalMileage: vehicleData.reduce((sum, v) => sum + v.odometer_reading, 0),
-      maintenanceOverdue: vehicleData.filter(v => v.maintenance_status === 'overdue').length,
-      utilization: (vehicleData.filter(v => v.status === 'in_use').length / vehicleData.length) * 100
-    };
-
-    setFleetMetrics(metrics);
-  };
-
-  const filterVehicles = () => {
+  const filterVehicles = useCallback(() => {
     let filtered = vehicles;
 
     if (searchTerm) {
@@ -154,7 +131,34 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
     }
 
     setFilteredVehicles(filtered);
+  }, [vehicles, searchTerm, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    loadFleetData();
+    const interval = setInterval(loadFleetData, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [loadFleetData]);
+
+  useEffect(() => {
+    filterVehicles();
+  }, [filterVehicles]);
+
+  const calculateFleetMetrics = (vehicleData: VehicleWithStatus[]) => {
+    const metrics: FleetMetrics = {
+      totalVehicles: vehicleData.length,
+      activeVehicles: vehicleData.filter(v => v.status === 'in_use').length,
+      maintenanceVehicles: vehicleData.filter(v => v.status === 'maintenance').length,
+      availableVehicles: vehicleData.filter(v => v.status === 'available').length,
+      avgFuelLevel: vehicleData.reduce((sum, v) => sum + v.current_fuel_level, 0) / vehicleData.length,
+      totalMileage: vehicleData.reduce((sum, v) => sum + v.odometer_reading, 0),
+      maintenanceOverdue: vehicleData.filter(v => v.maintenance_status === 'overdue').length,
+      utilization: (vehicleData.filter(v => v.status === 'in_use').length / vehicleData.length) * 100
+    };
+
+    setFleetMetrics(metrics);
   };
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -368,7 +372,7 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
                   </div>
                   
                   <div className="flex flex-col items-end gap-1">
-                    <Badge variant={getStatusBadge(vehicle.status) as any} className="text-xs">
+                    <Badge variant={getStatusBadge(vehicle.status) as "default" | "destructive" | "outline" | "secondary"} className="text-xs">
                       {vehicle.status.replace('_', ' ')}
                     </Badge>
                     {vehicle.maintenance_status === 'overdue' && (
@@ -505,7 +509,9 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
             </p>
           </div>
         )}
+      </Card>
 
+      <Card className="glass-card p-6">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">

@@ -160,7 +160,7 @@ const AIOptimization: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Badge variant={getStatusBadge(systemStatus.ai_engine_status) as any} className={`glass-card ${getStatusColor(systemStatus.ai_engine_status)}`}>
+            <Badge variant={getStatusBadge(systemStatus.ai_engine_status) as "default" | "destructive" | "outline" | "secondary"} className={`glass-card ${getStatusColor(systemStatus.ai_engine_status)}`}>
               <Brain className="w-4 h-4 mr-2" />
               AI Engine {systemStatus.ai_engine_status.toUpperCase()}
             </Badge>
