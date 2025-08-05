@@ -23,6 +23,15 @@ export * from "./layout"
 // Loading Components
 export * from "./loading"
 
+// Advanced Visual Effects
+export * from "./visual-effects"
+
+// Micro-interactions
+export * from "./micro-interactions"
+
+// Data Visualization
+export * from "./data-visualization"
+
 // Form Components
 export * from "./form"
 export * from "./checkbox"
