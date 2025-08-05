@@ -132,6 +132,12 @@ const Dashboard = () => {
           <Button variant="default" className="glow-primary">
             Emergency Override
           </Button>
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/overwatch'}>
+            OverWatch Center
+          </Button>
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/pavement-scan'}>
+            PavementScan Pro
+          </Button>
           <Button variant="outline" className="glass-card">
             Deploy Crew
           </Button>
@@ -185,11 +191,36 @@ const Dashboard = () => {
               Real-time
             </Badge>
           </div>
-          <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center border border-glass-border">
-            <div className="text-center">
-              <MapPin className="w-12 h-12 text-primary mx-auto mb-2" />
-              <p className="text-muted-foreground">Interactive Map Loading...</p>
-              <p className="text-sm text-muted-foreground mt-1">5 active sites tracked</p>
+          <div className="h-64 bg-muted/20 rounded-lg relative border border-glass-border overflow-hidden cursor-pointer"
+               onClick={() => window.location.href = '/overwatch'}>
+            {/* Simulated Map Preview */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800">
+              <div className="absolute inset-0 opacity-20">
+                <svg width="100%" height="100%">
+                  <defs>
+                    <pattern id="grid-small" width="10" height="10" patternUnits="userSpaceOnUse">
+                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.3"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grid-small)" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Vehicle Markers */}
+            <div className="absolute top-8 left-12 w-3 h-3 bg-success rounded-full animate-pulse"></div>
+            <div className="absolute top-16 right-16 w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+            <div className="absolute bottom-16 left-20 w-3 h-3 bg-accent rounded-full animate-pulse"></div>
+            <div className="absolute bottom-12 right-12 w-3 h-3 bg-warning rounded-full animate-pulse"></div>
+            
+            {/* Center Info */}
+            <div className="absolute inset-0 flex items-center justify-center bg-background/10">
+              <div className="text-center">
+                <MapPin className="w-12 h-12 text-primary mx-auto mb-2" />
+                <p className="text-foreground font-medium">Real-Time Tracking Active</p>
+                <p className="text-sm text-muted-foreground mt-1">5 vehicles • 3 crews • 2 alerts</p>
+                <p className="text-xs text-accent mt-2">Click to open OverWatch</p>
+              </div>
             </div>
           </div>
         </Card>
