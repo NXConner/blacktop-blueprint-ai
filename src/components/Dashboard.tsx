@@ -153,6 +153,9 @@ const Dashboard = () => {
           <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/mobile-app'}>
             Mobile App
           </Button>
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/ai-optimization'}>
+            AI Optimization
+          </Button>
         </div>
       </div>
 
