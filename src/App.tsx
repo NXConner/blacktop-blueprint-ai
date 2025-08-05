@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Navigation } from "@/components/layout/Navigation";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ParticleSystem } from "@/components/ui/particle-system";
 import Index from "./pages/Index";
 import OverWatch from "./pages/OverWatch";
 import PavementScan from "./pages/PavementScan";
@@ -18,6 +19,7 @@ import MobileApp from "./pages/MobileApp";
 import AIOptimization from "./pages/AIOptimization";
 import ReportingAnalytics from "./pages/ReportingAnalytics";
 import SecurityCompliance from "./pages/SecurityCompliance";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,9 +32,14 @@ const App = () => (
           <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ParticleSystem 
+            intensity="medium" 
+            interactive={true}
+            className="animate-fade-in"
+          />
           <BrowserRouter>
             <Navigation />
-            <main className="lg:ml-72 pt-16">
+            <main className="lg:ml-72 pt-16 relative z-10">
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/overwatch" element={<OverWatch />} />
@@ -45,6 +52,7 @@ const App = () => (
                 <Route path="/ai-optimization" element={<AIOptimization />} />
                 <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
                 <Route path="/security-compliance" element={<SecurityCompliance />} />
+                <Route path="/settings" element={<Settings />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
