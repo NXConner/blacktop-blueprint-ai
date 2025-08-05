@@ -150,6 +150,9 @@ const Dashboard = () => {
           <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/cost-control'}>
             Cost Analysis
           </Button>
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/mobile-app'}>
+            Mobile App
+          </Button>
         </div>
       </div>
 
