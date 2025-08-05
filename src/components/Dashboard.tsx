@@ -141,7 +141,7 @@ const Dashboard = () => {
           <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/atlas-hub'}>
             Atlas Hub
           </Button>
-          <Button variant="outline" className="glass-card">
+          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/crew-management'}>
             Deploy Crew
           </Button>
           <Button variant="outline" className="glass-card">
