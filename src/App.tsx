@@ -30,7 +30,7 @@ const App = () => (
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
-            <>
+            <div>
               <Toaster />
               <Sonner />
               <ParticleSystem 
@@ -59,7 +59,7 @@ const App = () => (
                   </Routes>
                 </main>
               </BrowserRouter>
-            </>
+            </div>
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
