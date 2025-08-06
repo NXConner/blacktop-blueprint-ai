@@ -19,10 +19,17 @@ import {
   Calculator,
   Eye,
   Grid3x3,
-  Maximize2
+  Maximize2,
+  Map,
+  Pen,
+  Settings
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { AtlasPointCloud, Project } from '@/types/database';
+import MapServiceSelector, { MapService, mapServices } from './MapServiceSelector';
+import MeasuringTools, { Measurement } from './MeasuringTools';
+import DrawingTools, { DrawingElement, DrawingLayer } from './DrawingTools';
+import MapOverlayManager, { MapOverlay } from './MapOverlayManager';
 
 interface TerrainMapperProps {
   projectId?: string;
@@ -101,8 +108,22 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
     lighting: 80
   });
 
-  const [measurementMode, setMeasurementMode] = useState<'none' | 'distance' | 'area' | 'volume'>('none');
-  const [measurements, setMeasurements] = useState<Array<Record<string, unknown>>>([]);
+  // New state for enhanced features
+  const [selectedMapService, setSelectedMapService] = useState<string>('openstreetmap');
+  const [activeTool, setActiveTool] = useState<string>('none');
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [drawings, setDrawings] = useState<DrawingElement[]>([]);
+  const [drawingLayers, setDrawingLayers] = useState<DrawingLayer[]>([
+    {
+      id: 'default',
+      name: 'Default Layer',
+      visible: true,
+      locked: false,
+      color: '#3b82f6',
+      opacity: 100
+    }
+  ]);
+  const [mapOverlays, setMapOverlays] = useState<MapOverlay[]>([]);
 
   const loadProjectPointClouds = useCallback(async () => {
     if (!projectId) return;
@@ -180,8 +201,16 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
       renderMeasurement(ctx, measurement);
     });
 
+    // Render drawings
+    drawings
+      .filter(drawing => drawing.visible)
+      .sort((a, b) => drawingLayers.find(l => l.id === a.layer)?.opacity || 0 - drawingLayers.find(l => l.id === b.layer)?.opacity || 0)
+      .forEach(drawing => {
+        renderDrawing(ctx, drawing);
+      });
+
     ctx.restore();
-  }, [visualizations, viewSettings, selectedPointCloud, measurements]);
+  }, [visualizations, viewSettings, selectedPointCloud, measurements, drawings, drawingLayers]);
 
   useEffect(() => {
     if (projectId) {
@@ -358,24 +387,134 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
     }
   };
 
-  const renderMeasurement = (ctx: CanvasRenderingContext2D, measurement: Record<string, unknown>) => {
-    // Render measurement overlays
-    ctx.strokeStyle = '#ef4444';
-    ctx.fillStyle = '#ef4444';
+  const renderMeasurement = (ctx: CanvasRenderingContext2D, measurement: Measurement) => {
+    if (!measurement.visible || measurement.points.length < 2) return;
+    
+    ctx.strokeStyle = measurement.color;
+    ctx.fillStyle = measurement.color;
     ctx.lineWidth = 2;
     
-    // Draw measurement line/area
+    // Draw measurement
     ctx.beginPath();
-    ctx.moveTo(measurement.start.x, measurement.start.y);
-    ctx.lineTo(measurement.end.x, measurement.end.y);
+    measurement.points.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+    
+    if (measurement.closed && measurement.points.length > 2) {
+      ctx.closePath();
+      ctx.fillStyle = measurement.color + '20'; // Semi-transparent fill
+      ctx.fill();
+    }
+    
     ctx.stroke();
     
     // Draw measurement label
-    const midX = (measurement.start.x + measurement.end.x) / 2;
-    const midY = (measurement.start.y + measurement.end.y) / 2;
+    const centerX = measurement.points.reduce((sum, p) => sum + p.x, 0) / measurement.points.length;
+    const centerY = measurement.points.reduce((sum, p) => sum + p.y, 0) / measurement.points.length;
     
     ctx.font = '12px sans-serif';
-    ctx.fillText(measurement.label, midX, midY);
+    ctx.fillStyle = measurement.color;
+    ctx.fillText(measurement.label, centerX, centerY);
+  };
+
+  const renderDrawing = (ctx: CanvasRenderingContext2D, drawing: DrawingElement) => {
+    if (!drawing.visible || drawing.points.length === 0) return;
+    
+    const layer = drawingLayers.find(l => l.id === drawing.layer);
+    if (!layer?.visible) return;
+    
+    ctx.strokeStyle = drawing.style.strokeColor;
+    ctx.fillStyle = drawing.style.fillColor;
+    ctx.lineWidth = drawing.style.strokeWidth;
+    ctx.globalAlpha = (drawing.style.opacity / 100) * (layer.opacity / 100);
+    
+    if (drawing.style.dashPattern) {
+      ctx.setLineDash(drawing.style.dashPattern);
+    } else {
+      ctx.setLineDash([]);
+    }
+    
+    ctx.beginPath();
+    
+    switch (drawing.type) {
+      case 'freehand':
+      case 'line':
+      case 'polygon':
+        drawing.points.forEach((point, index) => {
+          if (index === 0) {
+            ctx.moveTo(point.x, point.y);
+          } else {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
+        if (drawing.type === 'polygon' && drawing.points.length > 2) {
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.stroke();
+        break;
+        
+      case 'rectangle':
+        if (drawing.points.length >= 2) {
+          const [start, end] = drawing.points;
+          const width = end.x - start.x;
+          const height = end.y - start.y;
+          ctx.rect(start.x, start.y, width, height);
+          ctx.fill();
+          ctx.stroke();
+        }
+        break;
+        
+      case 'circle':
+        if (drawing.points.length >= 2) {
+          const [center, edge] = drawing.points;
+          const radius = Math.sqrt(
+            Math.pow(edge.x - center.x, 2) + Math.pow(edge.y - center.y, 2)
+          );
+          ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        break;
+        
+      case 'text':
+        if (drawing.points.length > 0 && drawing.text) {
+          const point = drawing.points[0];
+          ctx.font = `${drawing.fontSize || 14}px sans-serif`;
+          ctx.fillText(drawing.text, point.x, point.y);
+        }
+        break;
+        
+      case 'marker':
+        if (drawing.points.length > 0) {
+          const point = drawing.points[0];
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          // Draw marker pin shape
+          ctx.beginPath();
+          ctx.moveTo(point.x, point.y);
+          ctx.lineTo(point.x - 4, point.y - 8);
+          ctx.lineTo(point.x + 4, point.y - 8);
+          ctx.closePath();
+          ctx.fill();
+        }
+        break;
+    }
+    
+    ctx.globalAlpha = 1;
+    ctx.setLineDash([]);
+  };
+
+  const handleMapServiceChange = (service: MapService) => {
+    setSelectedMapService(service.id);
+    // In a real implementation, this would update the base map layer
+    console.log('Map service changed to:', service.name);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -681,12 +820,12 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
         )}
       </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Main Terrain View */}
-        <div className="xl:col-span-3">
+        <div className="xl:col-span-8">
           <Card className="glass-card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">3D Terrain Visualization</h3>
+              <h3 className="text-lg font-semibold">Advanced Map Viewer</h3>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -717,6 +856,14 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
                 </Button>
               </div>
             </div>
+
+            {/* Map Service Selector */}
+            <div className="mb-4">
+              <MapServiceSelector
+                selectedService={selectedMapService}
+                onServiceChange={handleMapServiceChange}
+              />
+            </div>
             
             <div className="relative aspect-video bg-muted/10 rounded-lg overflow-hidden border border-glass-border">
               <canvas
@@ -738,14 +885,36 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
           </Card>
         </div>
 
-        {/* Controls Panel */}
-        <div className="space-y-4">
-          {/* Layer Controls */}
-          <Card className="glass-card p-4">
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Layers className="w-4 h-4" />
-              Visualization Layers
-            </h4>
+        {/* Enhanced Controls Panel */}
+        <div className="xl:col-span-4 space-y-4">
+          {/* Tools Tabs */}
+          <Tabs defaultValue="visualization" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="visualization" className="text-xs">
+                <Layers className="w-3 h-3 mr-1" />
+                Layers
+              </TabsTrigger>
+              <TabsTrigger value="measuring" className="text-xs">
+                <Ruler className="w-3 h-3 mr-1" />
+                Measure
+              </TabsTrigger>
+              <TabsTrigger value="drawing" className="text-xs">
+                <Pen className="w-3 h-3 mr-1" />
+                Draw
+              </TabsTrigger>
+              <TabsTrigger value="overlays" className="text-xs">
+                <Map className="w-3 h-3 mr-1" />
+                GIS
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Visualization Layers Tab */}
+            <TabsContent value="visualization">
+              <Card className="glass-card p-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Layers className="w-4 h-4" />
+                  Terrain Layers
+                </h4>
             
             <div className="space-y-3">
               {visualizations.map((viz) => (
@@ -781,13 +950,12 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
                       </div>
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-          </Card>
+                  </div>
+                ))}
+              </div>
 
-          {/* View Controls */}
-          <Card className="glass-card p-4">
+              {/* View Controls */}
+              <div className="mt-6 pt-4 border-t border-glass-border">
             <h4 className="font-semibold mb-3 flex items-center gap-2">
               <Eye className="w-4 h-4" />
               View Controls
@@ -836,47 +1004,41 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
                   onChange={(e) => setViewSettings(prev => ({ ...prev, showAxes: e.target.checked }))}
                   className="rounded"
                 />
+                </div>
               </div>
-            </div>
-          </Card>
+              </Card>
+            </TabsContent>
 
-          {/* Measurement Tools */}
-          <Card className="glass-card p-4">
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Ruler className="w-4 h-4" />
-              Measurement Tools
-            </h4>
-            
-            <div className="space-y-2">
-              <Button 
-                variant={measurementMode === 'distance' ? "default" : "outline"} 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={() => setMeasurementMode(measurementMode === 'distance' ? 'none' : 'distance')}
-              >
-                <Ruler className="w-4 h-4 mr-2" />
-                Distance
-              </Button>
-              <Button 
-                variant={measurementMode === 'area' ? "default" : "outline"} 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={() => setMeasurementMode(measurementMode === 'area' ? 'none' : 'area')}
-              >
-                <Grid3x3 className="w-4 h-4 mr-2" />
-                Area
-              </Button>
-              <Button 
-                variant={measurementMode === 'volume' ? "default" : "outline"} 
-                size="sm" 
-                className="w-full justify-start"
-                onClick={() => setMeasurementMode(measurementMode === 'volume' ? 'none' : 'volume')}
-              >
-                <Calculator className="w-4 h-4 mr-2" />
-                Volume
-              </Button>
-            </div>
-          </Card>
+            {/* Measuring Tools Tab */}
+            <TabsContent value="measuring">
+              <MeasuringTools
+                measurements={measurements}
+                onMeasurementsChange={setMeasurements}
+                activeTool={activeTool}
+                onToolChange={setActiveTool}
+              />
+            </TabsContent>
+
+            {/* Drawing Tools Tab */}
+            <TabsContent value="drawing">
+              <DrawingTools
+                drawings={drawings}
+                onDrawingsChange={setDrawings}
+                layers={drawingLayers}
+                onLayersChange={setDrawingLayers}
+                activeTool={activeTool}
+                onToolChange={setActiveTool}
+              />
+            </TabsContent>
+
+            {/* Map Overlays Tab */}
+            <TabsContent value="overlays">
+              <MapOverlayManager
+                overlays={mapOverlays}
+                onOverlaysChange={setMapOverlays}
+              />
+            </TabsContent>
+          </Tabs>
 
           {/* Analysis Results */}
           {processingSession.resultData && (
