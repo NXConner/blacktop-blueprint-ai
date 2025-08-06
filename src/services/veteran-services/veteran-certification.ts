@@ -602,6 +602,98 @@ class VeteranCertificationService {
     }
   }
 
+  // Fetch contract opportunities from SAM.gov API
+  private async fetchFromSAMAPI(): Promise<any[]> {
+    try {
+      const apiKey = process.env.VITE_SAM_GOV_API_KEY;
+      if (!apiKey) {
+        console.warn('SAM.gov API key not configured, falling back to database data');
+        return [];
+      }
+
+      // SAM.gov Contract Opportunities API endpoint
+      const baseUrl = 'https://api.sam.gov/opportunities/v2/search';
+      const params = new URLSearchParams({
+        api_key: apiKey,
+        limit: '100',
+        ptype: 'o', // Opportunities
+        naics: '237310,238110,238190', // Construction NAICS codes
+        setaside: 'SDVOSBC,SBC', // Set-aside types for veterans
+        status: 'active,forecast'
+      });
+
+      const response = await fetch(`${baseUrl}?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`SAM.gov API request failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform SAM.gov data to our format
+      return data.opportunitiesData?.map((opp: any) => ({
+        solicitation_number: opp.solicitationNumber,
+        title: opp.title,
+        description: opp.description,
+        agency: opp.organizationHierarchy?.agencyName,
+        office: opp.organizationHierarchy?.officeName,
+        naics_code: opp.naicsCode?.[0]?.naicsCode,
+        set_aside_type: this.mapSAMSetAsideTypes(opp.typeOfSetAside),
+        estimated_value: opp.award?.dollarAmount || opp.baseAndAllOptionsValue,
+        posting_date: opp.postedDate,
+        response_deadline: opp.responseDeadLine,
+        place_of_performance: opp.placeOfPerformance?.streetAddress,
+        contract_type: this.mapSAMContractType(opp.typeOfContract),
+        requirements: opp.description,
+        status: opp.active ? OpportunityStatus.ACTIVE : OpportunityStatus.CLOSED
+      })) || [];
+    } catch (error) {
+      console.error('Failed to fetch from SAM.gov API:', error);
+      return [];
+    }
+  }
+
+  private mapSAMSetAsideTypes(setAsideCode: string): SetAsideType[] {
+    const types: SetAsideType[] = [];
+    
+    if (setAsideCode?.includes('SDVOSBC')) {
+      types.push(SetAsideType.SERVICE_DISABLED_VETERAN);
+    }
+    if (setAsideCode?.includes('SBC') || setAsideCode?.includes('SB')) {
+      types.push(SetAsideType.SMALL_BUSINESS);
+    }
+    if (setAsideCode?.includes('8A')) {
+      types.push(SetAsideType.EIGHT_A);
+    }
+    if (setAsideCode?.includes('HUBZ')) {
+      types.push(SetAsideType.HUBZONE);
+    }
+    if (setAsideCode?.includes('WOSB')) {
+      types.push(SetAsideType.WOMEN_OWNED);
+    }
+    
+    return types.length > 0 ? types : [SetAsideType.UNRESTRICTED];
+  }
+
+  private mapSAMContractType(contractType: string): ContractType {
+    switch (contractType?.toUpperCase()) {
+      case 'FIRM_FIXED_PRICE':
+      case 'FFP':
+        return ContractType.FIXED_PRICE;
+      case 'COST_PLUS_FIXED_FEE':
+      case 'CPFF':
+        return ContractType.COST_PLUS;
+      case 'TIME_AND_MATERIALS':
+      case 'T&M':
+        return ContractType.TIME_AND_MATERIALS;
+      case 'INDEFINITE_DELIVERY':
+      case 'IDIQ':
+        return ContractType.INDEFINITE_DELIVERY;
+      default:
+        return ContractType.FIXED_PRICE;
+    }
+  }
+
   // Government API Integration (SAM.gov)
   async syncContractOpportunities(): Promise<{ 
     success: boolean; 
@@ -609,32 +701,13 @@ class VeteranCertificationService {
     errors: string[] 
   }> {
     try {
-      // In a real implementation, this would call SAM.gov API
-      // For now, we'll simulate the sync process
+      // Fetch real contract opportunities from SAM.gov API
+      const opportunities = await this.fetchFromSAMAPI();
       
-      const mockOpportunities = [
-        {
-          solicitation_number: 'W912DY-24-R-0001',
-          title: 'Construction Services - Road Repair',
-          description: 'Asphalt repair and maintenance services for military installations',
-          agency: 'Department of Defense',
-          office: 'U.S. Army Corps of Engineers',
-          naics_code: '237310',
-          set_aside_type: [SetAsideType.SERVICE_DISABLED_VETERAN, SetAsideType.SMALL_BUSINESS],
-          estimated_value: 2500000,
-          posting_date: new Date().toISOString(),
-          response_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          place_of_performance: 'Fort Liberty, NC',
-          contract_type: ContractType.FIXED_PRICE,
-          requirements: 'Qualified contractors must have experience with asphalt paving and road construction',
-          status: OpportunityStatus.ACTIVE
-        }
-      ];
-
       let processed = 0;
       const errors: string[] = [];
 
-      for (const opportunity of mockOpportunities) {
+      for (const opportunity of opportunities) {
         try {
           const { error } = await supabase
             .from('contract_opportunities')

@@ -806,7 +806,7 @@ export default function Settings() {
                       id="username"
                       value={settings.username}
                       onChange={(e) => updateSetting('username', e.target.value)}
-                      placeholder="Enter your username"
+                      placeholder="e.g., operator@contractor.com"
                       className="glass-card"
                     />
                   </div>
@@ -817,7 +817,7 @@ export default function Settings() {
                       id="bio"
                       value={settings.bio}
                       onChange={(e) => updateSetting('bio', e.target.value)}
-                      placeholder="Tell us about yourself"
+                      placeholder="e.g., Senior Paving Operator with 15 years experience specializing in highway resurfacing and commercial projects"
                       className="glass-card"
                       rows={3}
                     />

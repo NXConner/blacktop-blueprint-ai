@@ -157,8 +157,8 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
         setProjects(projectsResponse.data);
       }
 
-      // Generate mock tasks
-      generateMockTasks();
+          // Load real crew tasks
+    loadCrewTasks();
 
     } catch (error) {
       console.error('Failed to load crew data:', error);
@@ -194,45 +194,43 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
     setDeploymentMetrics(metrics);
   };
 
-  const generateMockTasks = () => {
-    const mockTasks: CrewTask[] = [
-      {
-        id: '1',
-        title: 'Parking Lot Resurfacing - Phase 1',
-        description: 'Remove existing asphalt and prepare base layer',
-        priority: 'high',
-        status: 'in_progress',
-        assigned_crew: 'crew-1',
-        estimated_hours: 8,
-        actual_hours: 5.5,
-        location: 'Downtown Shopping Center',
-        due_date: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'Road Crack Sealing - Highway 101',
-        description: 'Seal cracks along 2-mile stretch of Highway 101',
-        priority: 'medium',
-        status: 'pending',
-        assigned_crew: 'crew-2',
-        estimated_hours: 6,
-        location: 'Highway 101, Mile Marker 15-17',
-        due_date: new Date(Date.now() + 86400000).toISOString()
-      },
-      {
-        id: '3',
-        title: 'Pothole Repair - Industrial District',
-        description: 'Emergency pothole repairs on Industrial Blvd',
-        priority: 'critical',
-        status: 'blocked',
-        assigned_crew: 'crew-3',
-        estimated_hours: 4,
-        location: 'Industrial Blvd & Manufacturing Way',
-        due_date: new Date(Date.now() - 3600000).toISOString()
-      }
-    ];
+  const loadCrewTasks = async () => {
+    try {
+      // Fetch real crew tasks from database
+      const { data: tasks, error } = await supabase
+        .from('crew_tasks')
+        .select(`
+          *,
+          project:projects(project_name, location_address),
+          crew:crews(crew_name),
+          assigned_by:employees(first_name, last_name)
+        `)
+        .order('due_date', { ascending: true });
 
-    setTasks(mockTasks);
+      if (error) {
+        console.error('Error loading crew tasks:', error);
+        return;
+      }
+
+      // Transform database data to CrewTask format
+      const transformedTasks: CrewTask[] = tasks?.map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        assigned_crew: task.crew_id,
+        estimated_hours: task.estimated_hours,
+        actual_hours: task.actual_hours,
+        location: task.location || task.project?.location_address,
+        due_date: task.due_date
+      })) || [];
+
+      setTasks(transformedTasks);
+    } catch (error) {
+      console.error('Failed to load crew tasks:', error);
+      setTasks([]);
+    }
   };
 
   const getStatusColor = (status: string) => {

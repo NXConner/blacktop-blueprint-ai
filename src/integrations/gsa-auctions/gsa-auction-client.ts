@@ -460,94 +460,177 @@ class GSAAuctionClient {
     return data || [];
   }
 
+  // Fetch data from real GSA API
+  private async fetchFromGSAAPI(): Promise<Omit<GSAAuction, 'id' | 'created_at' | 'updated_at'>[]> {
+    try {
+      // GSA API endpoint for surplus auctions
+      const apiUrl = 'https://api.gsa.gov/technology/auctions/v1/auctions';
+      const apiKey = process.env.VITE_GSA_API_KEY;
+      
+      if (!apiKey) {
+        console.warn('GSA API key not configured, falling back to database data');
+        return [];
+      }
+
+      const response = await fetch(`${apiUrl}?api_key=${apiKey}&status=active,upcoming`);
+      
+      if (!response.ok) {
+        throw new Error(`GSA API request failed: ${response.statusText}`);
+      }
+
+      const apiData = await response.json();
+      
+      // Transform GSA API data to our format
+      return apiData.auctions?.map((auction: any) => ({
+        auction_number: auction.auctionNumber,
+        title: auction.title,
+        description: auction.description,
+        category: this.mapGSACategory(auction.category),
+        subcategory: auction.subcategory,
+        location: {
+          facility_name: auction.location?.facilityName,
+          address: auction.location?.address,
+          city: auction.location?.city,
+          state: auction.location?.state,
+          zip_code: auction.location?.zipCode,
+          contact_phone: auction.location?.contactPhone,
+          contact_email: auction.location?.contactEmail,
+          inspection_hours: auction.location?.inspectionHours,
+          special_instructions: auction.location?.specialInstructions
+        },
+        preview_dates: auction.previewDates?.map((date: any) => ({
+          date: date.date,
+          start_time: date.startTime,
+          end_time: date.endTime,
+          appointment_required: date.appointmentRequired
+        })) || [],
+        bidding_start: auction.biddingStart,
+        bidding_end: auction.biddingEnd,
+        status: this.mapGSAStatus(auction.status),
+        items: [],
+        terms_conditions: auction.termsConditions,
+        inspection_required: auction.inspectionRequired,
+        removal_deadline: auction.removalDeadline,
+        payment_terms: {
+          methods: auction.paymentTerms?.methods || [],
+          deposit_required: auction.paymentTerms?.depositRequired,
+          deposit_percentage: auction.paymentTerms?.depositPercentage,
+          payment_deadline_hours: auction.paymentTerms?.paymentDeadlineHours,
+          late_fees: auction.paymentTerms?.lateFees,
+          payment_instructions: auction.paymentTerms?.paymentInstructions
+        },
+        shipping_options: auction.shippingOptions || []
+      })) || [];
+    } catch (error) {
+      console.error('Failed to fetch from GSA API:', error);
+      return [];
+    }
+  }
+
+  private async fetchAuctionItems(auctionNumber: string): Promise<Omit<AuctionItem, 'id'>[]> {
+    try {
+      const apiUrl = `https://api.gsa.gov/technology/auctions/v1/auctions/${auctionNumber}/items`;
+      const apiKey = process.env.VITE_GSA_API_KEY;
+      
+      if (!apiKey) {
+        return [];
+      }
+
+      const response = await fetch(`${apiUrl}?api_key=${apiKey}`);
+      
+      if (!response.ok) {
+        throw new Error(`GSA API items request failed: ${response.statusText}`);
+      }
+
+      const apiData = await response.json();
+      
+      return apiData.items?.map((item: any) => ({
+        auction_id: '', // Will be populated by caller
+        lot_number: item.lotNumber,
+        title: item.title,
+        description: item.description,
+        condition: this.mapGSACondition(item.condition),
+        estimated_value: item.estimatedValue,
+        starting_bid: item.startingBid,
+        current_bid: item.currentBid || item.startingBid,
+        bid_count: item.bidCount || 0,
+        reserve_met: item.reserveMet || false,
+        specifications: item.specifications || [],
+        images: item.images || [],
+        documents: item.documents || [],
+        location_notes: item.locationNotes,
+        watch_listed: false
+      })) || [];
+    } catch (error) {
+      console.error(`Failed to fetch items for auction ${auctionNumber}:`, error);
+      return [];
+    }
+  }
+
+  private mapGSACategory(category: string): AuctionCategory {
+    switch (category?.toLowerCase()) {
+      case 'construction equipment':
+      case 'heavy equipment':
+        return AuctionCategory.CONSTRUCTION_EQUIPMENT;
+      case 'vehicles':
+      case 'automotive':
+        return AuctionCategory.VEHICLES;
+      case 'industrial equipment':
+        return AuctionCategory.INDUSTRIAL_EQUIPMENT;
+      case 'electronics':
+        return AuctionCategory.ELECTRONICS;
+      default:
+        return AuctionCategory.OTHER;
+    }
+  }
+
+  private mapGSAStatus(status: string): AuctionStatus {
+    switch (status?.toLowerCase()) {
+      case 'upcoming':
+      case 'scheduled':
+        return AuctionStatus.UPCOMING;
+      case 'active':
+      case 'live':
+        return AuctionStatus.ACTIVE;
+      case 'closed':
+      case 'ended':
+        return AuctionStatus.CLOSED;
+      case 'cancelled':
+        return AuctionStatus.CANCELLED;
+      default:
+        return AuctionStatus.UPCOMING;
+    }
+  }
+
+  private mapGSACondition(condition: string): ItemCondition {
+    switch (condition?.toLowerCase()) {
+      case 'excellent':
+        return ItemCondition.EXCELLENT;
+      case 'good':
+        return ItemCondition.GOOD;
+      case 'fair':
+        return ItemCondition.FAIR;
+      case 'poor':
+        return ItemCondition.POOR;
+      case 'unknown':
+      case 'for parts':
+        return ItemCondition.UNKNOWN;
+      default:
+        return ItemCondition.UNKNOWN;
+    }
+  }
+
   // Data Synchronization
   async syncAuctionData(): Promise<{ success: boolean; processed: number; errors: string[] }> {
     try {
-      // Mock auction data that would come from GSA API
-      const mockAuctions: Omit<GSAAuction, 'id' | 'created_at' | 'updated_at'>[] = [
-        {
-          auction_number: 'GSA-2024-001',
-          title: 'Heavy Construction Equipment - Fort Liberty',
-          description: 'Surplus construction equipment including excavators, bulldozers, and paving equipment',
-          category: AuctionCategory.CONSTRUCTION_EQUIPMENT,
-          subcategory: 'Earth Moving Equipment',
-          location: {
-            facility_name: 'Fort Liberty',
-            address: '9205 Reilly Rd',
-            city: 'Fort Liberty',
-            state: 'NC',
-            zip_code: '28310',
-            contact_phone: '(910) 396-5000',
-            contact_email: 'surplus@fortliberty.army.mil',
-            inspection_hours: 'Mon-Fri 8:00 AM - 4:00 PM',
-            special_instructions: 'Security clearance not required for inspection'
-          },
-          preview_dates: [
-            {
-              date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              start_time: '08:00',
-              end_time: '16:00',
-              appointment_required: false
-            }
-          ],
-          bidding_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-          bidding_end: new Date(Date.now() + 17 * 24 * 60 * 60 * 1000).toISOString(),
-          status: AuctionStatus.UPCOMING,
-          items: [],
-          terms_conditions: 'Standard GSA surplus sale terms apply',
-          inspection_required: true,
-          removal_deadline: new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString(),
-          payment_terms: {
-            methods: [PaymentMethod.WIRE_TRANSFER, PaymentMethod.CASHIERS_CHECK],
-            deposit_required: true,
-            deposit_percentage: 10,
-            payment_deadline_hours: 72,
-            late_fees: true,
-            payment_instructions: 'Payment must be received within 72 hours of auction close'
-          },
-          shipping_options: [
-            {
-              id: '1',
-              name: 'Self Pickup',
-              description: 'Buyer arranges own transportation',
-              cost_estimate: 0,
-              delivery_timeframe: 'Within 7 days',
-              restrictions: ['Proper equipment required', 'Insurance verification needed']
-            }
-          ]
-        }
-      ];
-
-      const mockItems: Omit<AuctionItem, 'id'>[] = [
-        {
-          auction_id: '', // Will be populated
-          lot_number: '001',
-          title: 'CAT 320D Excavator',
-          description: '2018 Caterpillar 320D hydraulic excavator with 2,450 hours',
-          condition: ItemCondition.GOOD,
-          estimated_value: 85000,
-          starting_bid: 35000,
-          current_bid: 35000,
-          bid_count: 0,
-          reserve_met: false,
-          specifications: [
-            { name: 'Year', value: '2018' },
-            { name: 'Hours', value: '2,450' },
-            { name: 'Weight', value: '20,500', unit: 'lbs' },
-            { name: 'Engine', value: 'Cat C4.4 ACERT' }
-          ],
-          images: [],
-          documents: [],
-          location_notes: 'Located in motor pool area',
-          watch_listed: false
-        }
-      ];
-
+      // Fetch real auction data from GSA API
+      const apiAuctions = await this.fetchFromGSAAPI();
+      
       let processed = 0;
       const errors: string[] = [];
 
-      // Sync auctions
-      for (const auction of mockAuctions) {
+      // Sync auctions from API
+      for (const auction of apiAuctions) {
         try {
           const { data: auctionData, error: auctionError } = await supabase
             .from('gsa_auctions')
@@ -560,8 +643,9 @@ class GSAAuctionClient {
             continue;
           }
 
-          // Sync items for this auction
-          for (const item of mockItems) {
+          // Fetch and sync items for this auction
+          const auctionItems = await this.fetchAuctionItems(auction.auction_number);
+          for (const item of auctionItems) {
             const itemWithAuction = { ...item, auction_id: auctionData.id };
             
             const { error: itemError } = await supabase

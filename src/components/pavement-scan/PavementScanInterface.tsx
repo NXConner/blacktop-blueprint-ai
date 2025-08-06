@@ -186,61 +186,109 @@ const PavementScanInterface: React.FC<ScanInterfaceProps> = ({
   };
 
   const analyzeScan = async () => {
-    // Simulate AI analysis
-    setTimeout(() => {
-      const mockResults: PavementAnalysisResults = {
-        surfaceConditionScore: 72,
-        crackDensity: 0.15,
-        potholeCount: 3,
-        roughnessIndex: 2.8,
-        ruttingDepth: 0.75,
-        aiConfidenceScore: 89,
-        defects: [
-          {
-            id: 'defect-1',
-            type: 'crack',
-            severity: 'medium',
-            coordinates: { x: 120, y: 80, width: 200, height: 5 },
-            confidence: 0.92,
-            description: 'Longitudinal crack, moderate severity'
-          },
-          {
-            id: 'defect-2',
-            type: 'pothole',
-            severity: 'high',
-            coordinates: { x: 300, y: 150, width: 50, height: 45 },
-            confidence: 0.87,
-            description: 'Deep pothole requiring immediate attention'
-          },
-          {
-            id: 'defect-3',
-            type: 'rutting',
-            severity: 'low',
-            coordinates: { x: 200, y: 200, width: 150, height: 30 },
-            confidence: 0.78,
-            description: 'Minor rutting in wheel path'
-          }
-        ],
-        recommendations: [
-          'Repair high-severity pothole immediately',
-          'Schedule crack sealing for longitudinal crack',
-          'Monitor rutting area for progression',
-          'Consider surface treatment in next maintenance cycle'
-        ]
-      };
-
+    try {
+      // Use real AI analysis service
+      const analysisResults = await performAIAnalysis(scanSession.capturedImages);
+      
       setScanSession(prev => ({
         ...prev,
         status: 'complete',
-        results: mockResults,
+        results: analysisResults,
         endTime: new Date()
       }));
 
       // Save scan to database if project ID provided
       if (projectId) {
-        saveScanResults(mockResults);
+        saveScanResults(analysisResults);
       }
-    }, 2000);
+    } catch (error) {
+      console.error('AI analysis failed:', error);
+      setScanSession(prev => ({
+        ...prev,
+        status: 'error',
+        endTime: new Date()
+      }));
+    }
+  };
+
+  const performAIAnalysis = async (images: string[]): Promise<PavementAnalysisResults> => {
+    const aiApiKey = process.env.VITE_AI_ANALYSIS_API_KEY;
+    if (!aiApiKey) {
+      throw new Error('AI Analysis API key not configured');
+    }
+
+    // Send images to AI analysis service
+    const formData = new FormData();
+    for (const imageUrl of images) {
+      // Convert base64 to blob if needed
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      formData.append('images', blob);
+    }
+
+    const aiResponse = await fetch('https://api.pavementai.com/v1/analyze', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${aiApiKey}`,
+        'X-Analysis-Type': 'comprehensive'
+      },
+      body: formData
+    });
+
+    if (!aiResponse.ok) {
+      throw new Error(`AI analysis failed: ${aiResponse.statusText}`);
+    }
+
+    const analysisData = await aiResponse.json();
+    
+    // Transform AI response to our format
+    return {
+      surfaceConditionScore: analysisData.overall_condition_score,
+      crackDensity: analysisData.crack_analysis.density,
+      potholeCount: analysisData.pothole_analysis.count,
+      roughnessIndex: analysisData.surface_metrics.roughness_iri,
+      ruttingDepth: analysisData.deformation_analysis.max_rut_depth,
+      aiConfidenceScore: analysisData.confidence_score,
+      defects: analysisData.defects?.map((defect: any) => ({
+        id: defect.id,
+        type: defect.type,
+        severity: defect.severity_level,
+        coordinates: {
+          x: defect.bounding_box.x,
+          y: defect.bounding_box.y,
+          width: defect.bounding_box.width,
+          height: defect.bounding_box.height
+        },
+        confidence: defect.confidence,
+        description: defect.description
+      })) || [],
+      recommendations: analysisData.recommendations || []
+    };
+  };
+
+  const getCurrentCoordinates = (): Promise<[number, number]> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve([position.coords.longitude, position.coords.latitude]);
+        },
+        (error) => {
+          console.warn('Could not get GPS coordinates:', error);
+          // Fallback to default coordinates
+          resolve([-98.5795, 39.8283]); // Center of US
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    });
   };
 
   const saveScanResults = async (results: PavementAnalysisResults) => {
@@ -251,7 +299,7 @@ const PavementScanInterface: React.FC<ScanInterfaceProps> = ({
         project_id: projectId,
         scan_location: {
           type: 'Point',
-          coordinates: [-74.0060, 40.7128] // Mock coordinates
+          coordinates: await getCurrentCoordinates() // Get real GPS coordinates
         },
         scan_timestamp: new Date().toISOString(),
         scan_type: 'progress',

@@ -144,35 +144,47 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
   };
 
   const loadFieldReports = async () => {
-    // Generate mock field reports
-    const mockReports: FieldReport[] = [
-      {
-        id: '1',
-        type: 'progress',
-        title: 'Section A Base Layer Complete',
-        description: 'Base layer application completed for Section A. Material temperature optimal at 155°F.',
-        location: { lat: 40.7128, lng: -74.0060, address: 'Highway 101, Mile 15' },
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        photos: ['photo1.jpg', 'photo2.jpg'],
-        voice_notes: ['note1.wav'],
-        priority: 'medium',
-        status: 'submitted'
-      },
-      {
-        id: '2',
-        type: 'issue',
-        title: 'Equipment Malfunction',
-        description: 'Paver experiencing intermittent hydraulic issues. Maintenance requested.',
-        location: { lat: 40.7130, lng: -74.0058, address: 'Highway 101, Mile 15.2' },
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        photos: ['issue1.jpg'],
-        voice_notes: [],
-        priority: 'high',
-        status: 'acknowledged'
-      }
-    ];
+    try {
+      // Fetch real field reports from database
+      const { data: reports, error } = await supabase
+        .from('field_reports')
+        .select(`
+          *,
+          project:projects(project_name),
+          crew:crews(crew_name),
+          submitted_by:employees(first_name, last_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-    setFieldReports(mockReports);
+      if (error) {
+        console.error('Error loading field reports:', error);
+        return;
+      }
+
+      // Transform database data to FieldReport format
+      const transformedReports: FieldReport[] = reports?.map(report => ({
+        id: report.id,
+        type: report.report_type,
+        title: report.title,
+        description: report.description,
+        location: {
+          lat: report.location?.coordinates?.[1] || 0,
+          lng: report.location?.coordinates?.[0] || 0,
+          address: report.location_address
+        },
+        timestamp: report.created_at,
+        photos: report.photos || [],
+        voice_notes: report.voice_notes || [],
+        priority: report.priority,
+        status: report.status
+      })) || [];
+
+      setFieldReports(transformedReports);
+    } catch (error) {
+      console.error('Failed to load field reports:', error);
+      setFieldReports([]);
+    }
   };
 
   const getCurrentLocation = () => {
