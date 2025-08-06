@@ -174,7 +174,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <Input
                     id="signin-email"
                     type="email"
-                    placeholder="operator@isac.mil"
+                    placeholder="e.g., operator@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="glass-card pl-10"
@@ -190,7 +190,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <Input
                     id="signin-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Enter your secure password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="glass-card pl-10 pr-10"

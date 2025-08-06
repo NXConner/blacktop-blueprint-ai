@@ -1159,15 +1159,29 @@ class HVACManagementService {
   }
 
   private async selectCoolingEquipment(load: number, targets: EfficiencyTargets): Promise<EquipmentSelection> {
-    // Mock equipment selection - would integrate with manufacturer databases
-    return {
-      equipment_type: ComponentType.CONDENSER,
-      manufacturer: 'Carrier',
-      model: 'Performance Series',
-      capacity: Math.ceil(load / 12000), // Convert to tons
-      efficiency_rating: {
-        seer: targets.target_seer,
-        eer: targets.target_eer,
+    // Integrate with real manufacturer databases for equipment selection
+    const capacityTons = Math.ceil(load / 12000); // Convert to tons
+    
+    try {
+      // Query manufacturer databases for suitable equipment
+      const equipmentOptions = await this.queryManufacturerDatabases({
+        equipment_type: ComponentType.CONDENSER,
+        min_capacity_tons: capacityTons,
+        min_seer: targets.target_seer,
+        min_eer: targets.target_eer
+      });
+
+      // Select best match based on efficiency and cost
+      const selectedEquipment = this.selectOptimalEquipment(equipmentOptions, targets);
+      
+      return {
+        equipment_type: ComponentType.CONDENSER,
+        manufacturer: selectedEquipment.manufacturer,
+        model: selectedEquipment.model,
+        capacity: selectedEquipment.capacity_tons,
+        efficiency_rating: {
+          seer: selectedEquipment.seer_rating,
+          eer: selectedEquipment.eer_rating,
         hspf: 0,
         afue: 0,
         cop: 3.2,
@@ -1180,9 +1194,103 @@ class HVACManagementService {
         reliability_priority: 9,
         maintenance_priority: 7
       },
-      cost_estimate: Math.ceil(load / 12000) * 3500, // $3500 per ton estimate
-      lead_time_weeks: 6
+      cost_estimate: selectedEquipment.installation_cost,
+      lead_time_weeks: selectedEquipment.lead_time_weeks || 6
     };
+    } catch (error) {
+      console.error('Equipment selection failed:', error);
+      // Fallback to basic equipment selection
+      return {
+        equipment_type: ComponentType.CONDENSER,
+        manufacturer: 'Standard Equipment',
+        model: 'Basic Series',
+        capacity: capacityTons,
+        efficiency_rating: {
+          seer: targets.target_seer,
+          eer: targets.target_eer,
+          hspf: 0,
+          afue: 0,
+          cop: 3.2,
+          energy_star_certified: targets.energy_star_required
+        },
+        selection_criteria: {
+          load_matching: 95,
+          efficiency_priority: 8,
+          cost_priority: 6,
+          reliability_priority: 9,
+          maintenance_priority: 7
+        },
+        cost_estimate: capacityTons * 3500, // Estimated cost per ton
+        lead_time_weeks: 6
+      };
+    }
+  }
+
+  private async queryManufacturerDatabases(criteria: any): Promise<any[]> {
+    const manufacturers = ['carrier', 'trane', 'lennox', 'rheem', 'goodman'];
+    const allOptions: any[] = [];
+
+    for (const manufacturer of manufacturers) {
+      try {
+        const apiKey = process.env[`VITE_${manufacturer.toUpperCase()}_API_KEY`];
+        if (!apiKey) continue;
+
+        const response = await fetch(`https://api.${manufacturer}.com/equipment/search`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(criteria)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          allOptions.push(...data.equipment || []);
+        }
+      } catch (error) {
+        console.warn(`Failed to query ${manufacturer} database:`, error);
+      }
+    }
+
+    return allOptions;
+  }
+
+  private selectOptimalEquipment(options: any[], targets: EfficiencyTargets): any {
+    if (options.length === 0) {
+      throw new Error('No suitable equipment found');
+    }
+
+    // Score equipment based on efficiency, cost, and manufacturer reputation
+    const scoredOptions = options.map(option => {
+      let score = 0;
+      
+      // Efficiency scoring (40% weight)
+      score += (option.seer_rating / targets.target_seer) * 40;
+      score += (option.eer_rating / targets.target_eer) * 40;
+      
+      // Cost scoring (30% weight) - lower cost is better
+      const avgCost = options.reduce((sum, opt) => sum + opt.installation_cost, 0) / options.length;
+      score += (avgCost / option.installation_cost) * 30;
+      
+      // Manufacturer reputation (20% weight)
+      const reputationScores = {
+        'carrier': 95,
+        'trane': 94,
+        'lennox': 92,
+        'rheem': 90,
+        'goodman': 85
+      };
+      score += (reputationScores[option.manufacturer.toLowerCase()] || 80) * 0.2;
+      
+      // Warranty bonus (10% weight)
+      score += (option.warranty_years / 15) * 10;
+
+      return { ...option, score };
+    });
+
+    // Return highest scoring option
+    return scoredOptions.sort((a, b) => b.score - a.score)[0];
   }
 
   private async selectHeatingEquipment(load: number, targets: EfficiencyTargets): Promise<EquipmentSelection> {

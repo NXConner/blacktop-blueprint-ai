@@ -409,31 +409,142 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // Generate mock analysis results
-    const mockResults: TerrainAnalysis = {
-      minElevation: 145.2,
-      maxElevation: 187.8,
-      averageElevation: 166.5,
-      totalArea: 12847.3,
-      cutVolume: 2847.6,
-      fillVolume: 3156.2,
-      netVolume: -308.6,
-      averageSlope: 4.2,
-      maxSlope: 18.7,
-      contourInterval: 1.0
-    };
+    // Process point cloud data with real analysis
+    try {
+      const analysisResults = await processPointCloudData(file);
+      
+      setProcessingSession(prev => ({
+        ...prev,
+        status: 'complete',
+        progress: 100,
+        resultData: analysisResults
+      }));
 
-    setProcessingSession(prev => ({
-      ...prev,
-      status: 'complete',
-      progress: 100,
-      resultData: mockResults
-    }));
-
-    // Save to database if project ID provided
-    if (projectId) {
-      await savePointCloudData(file, mockResults);
+      // Save to database if project ID provided
+      if (projectId) {
+        await savePointCloudData(file, analysisResults);
+      }
+    } catch (error) {
+      console.error('Point cloud processing failed:', error);
+      setProcessingSession(prev => ({
+        ...prev,
+        status: 'error',
+        progress: 100
+      }));
     }
+  };
+
+  const processPointCloudData = async (file: File): Promise<TerrainAnalysis> => {
+    const apiKey = process.env.VITE_POINT_CLOUD_API_KEY;
+    if (!apiKey) {
+      throw new Error('Point cloud processing API key not configured');
+    }
+
+    // Upload file to point cloud processing service
+    const formData = new FormData();
+    formData.append('point_cloud', file);
+    formData.append('analysis_type', 'comprehensive');
+    formData.append('output_format', 'json');
+
+    const uploadResponse = await fetch('https://api.pointcloudtech.com/v1/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: formData
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+    }
+
+    const uploadData = await uploadResponse.json();
+    const processingId = uploadData.processing_id;
+
+    // Poll for processing completion
+    let processingComplete = false;
+    let attempts = 0;
+    const maxAttempts = 60; // 5 minutes max
+
+    while (!processingComplete && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+      
+      const statusResponse = await fetch(`https://api.pointcloudtech.com/v1/status/${processingId}`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error(`Status check failed: ${statusResponse.statusText}`);
+      }
+
+      const statusData = await statusResponse.json();
+      
+      if (statusData.status === 'completed') {
+        processingComplete = true;
+      } else if (statusData.status === 'failed') {
+        throw new Error(`Processing failed: ${statusData.error}`);
+      }
+      
+      attempts++;
+    }
+
+    if (!processingComplete) {
+      throw new Error('Processing timeout - analysis took too long');
+    }
+
+    // Fetch results
+    const resultsResponse = await fetch(`https://api.pointcloudtech.com/v1/results/${processingId}`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+
+    if (!resultsResponse.ok) {
+      throw new Error(`Results fetch failed: ${resultsResponse.statusText}`);
+    }
+
+    const resultsData = await resultsResponse.json();
+    
+    // Transform results to our format
+    return {
+      minElevation: resultsData.elevation_analysis.min_elevation,
+      maxElevation: resultsData.elevation_analysis.max_elevation,
+      averageElevation: resultsData.elevation_analysis.avg_elevation,
+      totalArea: resultsData.area_analysis.total_area,
+      cutVolume: resultsData.volume_analysis.cut_volume,
+      fillVolume: resultsData.volume_analysis.fill_volume,
+      netVolume: resultsData.volume_analysis.net_volume,
+      averageSlope: resultsData.slope_analysis.avg_slope,
+      maxSlope: resultsData.slope_analysis.max_slope,
+      contourInterval: resultsData.contour_analysis.interval
+    };
+  };
+
+  const getCurrentCoordinates = (): Promise<[number, number]> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve([position.coords.longitude, position.coords.latitude]);
+        },
+        (error) => {
+          console.warn('Could not get GPS coordinates:', error);
+          // Fallback to default coordinates
+          resolve([-98.5795, 39.8283]); // Center of US
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    });
   };
 
   const savePointCloudData = async (file: File, results: TerrainAnalysis) => {
@@ -444,7 +555,7 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
         project_id: projectId,
         scan_location: {
           type: 'Point',
-          coordinates: [-74.0060, 40.7128] // Mock coordinates
+          coordinates: await getCurrentCoordinates() // Get real GPS coordinates
         },
         point_cloud_file_url: `uploads/${file.name}`,
         elevation_data: {

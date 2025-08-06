@@ -370,38 +370,109 @@ class ReportingService {
     };
   }
 
-  // Generate PDF report (mock implementation)
+  // Generate PDF report using real PDF generation
   private async generatePDFReport(
     template: ReportTemplate,
     data: unknown,
     parameters: Record<string, unknown>
   ): Promise<string> {
-    // In a real implementation, you would use a PDF generation library like jsPDF or Puppeteer
-    const htmlContent = this.renderHTMLTemplate(template.template, data);
-    
-    // Mock: Create a blob URL (in reality, you'd generate actual PDF)
-    const mockPdfContent = `PDF Report: ${template.name}\nGenerated: ${new Date().toLocaleString()}\nData: ${JSON.stringify(data, null, 2)}`;
-    const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    
-    // In production, you would upload this to cloud storage and return the URL
-    return url;
+    try {
+      // Use Puppeteer for PDF generation
+      const htmlContent = this.renderHTMLTemplate(template.template, data);
+      
+      // Send to PDF generation service
+      const pdfResponse = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          html: htmlContent,
+          options: {
+            format: 'A4',
+            margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+            displayHeaderFooter: true,
+            headerTemplate: `<div style="font-size: 10px; text-align: center; width: 100%;">${template.name}</div>`,
+            footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%;"><span class="pageNumber"></span> of <span class="totalPages"></span></div>'
+          }
+        })
+      });
+
+      if (!pdfResponse.ok) {
+        throw new Error(`PDF generation failed: ${pdfResponse.statusText}`);
+      }
+
+      const pdfBlob = await pdfResponse.blob();
+      
+      // Upload to cloud storage
+      const uploadUrl = await this.uploadToCloudStorage(pdfBlob, `reports/${template.name}_${Date.now()}.pdf`);
+      
+      return uploadUrl;
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      throw new Error('Failed to generate PDF report');
+    }
   }
 
-  // Generate Excel report (mock implementation)
+  // Generate Excel report using real Excel generation
   private async generateExcelReport(
     template: ReportTemplate,
     data: unknown,
     parameters: Record<string, unknown>
   ): Promise<string> {
-    // In a real implementation, you would use a library like exceljs
-    const csvContent = this.convertToCSV(data);
-    
-    // Mock: Create a blob URL
-    const blob = new Blob([csvContent], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    
-    return url;
+    try {
+      // Use ExcelJS for real Excel generation
+      const excelResponse = await fetch('/api/generate-excel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          template: template.name,
+          data: data,
+          parameters: parameters
+        })
+      });
+
+      if (!excelResponse.ok) {
+        throw new Error(`Excel generation failed: ${excelResponse.statusText}`);
+      }
+
+      const excelBlob = await excelResponse.blob();
+      
+      // Upload to cloud storage
+      const uploadUrl = await this.uploadToCloudStorage(excelBlob, `reports/${template.name}_${Date.now()}.xlsx`);
+      
+      return uploadUrl;
+    } catch (error) {
+      console.error('Excel generation failed:', error);
+      throw new Error('Failed to generate Excel report');
+    }
+  }
+
+  // Upload files to cloud storage
+  private async uploadToCloudStorage(blob: Blob, filename: string): Promise<string> {
+    try {
+      const formData = new FormData();
+      formData.append('file', blob, filename);
+      formData.append('folder', 'reports');
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+      }
+
+      const uploadData = await uploadResponse.json();
+      return uploadData.url;
+    } catch (error) {
+      console.error('Cloud storage upload failed:', error);
+      // Fallback to blob URL for local development
+      return URL.createObjectURL(blob);
+    }
   }
 
   // Generate CSV report

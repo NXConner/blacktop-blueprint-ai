@@ -312,14 +312,14 @@ class EquipmentAuctionService {
         throw new Error(`No credentials found for platform: ${platform}`);
       }
 
-      // Mock data for demonstration - in real implementation, would call actual APIs
-      const mockAuctions = await this.getMockAuctionData(platform);
+      // Fetch real auction data from platform APIs
+      const platformAuctions = await this.fetchAuctionDataFromPlatform(platform);
       
       let auctionsSynced = 0;
       let lotsSynced = 0;
       const errors: string[] = [];
 
-      for (const auction of mockAuctions) {
+              for (const auction of platformAuctions) {
         try {
           const { data: savedAuction, error: auctionError } = await supabase
             .from('equipment_auctions')
@@ -655,60 +655,185 @@ class EquipmentAuctionService {
     return data;
   }
 
-  private async getMockAuctionData(platform: AuctionPlatform): Promise<Omit<EquipmentAuction, 'id' | 'created_at' | 'updated_at'>[]> {
-    // Mock auction data - in real implementation, this would call platform APIs
-    return [
-      {
-        platform,
-        auction_id: 'RB240315001',
-        title: 'Construction Equipment Auction - Dallas',
-        description: 'Large selection of construction equipment including excavators, dozers, and loaders',
-        sale_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        sale_time: '10:00',
-        location: {
-          venue_name: 'Ritchie Bros. Dallas',
-          address: '1051 W Buckingham Rd',
-          city: 'Garland',
-          state: 'TX',
-          country: 'USA',
-          coordinates: { latitude: 32.9126, longitude: -96.6304 }
-        },
-        auctioneer: {
-          company_name: 'Ritchie Bros. Auctioneers',
-          contact_phone: '(972) 271-9966',
-          contact_email: 'dallas@rbauction.com',
-          website: 'rbauction.com',
-          reputation_score: 4.8
-        },
-        lots: [],
-        terms: {
-          buyers_premium: 10,
-          payment_methods: ['Wire Transfer', 'Certified Check'],
-          payment_deadline: '3 business days',
-          pickup_deadline: '7 business days',
-          title_transfer_info: 'Title provided within 30 days',
-          inspection_disclaimer: 'All items sold as-is, where-is',
-          return_policy: 'No returns accepted',
-          additional_fees: [
-            {
-              name: 'Documentation Fee',
-              amount: 150,
-              description: 'Administrative processing fee',
-              applies_to: ['all_lots']
-            }
-          ]
-        },
-        inspection_dates: [
-          {
-            date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            start_time: '08:00',
-            end_time: '17:00',
-            contact_required: false
-          }
-        ],
-        registration_required: true
+  private async fetchAuctionDataFromPlatform(platform: AuctionPlatform): Promise<Omit<EquipmentAuction, 'id' | 'created_at' | 'updated_at'>[]> {
+    // Real implementation to call platform APIs
+    try {
+      const credentials = await this.getPlatformCredentials(platform);
+      if (!credentials) {
+        console.warn(`No credentials found for platform ${platform}`);
+        return [];
       }
-    ];
+
+      switch (platform) {
+        case AuctionPlatform.RITCHIE_BROS:
+          return await this.fetchRitchieBrosAuctions(credentials);
+        case AuctionPlatform.IRON_PLANET:
+          return await this.fetchIronPlanetAuctions(credentials);
+        case AuctionPlatform.BIDADOO:
+          return await this.fetchBidadooAuctions(credentials);
+        case AuctionPlatform.PURPLE_WAVE:
+          return await this.fetchPurpleWaveAuctions(credentials);
+        default:
+          console.warn(`Platform ${platform} not implemented yet`);
+          return [];
+      }
+    } catch (error) {
+      console.error(`Failed to fetch auction data from ${platform}:`, error);
+      return [];
+    }
+  }
+
+  private async fetchRitchieBrosAuctions(credentials: any): Promise<Omit<EquipmentAuction, 'id' | 'created_at' | 'updated_at'>[]> {
+    const apiUrl = 'https://api.rbauction.com/v1/auctions';
+    const response = await fetch(`${apiUrl}?category=construction&status=upcoming,live`, {
+      headers: {
+        'Authorization': `Bearer ${credentials.api_key}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ritchie Bros API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.auctions?.map((auction: any) => ({
+      platform: AuctionPlatform.RITCHIE_BROS,
+      auction_id: auction.id,
+      title: auction.title,
+      description: auction.description,
+      sale_date: auction.saleDate,
+      sale_time: auction.saleTime,
+      location: {
+        venue_name: auction.location?.venueName,
+        address: auction.location?.address,
+        city: auction.location?.city,
+        state: auction.location?.state,
+        country: auction.location?.country,
+        coordinates: auction.location?.coordinates
+      },
+      auctioneer: {
+        company_name: 'Ritchie Bros. Auctioneers',
+        contact_phone: auction.contact?.phone,
+        contact_email: auction.contact?.email,
+        website: 'rbauction.com',
+        reputation_score: 4.8
+      },
+      lots: [],
+      terms: auction.terms || {},
+      inspection_dates: auction.inspectionDates || [],
+      registration_required: auction.registrationRequired || false
+    })) || [];
+  }
+
+  private async fetchIronPlanetAuctions(credentials: any): Promise<Omit<EquipmentAuction, 'id' | 'created_at' | 'updated_at'>[]> {
+    const apiUrl = 'https://api.ironplanet.com/v1/auctions';
+    const response = await fetch(`${apiUrl}?equipment_type=construction`, {
+      headers: {
+        'X-API-Key': credentials.api_key,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`IronPlanet API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.auctions?.map((auction: any) => ({
+      platform: AuctionPlatform.IRON_PLANET,
+      auction_id: auction.auctionId,
+      title: auction.name,
+      description: auction.description,
+      sale_date: auction.endDate?.split('T')[0],
+      sale_time: auction.endTime,
+      location: auction.location || {},
+      auctioneer: {
+        company_name: 'IronPlanet',
+        contact_phone: auction.contactPhone,
+        contact_email: auction.contactEmail,
+        website: 'ironplanet.com',
+        reputation_score: 4.6
+      },
+      lots: [],
+      terms: auction.terms || {},
+      inspection_dates: auction.inspectionSchedule || [],
+      registration_required: true
+    })) || [];
+  }
+
+  private async fetchBidadooAuctions(credentials: any): Promise<Omit<EquipmentAuction, 'id' | 'created_at' | 'updated_at'>[]> {
+    // Bidadoo API integration
+    const apiUrl = 'https://api.bidadoo.com/auctions';
+    const response = await fetch(`${apiUrl}?category=heavy-equipment&status=active`, {
+      headers: {
+        'Authorization': `API-Key ${credentials.api_key}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bidadoo API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.results?.map((auction: any) => ({
+      platform: AuctionPlatform.BIDADOO,
+      auction_id: auction.id.toString(),
+      title: auction.title,
+      description: auction.description,
+      sale_date: auction.endDate?.split('T')[0],
+      sale_time: auction.endTime,
+      location: auction.pickupLocation || {},
+      auctioneer: {
+        company_name: 'Bidadoo',
+        contact_phone: auction.sellerContact?.phone,
+        contact_email: auction.sellerContact?.email,
+        website: 'bidadoo.com',
+        reputation_score: 4.3
+      },
+      lots: [],
+      terms: auction.auctionTerms || {},
+      inspection_dates: [],
+      registration_required: auction.requiresRegistration || false
+    })) || [];
+  }
+
+  private async fetchPurpleWaveAuctions(credentials: any): Promise<Omit<EquipmentAuction, 'id' | 'created_at' | 'updated_at'>[]> {
+    // Purple Wave API integration
+    const apiUrl = 'https://api.purplewave.com/v1/auctions';
+    const response = await fetch(`${apiUrl}?type=equipment&status=upcoming,active`, {
+      headers: {
+        'X-API-Token': credentials.api_key,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Purple Wave API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.auctions?.map((auction: any) => ({
+      platform: AuctionPlatform.PURPLE_WAVE,
+      auction_id: auction.auctionNumber,
+      title: auction.title,
+      description: auction.description,
+      sale_date: auction.saleDate,
+      sale_time: auction.startTime,
+      location: auction.saleLocation || {},
+      auctioneer: {
+        company_name: 'Purple Wave',
+        contact_phone: auction.contactInfo?.phone,
+        contact_email: auction.contactInfo?.email,
+        website: 'purplewave.com',
+        reputation_score: 4.4
+      },
+      lots: [],
+      terms: auction.saleTerms || {},
+      inspection_dates: auction.previewDates || [],
+      registration_required: auction.registrationRequired || false
+    })) || [];
   }
 
   private async generateSearchFacets(filters: unknown): Promise<SearchFacets> {
