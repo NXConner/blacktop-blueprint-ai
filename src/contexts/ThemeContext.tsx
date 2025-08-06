@@ -32,16 +32,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     
     switch (wallpaper.type) {
       case 'gradient':
-        root.style.setProperty('--wallpaper-background', getWallpaperGradient(wallpaper.url));
+        const gradientValue = getWallpaperGradient(wallpaper.url);
+        root.style.setProperty('--wallpaper-background', gradientValue);
+        console.log(`Applied gradient wallpaper "${wallpaper.name}":`, gradientValue);
         break;
       case 'pattern':
-        root.style.setProperty('--wallpaper-background', 
-          `url('/wallpapers/${wallpaper.url}.svg'), ${currentTheme.gradients.background}`);
+        const patternValue = `url('/wallpapers/${wallpaper.url}.svg'), ${currentTheme.gradients.background}`;
+        root.style.setProperty('--wallpaper-background', patternValue);
+        console.log(`Applied pattern wallpaper "${wallpaper.name}":`, patternValue);
         break;
       case 'image':
         // Try SVG first, fallback to JPG, then to gradient
-        root.style.setProperty('--wallpaper-background', 
-          `url('/wallpapers/${wallpaper.url}.svg'), url('/wallpapers/${wallpaper.url}.jpg'), ${currentTheme.gradients.background}`);
+        const imageValue = `url('/wallpapers/${wallpaper.url}.svg'), url('/wallpapers/${wallpaper.url}.jpg'), ${currentTheme.gradients.background}`;
+        root.style.setProperty('--wallpaper-background', imageValue);
+        console.log(`Applied image wallpaper "${wallpaper.name}":`, imageValue);
         break;
     }
   }, [currentTheme.gradients.background]);
@@ -105,6 +109,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     } else {
       // Use theme's default background gradient
       root.style.setProperty('--wallpaper-background', theme.gradients.background);
+      console.log(`Using theme default background:`, theme.gradients.background);
     }
 
     // Save to localStorage

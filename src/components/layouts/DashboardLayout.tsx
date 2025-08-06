@@ -74,7 +74,7 @@ export function DashboardLayout({
   systemStatus = []
 }: DashboardLayoutProps) {
   return (
-    <div className={cn("min-h-screen bg-background p-6 animate-fade-in", className)}>
+    <div className={cn("min-h-screen p-6 animate-fade-in", className)}>
       {/* Page Header */}
       <AnimatedContainer animation="slide-up">
         <PageHeader
