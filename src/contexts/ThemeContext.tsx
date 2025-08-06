@@ -27,6 +27,35 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return savedWallpaper ? JSON.parse(savedWallpaper) : null;
   });
 
+  const applyWallpaper = useCallback((wallpaper: Wallpaper) => {
+    const root = document.documentElement;
+    
+    switch (wallpaper.type) {
+      case 'gradient':
+        root.style.setProperty('--wallpaper-background', getWallpaperGradient(wallpaper.url));
+        break;
+      case 'pattern':
+        root.style.setProperty('--wallpaper-background', 
+          `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.svg')`);
+        break;
+      case 'image':
+        root.style.setProperty('--wallpaper-background', 
+          `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.jpg')`);
+        break;
+    }
+  }, [currentTheme.gradients.background]);
+
+  const getWallpaperGradient = (wallpaperUrl: string): string => {
+    const gradients: Record<string, string> = {
+      'pure-black': 'linear-gradient(0deg, hsl(0 0% 2%), hsl(0 0% 4%))',
+      'void': 'radial-gradient(circle at 50% 50%, hsl(0 0% 6%) 0%, hsl(0 0% 2%) 100%)',
+      'red-alert': 'linear-gradient(135deg, hsl(0 80% 8%), hsl(0 60% 15%), hsl(0 80% 8%))',
+      'sunset-gradient': 'linear-gradient(135deg, hsl(15 100% 70%), hsl(35 100% 60%), hsl(320 60% 70%))',
+      'northern-lights': 'linear-gradient(135deg, hsl(220 30% 8%), hsl(160 100% 25%), hsl(280 100% 25%), hsl(220 30% 8%))',
+    };
+    return gradients[wallpaperUrl] || currentTheme.gradients.background;
+  };
+
   // Apply theme colors to CSS variables
   useEffect(() => {
     const root = document.documentElement;
@@ -73,35 +102,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     // Save to localStorage
     localStorage.setItem('theme-id', theme.id);
   }, [currentTheme, currentWallpaper, applyWallpaper]);
-
-  const applyWallpaper = useCallback((wallpaper: Wallpaper) => {
-    const root = document.documentElement;
-    
-    switch (wallpaper.type) {
-      case 'gradient':
-        root.style.setProperty('--wallpaper-background', getWallpaperGradient(wallpaper.url));
-        break;
-      case 'pattern':
-        root.style.setProperty('--wallpaper-background', 
-          `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.svg')`);
-        break;
-      case 'image':
-        root.style.setProperty('--wallpaper-background', 
-          `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.jpg')`);
-        break;
-    }
-      }, []);
-
-  const getWallpaperGradient = (wallpaperUrl: string): string => {
-    const gradients: Record<string, string> = {
-      'pure-black': 'linear-gradient(0deg, hsl(0 0% 2%), hsl(0 0% 4%))',
-      'void': 'radial-gradient(circle at 50% 50%, hsl(0 0% 6%) 0%, hsl(0 0% 2%) 100%)',
-      'red-alert': 'linear-gradient(135deg, hsl(0 80% 8%), hsl(0 60% 15%), hsl(0 80% 8%))',
-      'sunset-gradient': 'linear-gradient(135deg, hsl(15 100% 70%), hsl(35 100% 60%), hsl(320 60% 70%))',
-      'northern-lights': 'linear-gradient(135deg, hsl(220 30% 8%), hsl(160 100% 25%), hsl(280 100% 25%), hsl(220 30% 8%))',
-    };
-    return gradients[wallpaperUrl] || currentTheme.gradients.background;
-  };
 
   const setTheme = (themeId: string) => {
     const theme = themes.find(t => t.id === themeId);
