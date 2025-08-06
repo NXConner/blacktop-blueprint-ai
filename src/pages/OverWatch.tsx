@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import OverWatchMap from '@/components/overwatch/OverWatchMap';
 import OverWatchControlPanel from '@/components/overwatch/OverWatchControlPanel';
+import ResponsiveContainer from '@/components/ui/responsive-container';
 
 const OverWatch: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -24,9 +25,10 @@ const OverWatch: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="min-h-screen bg-background overflow-x-safe">
+      <ResponsiveContainer className="py-6">
+        {/* Header */}
+        <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-4xl font-bold text-glow-primary mb-2">
@@ -83,9 +85,9 @@ const OverWatch: React.FC = () => {
 
           {/* Overview Tab - Map + Summary */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Main Map */}
-              <div className="xl:col-span-2">
+              <div className="lg:col-span-2">
                 <OverWatchMap 
                   height={isFullscreen ? "calc(100vh - 200px)" : "600px"}
                   className="w-full"
@@ -306,7 +308,7 @@ const OverWatch: React.FC = () => {
             </Button>
           </div>
         )}
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 };
