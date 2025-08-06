@@ -13,12 +13,12 @@ export function Hero() {
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-hero opacity-50" />
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/4 left-1/4 w-48 h-48 md:w-96 md:h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 md:w-96 md:h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="mb-6">
           <Badge 
             variant="secondary" 
@@ -29,17 +29,17 @@ export function Hero() {
           </Badge>
         </div>
 
-        <h1 className="text-5xl lg:text-7xl font-bold mb-6 text-glow-primary">
+        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 text-glow-primary leading-tight">
           <span className="bg-gradient-primary bg-clip-text text-transparent">
             ISAC OS
           </span>
         </h1>
         
-        <p className="text-xl lg:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto">
+        <p className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto">
           Integrated Systems Analysis & Command Operating System
         </p>
         
-        <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
           Advanced tactical command interface with real-time monitoring, 
           AI-powered optimization, and comprehensive operational oversight.
         </p>
@@ -71,7 +71,7 @@ export function Hero() {
         </div>
 
         {/* Feature Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
           <div className="glass-card p-6 rounded-xl border border-glass-border">
             <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mb-4 mx-auto">
               <Eye className="w-6 h-6 text-primary-foreground" />

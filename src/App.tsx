@@ -31,7 +31,7 @@ const App = () => (
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
-            <div>
+            <div className="min-h-screen bg-background">
               <Toaster />
               <Sonner />
               <ParticleSystem 
@@ -41,7 +41,7 @@ const App = () => (
               />
               <BrowserRouter>
                 <Navigation />
-                <main className="lg:ml-72 pt-16 relative z-10">
+                <main className="lg:ml-72 pt-16 relative z-10 min-h-screen">
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/overwatch" element={<OverWatch />} />
