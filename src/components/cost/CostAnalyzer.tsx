@@ -678,7 +678,7 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
           <Card className="glass-elevated p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold">Cost Entry Management</h3>
-              <Button className="glow-primary">
+              <Button className="glow-primary" onClick={() => console.log('Add Cost Entry clicked - TODO: Implement cost entry creation modal')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Cost Entry
               </Button>

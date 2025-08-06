@@ -251,14 +251,16 @@ export function Navigation({ className }: NavigationProps) {
             </Button>
           )}
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="glass-card hover:glow-secondary min-h-[44px] min-w-[44px]"
-            aria-label="Settings"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
+          <Link to="/settings">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="glass-card hover:glow-secondary min-h-[44px] min-w-[44px]"
+              aria-label="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </header>
 

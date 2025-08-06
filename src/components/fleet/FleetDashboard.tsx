@@ -301,7 +301,7 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
-            <Button className="glow-primary">
+            <Button className="glow-primary" onClick={() => console.log('Add Vehicle clicked - TODO: Implement vehicle creation modal')}>
               <Plus className="w-4 h-4 mr-2" />
               Add Vehicle
             </Button>
