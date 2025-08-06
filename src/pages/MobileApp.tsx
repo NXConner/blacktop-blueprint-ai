@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import MobileInterface from '@/components/mobile/MobileInterface';
 
+import ResponsiveContainer from '@/components/ui/responsive-container';
+
 const MobileApp: React.FC = () => {
   const [deviceInfo, setDeviceInfo] = useState({
     user_agent: '',
@@ -118,9 +120,10 @@ const MobileApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="min-h-screen bg-background overflow-x-safe">
+      <ResponsiveContainer className="py-6">
+        {/* Header */}
+        <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-4xl font-bold text-glow-primary mb-2">
@@ -181,7 +184,7 @@ const MobileApp: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-muted/10 rounded-lg">
               <div className="text-lg font-bold text-primary">iOS</div>
               <div className="text-sm text-muted-foreground">iPhone & iPad</div>
@@ -566,6 +569,7 @@ const MobileApp: React.FC = () => {
           </div>
         </div>
       )}
+      </ResponsiveContainer>
     </div>
   );
 };

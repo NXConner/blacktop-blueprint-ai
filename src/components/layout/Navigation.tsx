@@ -149,7 +149,8 @@ export function Navigation({ className }: NavigationProps) {
       <header className={cn(
         "fixed top-0 left-0 right-0 z-50",
         "glass-elevated border-b border-glass-border",
-        "h-16 px-4 flex items-center justify-between",
+        "h-16 px-4 sm:px-6 flex items-center justify-between",
+        "backdrop-blur-md bg-background/80",
         className
       )}>
         {/* Left Section */}
@@ -158,7 +159,8 @@ export function Navigation({ className }: NavigationProps) {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="lg:hidden glass-card hover:glow-primary"
+            className="lg:hidden glass-card hover:glow-primary min-h-[44px] min-w-[44px]"
+            aria-label="Toggle navigation menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -204,7 +206,8 @@ export function Navigation({ className }: NavigationProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="glass-card hover:glow-accent relative"
+            className="glass-card hover:glow-accent relative min-h-[44px] min-w-[44px]"
+            aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
             <Badge 
@@ -228,8 +231,9 @@ export function Navigation({ className }: NavigationProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleSignOut}
-                className="glass-card hover:glow-destructive"
+                className="glass-card hover:glow-destructive min-h-[44px] min-w-[44px]"
                 title="Sign Out"
+                aria-label="Sign Out"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -239,8 +243,9 @@ export function Navigation({ className }: NavigationProps) {
               variant="ghost"
               size="icon"
               onClick={() => setAuthModalOpen(true)}
-              className="glass-card hover:glow-primary"
+              className="glass-card hover:glow-primary min-h-[44px] min-w-[44px]"
               title="Sign In"
+              aria-label="Sign In"
             >
               <LogIn className="h-5 w-5" />
             </Button>
@@ -249,7 +254,8 @@ export function Navigation({ className }: NavigationProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="glass-card hover:glow-secondary"
+            className="glass-card hover:glow-secondary min-h-[44px] min-w-[44px]"
+            aria-label="Settings"
           >
             <Settings className="h-5 w-5" />
           </Button>
@@ -259,18 +265,20 @@ export function Navigation({ className }: NavigationProps) {
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur lg:hidden"
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={toggleSidebar}
+          aria-label="Close navigation menu"
         />
       )}
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-16 left-0 bottom-0 z-40 w-72",
+        "fixed top-16 left-0 bottom-0 z-40 w-72 max-w-[90vw]",
         "glass-elevated border-r border-glass-border",
-        "transform transition-transform duration-300 lg:translate-x-0",
+        "transform transition-transform duration-300 ease-out lg:translate-x-0",
+        "backdrop-blur-md bg-background/95",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
-        "lg:static lg:top-0 lg:h-screen lg:pt-16"
+        "lg:static lg:top-0 lg:h-screen lg:pt-16 lg:max-w-none"
       )}>
         <div className="h-full overflow-y-auto p-4">
           {/* Close button for mobile */}
@@ -280,7 +288,8 @@ export function Navigation({ className }: NavigationProps) {
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
-              className="glass-card"
+              className="glass-card min-h-[44px] min-w-[44px]"
+              aria-label="Close navigation menu"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -346,11 +355,6 @@ export function Navigation({ className }: NavigationProps) {
         </div>
       </aside>
 
-      {/* Main Content Spacer */}
-      <div className="lg:ml-72 pt-16">
-        {/* This div provides proper spacing for the main content */}
-      </div>
-      
       {/* Authentication Modal */}
       <AuthModal 
         isOpen={authModalOpen} 
