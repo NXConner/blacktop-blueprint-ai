@@ -152,7 +152,7 @@ export interface ComplianceReporting {
   due_date: string;
   submission_date?: string;
   recipient_agency: string;
-  report_data: any;
+  report_data: unknown;
   status: 'draft' | 'submitted' | 'approved' | 'rejected';
 }
 
@@ -633,7 +633,7 @@ class EnvironmentalComplianceService {
     };
   }
 
-  private calculateEnergyEmissions(projectData: any): EmissionCategory {
+  private calculateEnergyEmissions(projectData: unknown): EmissionCategory {
     const emissionFactor = 0.5; // kg CO2/kWh
     return {
       category: 'Energy',
@@ -643,7 +643,7 @@ class EnvironmentalComplianceService {
     };
   }
 
-  private calculateTransportationEmissions(projectData: any): EmissionCategory {
+  private calculateTransportationEmissions(projectData: unknown): EmissionCategory {
     const emissionFactor = 0.2; // kg CO2/mile
     return {
       category: 'Transportation',
@@ -653,7 +653,7 @@ class EnvironmentalComplianceService {
     };
   }
 
-  private calculateMaterialEmissions(projectData: any): EmissionCategory {
+  private calculateMaterialEmissions(projectData: unknown): EmissionCategory {
     const emissionFactor = 500; // kg CO2/ton
     return {
       category: 'Materials',
@@ -663,7 +663,7 @@ class EnvironmentalComplianceService {
     };
   }
 
-  private calculateWasteEmissions(projectData: any): EmissionCategory {
+  private calculateWasteEmissions(projectData: unknown): EmissionCategory {
     const emissionFactor = 100; // kg CO2/ton
     return {
       category: 'Waste',

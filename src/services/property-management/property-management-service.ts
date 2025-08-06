@@ -1240,7 +1240,7 @@ export function usePropertyManagement() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const loadProperties = async (filters?: any) => {
+  const loadProperties = async (filters?: unknown) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -1275,7 +1275,7 @@ export function usePropertyManagement() {
     }
   };
 
-  const loadMaintenanceRequests = async (filters?: any) => {
+  const loadMaintenanceRequests = async (filters?: unknown) => {
     setIsLoading(true);
     try {
       const data = await propertyManagementService.getMaintenanceRequests(filters);

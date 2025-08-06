@@ -11,7 +11,7 @@ export interface NotificationData {
   severity: 'low' | 'medium' | 'high' | 'critical';
   timestamp: string;
   read: boolean;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   actions?: NotificationAction[];
   expires_at?: string;
   user_id?: string;
@@ -244,7 +244,7 @@ class NotificationSystem {
   // Create notification from template
   async createFromTemplate(
     templateId: string,
-    variables: Record<string, any>,
+    variables: Record<string, unknown>,
     userId?: string
   ): Promise<string> {
     const template = this.templates.get(templateId);
@@ -275,7 +275,7 @@ class NotificationSystem {
   }
 
   // Interpolate template variables
-  private interpolateTemplate(template: string, variables: Record<string, any>): string {
+  private interpolateTemplate(template: string, variables: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
       return variables[key] || match;
     });

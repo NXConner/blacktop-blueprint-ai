@@ -644,7 +644,7 @@ class GSAAuctionClient {
   }
 
   // Real-time auction updates
-  async subscribeToAuctionUpdates(auctionId: string, callback: (update: any) => void): Promise<() => void> {
+  async subscribeToAuctionUpdates(auctionId: string, callback: (update: unknown) => void): Promise<() => void> {
     const subscription = supabase
       .channel(`auction-${auctionId}`)
       .on('postgres_changes', 
@@ -702,7 +702,7 @@ export function useGSAAuctions() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const searchAuctions = async (filters?: any) => {
+  const searchAuctions = async (filters?: unknown) => {
     setIsLoading(true);
     setError(null);
     try {

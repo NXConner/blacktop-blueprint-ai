@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Particle {
@@ -201,7 +201,7 @@ export function ParticleSystem({
   };
 
   // Main animation loop
-  const animate = (timestamp: number) => {
+  const animate = useCallback((timestamp: number) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx || !enabled) return;
@@ -227,10 +227,10 @@ export function ParticleSystem({
     });
     
     animationRef.current = requestAnimationFrame(animate);
-  };
+  }, [enabled, config]);
 
   // Handle mouse interactions
-  const handleMouseMove = (event: MouseEvent) => {
+  const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!interactive || !canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
@@ -245,9 +245,9 @@ export function ParticleSystem({
       const offsetY = (Math.random() - 0.5) * 50;
       particlesRef.current.push(createParticle(x + offsetX, y + offsetY, 'spark'));
     }
-  };
+  }, [interactive, config]);
 
-  const handleMouseClick = (event: MouseEvent) => {
+  const handleMouseClick = useCallback((event: MouseEvent) => {
     if (!interactive || !canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
@@ -265,7 +265,7 @@ export function ParticleSystem({
         particlesRef.current.push(createParticle(particleX, particleY, 'glow'));
       }
     }
-  };
+  }, [interactive, config]);
 
   // Resize canvas to match container
   const resizeCanvas = () => {
@@ -304,7 +304,7 @@ export function ParticleSystem({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [enabled, intensity, currentTheme.id]);
+  }, [enabled, intensity, currentTheme.id, animate, handleMouseMove, handleMouseClick]);
 
   // Pause animation when not visible
   useEffect(() => {
@@ -313,7 +313,7 @@ export function ParticleSystem({
     } else if (isVisible && enabled) {
       animationRef.current = requestAnimationFrame(animate);
     }
-  }, [isVisible, enabled]);
+  }, [isVisible, enabled, animate]);
 
   if (!enabled) return null;
 
