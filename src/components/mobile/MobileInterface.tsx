@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Project, Employee, Vehicle, WorkSession } from '@/types/database';
+import { capacitorNative } from '@/services/capacitor-native';
 
 interface MobileInterfaceProps {
   userId?: string;
@@ -175,20 +176,33 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
     setFieldReports(mockReports);
   };
 
-  const getCurrentLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-      );
+  const getCurrentLocation = async () => {
+    try {
+      if (capacitorNative.isNativeApp()) {
+        // Use native geolocation on mobile app
+        const position = await capacitorNative.getCurrentPosition();
+        if (position) {
+          setCurrentLocation(position);
+        }
+      } else {
+        // Fallback to web geolocation API
+        if ('geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setCurrentLocation({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              });
+            },
+            (error) => {
+              console.error('Geolocation error:', error);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Location access error:', error);
     }
   };
 
@@ -238,26 +252,38 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
 
   const capturePhoto = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      
-      // Create video element for photo capture
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.play();
+      if (capacitorNative.isNativeApp()) {
+        // Use native camera on mobile app
+        const photoData = await capacitorNative.capturePhoto();
+        if (photoData) {
+          setNewReport(prev => ({
+            ...prev,
+            photos: [...(prev.photos || []), photoData]
+          }));
+        }
+      } else {
+        // Fallback to web camera API
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        
+        // Create video element for photo capture
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
 
-      // This would normally open a camera interface
-      console.log('Camera opened for photo capture');
-      
-      // Add photo to current report
-      setNewReport(prev => ({
-        ...prev,
-        photos: [...(prev.photos || []), `photo_${Date.now()}.jpg`]
-      }));
+        // This would normally open a camera interface
+        console.log('Camera opened for photo capture');
+        
+        // Add photo to current report
+        setNewReport(prev => ({
+          ...prev,
+          photos: [...(prev.photos || []), `photo_${Date.now()}.jpg`]
+        }));
 
-      // Stop the stream
-      stream.getTracks().forEach(track => track.stop());
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+      }
     } catch (error) {
       console.error('Camera access denied:', error);
     }

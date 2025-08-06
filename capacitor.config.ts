@@ -1,0 +1,53 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.blackoutconstruction.app',
+  appName: 'Blackout Construction',
+  webDir: 'dist',
+  server: {
+    androidScheme: 'https'
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      backgroundColor: "#1e293b",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#0891b2",
+      splashFullScreen: true,
+      splashImmersive: true,
+      layoutName: "launch_screen",
+      useDialog: true,
+    },
+    StatusBar: {
+      style: "DARK",
+      backgroundColor: "#1e293b",
+    },
+    Camera: {
+      permissions: ["camera", "photos"]
+    },
+    Geolocation: {
+      permissions: ["location"]
+    },
+    Device: {
+      permissions: []
+    },
+    Network: {
+      permissions: []
+    },
+    Filesystem: {
+      permissions: []
+    }
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true
+  }
+};
+
+export default config;

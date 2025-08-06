@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Blackout Construction</string>
+    <string name="title_activity_main">Blackout Construction</string>
+    <string name="package_name">com.blackoutconstruction.app</string>
+    <string name="custom_url_scheme">com.blackoutconstruction.app</string>
+</resources>
