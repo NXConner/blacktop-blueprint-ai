@@ -1,0 +1,21 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="stars" width="50" height="50" patternUnits="userSpaceOnUse">
+      <rect width="50" height="50" fill="hsl(270 40% 8%)"/>
+      <circle cx="10" cy="15" r="0.5" fill="hsl(280 100% 80%)" opacity="0.8"/>
+      <circle cx="35" cy="8" r="1" fill="hsl(160 100% 70%)" opacity="0.6"/>
+      <circle cx="25" cy="30" r="0.7" fill="hsl(200 100% 80%)" opacity="0.7"/>
+      <circle cx="45" cy="40" r="0.3" fill="hsl(320 80% 70%)" opacity="0.9"/>
+      <circle cx="5" cy="42" r="0.8" fill="hsl(240 100% 70%)" opacity="0.5"/>
+      <path d="M 20 20 L 21 18 L 22 20 L 24 19 L 22 22 L 20 21 L 18 22 L 20 20" fill="hsl(280 100% 70%)" opacity="0.8"/>
+    </pattern>
+    <pattern id="cosmic-dust" width="25" height="25" patternUnits="userSpaceOnUse">
+      <rect width="25" height="25" fill="none"/>
+      <circle cx="5" cy="5" r="0.2" fill="hsl(300 80% 70%)" opacity="0.4"/>
+      <circle cx="15" cy="12" r="0.3" fill="hsl(180 100% 60%)" opacity="0.3"/>
+      <circle cx="22" cy="20" r="0.1" fill="hsl(240 100% 70%)" opacity="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#stars)"/>
+  <rect width="100" height="100" fill="url(#cosmic-dust)"/>
+</svg>

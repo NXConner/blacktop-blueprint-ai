@@ -1310,6 +1310,23 @@
     animation: glitch-2 0.6s ease-in-out;
   }
 
+  /* Enhanced Visual Effects Animations */
+  .animate-volumetric-pulse {
+    animation: volumetric-pulse 3s ease-in-out infinite;
+  }
+
+  .animate-plasma-flow {
+    animation: plasma-flow 5s linear infinite;
+  }
+
+  .animate-aurora-wave {
+    animation: aurora-wave 8s ease-in-out infinite;
+  }
+
+  .animate-hologram-shimmer {
+    animation: hologram-shimmer 2s linear infinite;
+  }
+
   /* Variable Font Support */
   .font-variable {
     font-variation-settings: "wght" 400;
@@ -1499,5 +1516,58 @@
   /* Improve input field touch targets */
   input, textarea, select {
     min-height: 44px;
+  }
+}
+
+/* Enhanced Visual Effects Keyframes */
+@keyframes volumetric-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1) blur(20px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2) blur(15px);
+  }
+}
+
+@keyframes plasma-flow {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes aurora-wave {
+  0%, 100% {
+    transform: translateY(-20%) scale(1);
+    opacity: 0.3;
+  }
+  33% {
+    transform: translateY(0%) scale(1.1);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translateY(20%) scale(0.9);
+    opacity: 0.4;
+  }
+}
+
+@keyframes hologram-shimmer {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+    opacity: 0;
   }
 }

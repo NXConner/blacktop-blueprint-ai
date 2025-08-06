@@ -1,0 +1,43 @@
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="canopyGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:hsl(120 80% 25%);stop-opacity:1" />
+      <stop offset="70%" style="stop-color:hsl(120 80% 15%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(140 40% 8%);stop-opacity:1" />
+    </radialGradient>
+    <pattern id="leaf-cluster" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="none"/>
+      <circle cx="30" cy="40" r="15" fill="hsl(120 80% 30%)" opacity="0.6"/>
+      <circle cx="70" cy="20" r="12" fill="hsl(80 60% 35%)" opacity="0.7"/>
+      <circle cx="80" cy="70" r="18" fill="hsl(140 80% 25%)" opacity="0.5"/>
+      <circle cx="20" cy="80" r="10" fill="hsl(120 80% 35%)" opacity="0.8"/>
+      <circle cx="50" cy="15" r="8" fill="hsl(80 60% 40%)" opacity="0.6"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="hsl(140 40% 8%)"/>
+  
+  <!-- Large canopy clusters -->
+  <circle cx="300" cy="200" r="150" fill="hsl(120 80% 25%)" opacity="0.8"/>
+  <circle cx="700" cy="150" r="180" fill="hsl(120 80% 30%)" opacity="0.7"/>
+  <circle cx="1200" cy="250" r="160" fill="hsl(80 60% 30%)" opacity="0.8"/>
+  <circle cx="1600" cy="180" r="140" fill="hsl(120 80% 25%)" opacity="0.8"/>
+  
+  <circle cx="400" cy="450" r="170" fill="hsl(140 80% 25%)" opacity="0.7"/>
+  <circle cx="900" cy="400" r="190" fill="hsl(120 80% 30%)" opacity="0.8"/>
+  <circle cx="1400" cy="500" r="155" fill="hsl(80 60% 30%)" opacity="0.7"/>
+  
+  <circle cx="200" cy="700" r="145" fill="hsl(120 80% 25%)" opacity="0.8"/>
+  <circle cx="600" cy="750" r="175" fill="hsl(140 80% 25%)" opacity="0.7"/>
+  <circle cx="1000" cy="700" r="165" fill="hsl(120 80% 30%)" opacity="0.8"/>
+  <circle cx="1500" cy="800" r="150" fill="hsl(80 60% 30%)" opacity="0.7"/>
+  <circle cx="1800" cy="650" r="130" fill="hsl(120 80% 25%)" opacity="0.8"/>
+  
+  <!-- Medium clusters -->
+  <circle cx="150" cy="350" r="80" fill="hsl(120 80% 35%)" opacity="0.6"/>
+  <circle cx="550" cy="300" r="90" fill="hsl(140 80% 30%)" opacity="0.7"/>
+  <circle cx="850" cy="200" r="75" fill="hsl(80 60% 35%)" opacity="0.6"/>
+  <circle cx="1100" cy="600" r="85" fill="hsl(120 80% 35%)" opacity="0.7"/>
+  <circle cx="1700" cy="400" r="70" fill="hsl(140 80% 30%)" opacity="0.6"/>
+  
+  <rect width="100%" height="100%" fill="url(#leaf-cluster)"/>
+</svg>

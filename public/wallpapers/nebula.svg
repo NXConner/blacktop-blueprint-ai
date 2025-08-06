@@ -1,0 +1,33 @@
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="nebula1" cx="30%" cy="40%" r="60%">
+      <stop offset="0%" style="stop-color:hsl(320 100% 60%);stop-opacity:0.7" />
+      <stop offset="40%" style="stop-color:hsl(280 100% 70%);stop-opacity:0.5" />
+      <stop offset="80%" style="stop-color:hsl(240 100% 70%);stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:hsl(270 40% 8%);stop-opacity:0" />
+    </radialGradient>
+    <radialGradient id="nebula2" cx="70%" cy="60%" r="50%">
+      <stop offset="0%" style="stop-color:hsl(180 100% 50%);stop-opacity:0.6" />
+      <stop offset="30%" style="stop-color:hsl(200 100% 60%);stop-opacity:0.4" />
+      <stop offset="70%" style="stop-color:hsl(240 100% 70%);stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:hsl(270 40% 8%);stop-opacity:0" />
+    </radialGradient>
+    <radialGradient id="nebula3" cx="50%" cy="20%" r="40%">
+      <stop offset="0%" style="stop-color:hsl(15 100% 60%);stop-opacity:0.5" />
+      <stop offset="50%" style="stop-color:hsl(35 100% 60%);stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:hsl(270 40% 8%);stop-opacity:0" />
+    </radialGradient>
+    <pattern id="space-dust" width="50" height="50" patternUnits="userSpaceOnUse">
+      <rect width="50" height="50" fill="none"/>
+      <circle cx="10" cy="15" r="0.3" fill="hsl(320 100% 80%)" opacity="0.6"/>
+      <circle cx="35" cy="8" r="0.5" fill="hsl(180 100% 70%)" opacity="0.4"/>
+      <circle cx="25" cy="40" r="0.2" fill="hsl(240 100% 80%)" opacity="0.7"/>
+      <circle cx="45" cy="35" r="0.1" fill="hsl(15 100% 70%)" opacity="0.8"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="hsl(270 40% 8%)"/>
+  <ellipse cx="576" cy="432" rx="600" ry="300" fill="url(#nebula1)"/>
+  <ellipse cx="1344" cy="648" rx="400" ry="250" fill="url(#nebula2)"/>
+  <ellipse cx="960" cy="216" rx="300" ry="200" fill="url(#nebula3)"/>
+  <rect width="100%" height="100%" fill="url(#space-dust)"/>
+</svg>

@@ -39,8 +39,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           `url('/wallpapers/${wallpaper.url}.svg'), ${currentTheme.gradients.background}`);
         break;
       case 'image':
+        // Try SVG first, fallback to JPG, then to gradient
         root.style.setProperty('--wallpaper-background', 
-          `url('/wallpapers/${wallpaper.url}.jpg'), ${currentTheme.gradients.background}`);
+          `url('/wallpapers/${wallpaper.url}.svg'), url('/wallpapers/${wallpaper.url}.jpg'), ${currentTheme.gradients.background}`);
         break;
     }
   }, [currentTheme.gradients.background]);
@@ -55,6 +56,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       'neon-pulse': 'linear-gradient(45deg, hsl(300 100% 20%), hsl(200 100% 25%), hsl(300 100% 20%))',
       'cyber-grid': 'linear-gradient(90deg, hsl(120 100% 5%), hsl(180 100% 8%), hsl(120 100% 5%))',
       'deep-space': 'radial-gradient(ellipse at center, hsl(240 100% 5%) 0%, hsl(0 0% 1%) 100%)',
+      'arctic-wind': 'linear-gradient(135deg, hsl(210 50% 98%), hsl(180 100% 90%), hsl(210 100% 85%))',
+      'golden-hour': 'linear-gradient(135deg, hsl(35 100% 80%), hsl(15 100% 70%), hsl(320 60% 75%))',
+      'warm-waves': 'linear-gradient(45deg, hsl(35 100% 75%), hsl(15 100% 65%), hsl(35 100% 85%))',
+      'cosmic-dance': 'radial-gradient(circle at 30% 70%, hsl(160 100% 50%) 0%, hsl(280 100% 70%) 50%, hsl(220 30% 8%) 100%)',
     };
     return gradients[wallpaperUrl] || currentTheme.gradients.background;
   };
