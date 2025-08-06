@@ -32,7 +32,7 @@ const App = () => (
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen">
               <Toaster />
               <Sonner />
               <ParticleSystem 

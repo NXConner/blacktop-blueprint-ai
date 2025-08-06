@@ -262,7 +262,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-safe animate-fade-in">
+    <div className="min-h-screen overflow-x-safe animate-fade-in">
       <ResponsiveContainer size="xl" className="py-6">
         {/* Header */}
         <div className="mb-8 animate-slide-up">

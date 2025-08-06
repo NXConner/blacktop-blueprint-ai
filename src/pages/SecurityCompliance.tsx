@@ -173,7 +173,7 @@ const SecurityCompliance: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">

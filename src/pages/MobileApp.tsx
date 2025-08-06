@@ -120,7 +120,7 @@ const MobileApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-safe">
+    <div className="min-h-screen overflow-x-safe">
       <ResponsiveContainer className="py-6">
         {/* Header */}
         <div className="mb-8">
