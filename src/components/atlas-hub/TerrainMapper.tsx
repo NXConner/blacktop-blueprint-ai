@@ -950,9 +950,9 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
                       </div>
                     </div>
                   )}
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
               {/* View Controls */}
               <div className="mt-6 pt-4 border-t border-glass-border">
@@ -1004,10 +1004,11 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
                   onChange={(e) => setViewSettings(prev => ({ ...prev, showAxes: e.target.checked }))}
                   className="rounded"
                 />
-                </div>
               </div>
-              </Card>
-            </TabsContent>
+            </div>
+          </div>
+        </Card>
+      </TabsContent>
 
             {/* Measuring Tools Tab */}
             <TabsContent value="measuring">
