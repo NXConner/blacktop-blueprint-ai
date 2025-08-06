@@ -38,7 +38,9 @@ import {
   Target,
   CheckCircle,
   Clock,
-  Users
+  Users,
+  FileDown,
+  ExternalLink
 } from 'lucide-react';
 
 // Module categories and their addons
@@ -952,6 +954,12 @@ function ModuleDetails({ module, isInstalled, installProgress, onInstall }) {
         </Badge>
         
         <div className="flex space-x-3">
+          <Button variant="outline" asChild>
+            <a href="/downloads" target="_blank" rel="noopener noreferrer">
+              <FileDown className="h-4 w-4 mr-2" />
+              Download Installer
+            </a>
+          </Button>
           {isInstalled ? (
             <Button disabled size="lg">
               <CheckCircle className="h-4 w-4 mr-2" />
