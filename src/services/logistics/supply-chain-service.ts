@@ -689,7 +689,7 @@ class SupplyChainService {
   }
 
   async updateOrderStatus(orderId: string, status: OrderStatus, notes?: string): Promise<void> {
-    const updates: any = { 
+    const updates: unknown = { 
       status, 
       updated_at: new Date().toISOString() 
     };
@@ -845,7 +845,7 @@ class SupplyChainService {
       .order('timestamp', { ascending: true });
 
     let onHand = 0;
-    let reserved = 0;
+    const reserved = 0;
 
     movements?.forEach(movement => {
       switch (movement.movement_type) {
@@ -920,7 +920,7 @@ class SupplyChainService {
     ];
   }
 
-  private async calculateDeliveryCosts(cargo: CargoInfo, route: TransportRoute, carrier: any): Promise<OperationCosts> {
+  private async calculateDeliveryCosts(cargo: CargoInfo, route: TransportRoute, carrier: unknown): Promise<OperationCosts> {
     const baseCost = route.distance * route.cost_per_mile;
     const weightSurcharge = cargo.total_weight > 5000 ? baseCost * 0.1 : 0;
     const fuelCost = route.distance * 0.5; // Mock fuel cost
@@ -961,7 +961,7 @@ class SupplyChainService {
     return data || [];
   }
 
-  private generateSupplyChainSummary(suppliers: any[], orders: any[], deliveries: any[]): SupplyChainSummary {
+  private generateSupplyChainSummary(suppliers: unknown[], orders: unknown[], deliveries: unknown[]): SupplyChainSummary {
     return {
       total_suppliers: suppliers.length,
       active_orders: orders.filter(o => o.status !== OrderStatus.CLOSED).length,
@@ -972,7 +972,7 @@ class SupplyChainService {
     };
   }
 
-  private analyzeSupplierPerformance(suppliers: any[]): SupplierPerformanceReport[] {
+  private analyzeSupplierPerformance(suppliers: unknown[]): SupplierPerformanceReport[] {
     return suppliers.map(supplier => ({
       supplier_id: supplier.id,
       supplier_name: supplier.company_name,
@@ -986,7 +986,7 @@ class SupplyChainService {
     }));
   }
 
-  private analyzeCosts(orders: any[], deliveries: any[]): CostAnalysis {
+  private analyzeCosts(orders: unknown[], deliveries: unknown[]): CostAnalysis {
     const totalProcurementCost = orders.reduce((sum, order) => sum + order.total_amount, 0);
     const totalLogisticsCost = deliveries.reduce((sum, delivery) => sum + (delivery.costs?.total_cost || 0), 0);
 
@@ -1072,7 +1072,7 @@ interface CostAnalysis {
   total_procurement_cost: number;
   total_logistics_cost: number;
   cost_per_delivery: number;
-  cost_trends: any[];
+  cost_trends: unknown[];
   cost_optimization_opportunities: string[];
 }
 
@@ -1087,7 +1087,7 @@ export function useSupplyChain() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const loadSuppliers = async (filters?: any) => {
+  const loadSuppliers = async (filters?: unknown) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -1110,7 +1110,7 @@ export function useSupplyChain() {
     }
   };
 
-  const scheduleDelivery = async (delivery: any) => {
+  const scheduleDelivery = async (delivery: unknown) => {
     try {
       return await supplyChainService.scheduleDelivery(delivery);
     } catch (err) {

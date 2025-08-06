@@ -333,7 +333,7 @@ export interface WidgetConfig {
 export interface FilterConfig {
   field: string;
   operator: string;
-  value: any;
+  value: unknown;
 }
 
 export interface TimeRangeConfig {
@@ -421,7 +421,7 @@ export interface ReportSection {
   title: string;
   content_type: 'chart' | 'table' | 'text' | 'kpi';
   data_query: string;
-  styling: any;
+  styling: unknown;
 }
 
 export interface AIInsight {
@@ -431,7 +431,7 @@ export interface AIInsight {
   description: string;
   impact: 'low' | 'medium' | 'high';
   action_items: string[];
-  supporting_data: any;
+  supporting_data: unknown;
   generated_at: string;
 }
 
@@ -506,7 +506,7 @@ export interface ConnectionInfo {
 
 export interface AuthenticationInfo {
   type: 'none' | 'basic' | 'oauth' | 'api_key';
-  credentials: any;
+  credentials: unknown;
 }
 
 export interface RefreshSchedule {

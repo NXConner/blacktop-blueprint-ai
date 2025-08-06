@@ -423,7 +423,7 @@ class QuickBooksClient {
   }
 
   // Full data synchronization
-  async performFullSync(): Promise<{ success: boolean; message: string; details: any }> {
+  async performFullSync(): Promise<{ success: boolean; message: string; details: unknown }> {
     try {
       const startTime = Date.now();
       

@@ -24,8 +24,8 @@ export interface ReportParameter {
   label: string;
   type: 'text' | 'number' | 'date' | 'select' | 'multiselect' | 'boolean';
   required: boolean;
-  defaultValue?: any;
-  options?: Array<{ value: any; label: string }>;
+  defaultValue?: unknown;
+  options?: Array<{ value: unknown; label: string }>;
   validation?: {
     min?: number;
     max?: number;
@@ -36,7 +36,7 @@ export interface ReportParameter {
 export interface ReportGeneration {
   id: string;
   templateId: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   status: 'pending' | 'generating' | 'completed' | 'failed';
   progress: number;
   startTime: string;
@@ -56,7 +56,7 @@ export interface ExportOptions {
     start: string;
     end: string;
   };
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   template?: string;
 }
 
@@ -179,7 +179,7 @@ class ReportingService {
   // Generate report
   async generateReport(
     templateId: string,
-    parameters: Record<string, any>,
+    parameters: Record<string, unknown>,
     userId: string
   ): Promise<string> {
     const template = this.templates.get(templateId);
@@ -263,7 +263,7 @@ class ReportingService {
   // Collect data for report
   private async collectReportData(
     template: ReportTemplate,
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   ): Promise<any> {
     const { category } = template;
 
@@ -281,7 +281,7 @@ class ReportingService {
   }
 
   // Collect fleet data
-  private async collectFleetData(parameters: Record<string, any>): Promise<any> {
+  private async collectFleetData(parameters: Record<string, unknown>): Promise<any> {
     const dateRange = this.getDateRange(parameters.dateRange);
     
     const [vehicles, routes, maintenance, costs] = await Promise.all([
@@ -318,7 +318,7 @@ class ReportingService {
   }
 
   // Collect project data
-  private async collectProjectData(parameters: Record<string, any>): Promise<any> {
+  private async collectProjectData(parameters: Record<string, unknown>): Promise<any> {
     const projectFilter = parameters.projectId ? { eq: ['id', parameters.projectId] } : {};
     
     const [projects, tasks, costs, milestones] = await Promise.all([
@@ -339,7 +339,7 @@ class ReportingService {
   }
 
   // Collect compliance data
-  private async collectComplianceData(parameters: Record<string, any>): Promise<any> {
+  private async collectComplianceData(parameters: Record<string, unknown>): Promise<any> {
     const [employees, violations, certifications, scores] = await Promise.all([
       supabase.from('employees').select('*'),
       supabase.from('employee_violations').select('*'),
@@ -360,7 +360,7 @@ class ReportingService {
   // Collect custom data
   private async collectCustomData(
     template: ReportTemplate,
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   ): Promise<any> {
     // This would be implemented based on specific custom requirements
     return {
@@ -373,8 +373,8 @@ class ReportingService {
   // Generate PDF report (mock implementation)
   private async generatePDFReport(
     template: ReportTemplate,
-    data: any,
-    parameters: Record<string, any>
+    data: unknown,
+    parameters: Record<string, unknown>
   ): Promise<string> {
     // In a real implementation, you would use a PDF generation library like jsPDF or Puppeteer
     const htmlContent = this.renderHTMLTemplate(template.template, data);
@@ -391,8 +391,8 @@ class ReportingService {
   // Generate Excel report (mock implementation)
   private async generateExcelReport(
     template: ReportTemplate,
-    data: any,
-    parameters: Record<string, any>
+    data: unknown,
+    parameters: Record<string, unknown>
   ): Promise<string> {
     // In a real implementation, you would use a library like exceljs
     const csvContent = this.convertToCSV(data);
@@ -407,8 +407,8 @@ class ReportingService {
   // Generate CSV report
   private async generateCSVReport(
     template: ReportTemplate,
-    data: any,
-    parameters: Record<string, any>
+    data: unknown,
+    parameters: Record<string, unknown>
   ): Promise<string> {
     const csvContent = this.convertToCSV(data);
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -420,8 +420,8 @@ class ReportingService {
   // Generate JSON report
   private async generateJSONReport(
     template: ReportTemplate,
-    data: any,
-    parameters: Record<string, any>
+    data: unknown,
+    parameters: Record<string, unknown>
   ): Promise<string> {
     const jsonContent = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json' });
@@ -431,7 +431,7 @@ class ReportingService {
   }
 
   // Convert data to CSV
-  private convertToCSV(data: any): string {
+  private convertToCSV(data: unknown): string {
     if (!data || typeof data !== 'object') return '';
 
     // Simple CSV conversion for flat data
@@ -458,7 +458,7 @@ class ReportingService {
   }
 
   // Render HTML template
-  private renderHTMLTemplate(template: string, data: any): string {
+  private renderHTMLTemplate(template: string, data: unknown): string {
     // Simple template rendering (in production, use a proper template engine)
     let html = template;
     
@@ -589,7 +589,7 @@ class ReportingService {
           <p>Active Vehicles: {{summary.activeVehicles}}</p>
           <p>Total Routes: {{summary.totalRoutes}}</p>
           <p>Total Distance: {{summary.totalDistance}} km</p>
-          <p>Total Fuel Cost: ${{summary.totalFuelCost}}</p>
+          <p>Total Fuel Cost: $\{{summary.totalFuelCost}}</p>
         </body>
       </html>
     `;
@@ -628,7 +628,7 @@ export function useReporting() {
 
   const generateReport = async (
     templateId: string,
-    parameters: Record<string, any>,
+    parameters: Record<string, unknown>,
     userId: string
   ) => {
     const generationId = await reportingService.generateReport(templateId, parameters, userId);

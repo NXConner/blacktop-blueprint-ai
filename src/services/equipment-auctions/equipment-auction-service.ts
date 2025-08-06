@@ -711,7 +711,7 @@ class EquipmentAuctionService {
     ];
   }
 
-  private async generateSearchFacets(filters: any): Promise<SearchFacets> {
+  private async generateSearchFacets(filters: unknown): Promise<SearchFacets> {
     // Generate search facets for filtering
     return {
       categories: Object.values(EquipmentCategory),
@@ -940,7 +940,7 @@ export function useEquipmentAuctions() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const searchEquipment = async (filters: any) => {
+  const searchEquipment = async (filters: unknown) => {
     setIsLoading(true);
     setError(null);
     try {

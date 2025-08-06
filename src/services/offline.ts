@@ -5,7 +5,7 @@ interface OfflineAction {
   id: string;
   type: string;
   table: string;
-  data: any;
+  data: unknown;
   timestamp: string;
   synced: boolean;
   retryCount: number;
@@ -86,7 +86,7 @@ class OfflineService {
   }
 
   // Queue action for later sync
-  async queueAction(type: string, table: string, data: any): Promise<string> {
+  async queueAction(type: string, table: string, data: unknown): Promise<string> {
     const action: OfflineAction = {
       id: crypto.randomUUID(),
       type,
@@ -238,7 +238,7 @@ class OfflineService {
   }
 
   // Cache data for offline access
-  async cacheData(key: string, data: any, expiryMinutes: number = 60): Promise<void> {
+  async cacheData(key: string, data: unknown, expiryMinutes: number = 60): Promise<void> {
     if (!this.db) await this.initDB();
 
     const cacheItem = {
@@ -286,7 +286,7 @@ class OfflineService {
   }
 
   // Save form draft
-  async saveDraft(formType: string, formData: any): Promise<string> {
+  async saveDraft(formType: string, formData: unknown): Promise<string> {
     if (!this.db) await this.initDB();
 
     const draft = {
