@@ -11,7 +11,7 @@ import type {
 
 // Real-time subscription types
 type SubscriptionCallback<T> = (payload: T) => void;
-type SubscriptionErrorCallback = (error: any) => void;
+type SubscriptionErrorCallback = (error: unknown) => void;
 
 interface RealtimeSubscription {
   channel: RealtimeChannel;
@@ -357,9 +357,9 @@ class RealtimeService {
   // Presence tracking for online users
   subscribeToPresence(
     channelName: string,
-    userMetadata: Record<string, any>,
-    onJoin?: (user: any) => void,
-    onLeave?: (user: any) => void
+    userMetadata: Record<string, unknown>,
+    onJoin?: (user: unknown) => void,
+    onLeave?: (user: unknown) => void
   ): () => void {
     const presenceChannelName = `presence-${channelName}`;
     
@@ -429,7 +429,7 @@ class RealtimeService {
   async broadcastMessage(
     channelName: string,
     event: string,
-    payload: any
+    payload: unknown
   ): Promise<void> {
     const channel = supabase.channel(channelName);
     
@@ -454,7 +454,7 @@ export const realtimeService = new RealtimeService();
 export function useRealtimeSubscription<T>(
   subscriptionType: 'vehicles' | 'weather' | 'alerts' | 'fleet' | 'system',
   callback: SubscriptionCallback<T>,
-  dependencies: any[] = []
+  dependencies: unknown[] = []
 ): void {
   React.useEffect(() => {
     let unsubscribe: (() => void) | undefined;

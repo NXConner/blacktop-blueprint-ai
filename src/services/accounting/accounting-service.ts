@@ -523,7 +523,7 @@ class AccountingService {
   }
 
   // Utility methods
-  private validateJournalEntry(entry: any): void {
+  private validateJournalEntry(entry: unknown): void {
     if (Math.abs(entry.total_debit - entry.total_credit) > 0.01) {
       throw new Error('Journal entry must balance: debits must equal credits');
     }
@@ -532,15 +532,15 @@ class AccountingService {
       throw new Error('Journal entry must have at least two lines');
     }
 
-    const calculatedDebit = entry.lines.reduce((sum: number, line: any) => sum + (line.debit_amount || 0), 0);
-    const calculatedCredit = entry.lines.reduce((sum: number, line: any) => sum + (line.credit_amount || 0), 0);
+    const calculatedDebit = entry.lines.reduce((sum: number, line: unknown) => sum + (line.debit_amount || 0), 0);
+    const calculatedCredit = entry.lines.reduce((sum: number, line: unknown) => sum + (line.credit_amount || 0), 0);
 
     if (Math.abs(calculatedDebit - entry.total_debit) > 0.01 || Math.abs(calculatedCredit - entry.total_credit) > 0.01) {
       throw new Error('Journal entry totals do not match line item totals');
     }
   }
 
-  private async validateAccountStructure(account: any): Promise<void> {
+  private async validateAccountStructure(account: unknown): Promise<void> {
     // Validate account code uniqueness
     const { data: existing } = await supabase
       .from('chart_of_accounts')
@@ -643,7 +643,7 @@ class AccountingService {
   }
 
   private groupIncomeStatementItems(
-    data: any[],
+    data: unknown[],
     accountMap: Map<string, ChartOfAccount>,
     categories: AccountCategory[]
   ): Record<string, IncomeStatementItem[]> {

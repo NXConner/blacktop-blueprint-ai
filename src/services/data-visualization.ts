@@ -8,7 +8,7 @@ export interface ChartDataPoint {
   y: number;
   label?: string;
   color?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ChartSeries {
@@ -64,7 +64,7 @@ export interface DashboardWidget {
     h: number;
   };
   dataSource: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 export interface Dashboard {
@@ -82,7 +82,7 @@ class DataVisualizationService {
   private charts: Map<string, ChartConfig> = new Map();
   private dashboards: Map<string, Dashboard> = new Map();
   private subscriptions: Map<string, () => void> = new Map();
-  private updateCallbacks: Map<string, Set<(data: any) => void>> = new Map();
+  private updateCallbacks: Map<string, Set<(data: unknown) => void>> = new Map();
 
   constructor() {
     this.loadSavedDashboards();
@@ -133,7 +133,7 @@ class DataVisualizationService {
   }
 
   // Update chart data
-  private updateChartData(chartId: string, newData: any): void {
+  private updateChartData(chartId: string, newData: unknown): void {
     const callbacks = this.updateCallbacks.get(chartId);
     if (callbacks) {
       callbacks.forEach(callback => {
@@ -344,10 +344,10 @@ class DataVisualizationService {
 
   // Aggregate data by time granularity
   private aggregateByTimeGranularity(
-    data: any[],
+    data: unknown[],
     dateField: string,
     granularity: 'hour' | 'day' | 'week' | 'month',
-    aggregator: (items: any[]) => number
+    aggregator: (items: unknown[]) => number
   ): Array<{ date: string; value: number }> {
     const groups: Record<string, any[]> = {};
 
@@ -362,10 +362,11 @@ class DataVisualizationService {
         case 'day':
           key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
           break;
-        case 'week':
+        case 'week': {
           const week = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000));
           key = `${date.getFullYear()}-W${week}`;
           break;
+        }
         case 'month':
           key = `${date.getFullYear()}-${date.getMonth() + 1}`;
           break;
@@ -566,7 +567,7 @@ class DataVisualizationService {
   }
 
   // Subscribe to chart updates
-  subscribeToChart(chartId: string, callback: (data: any) => void): () => void {
+  subscribeToChart(chartId: string, callback: (data: unknown) => void): () => void {
     if (!this.updateCallbacks.has(chartId)) {
       this.updateCallbacks.set(chartId, new Set());
     }

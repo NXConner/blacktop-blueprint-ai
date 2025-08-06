@@ -602,7 +602,7 @@ export interface PrintQualityCheck {
   check_type: string;
   result: 'pass' | 'fail' | 'warning';
   details: string;
-  measurement_data?: any;
+  measurement_data?: unknown;
 }
 
 // ================================
@@ -1045,10 +1045,10 @@ class FinalModulesService {
 
   // Comprehensive Analytics
   async generateComprehensiveReport(projectId: string): Promise<{
-    training_metrics: any;
-    marketplace_metrics: any;
-    manufacturing_metrics: any;
-    emerging_tech_metrics: any;
+    training_metrics: unknown;
+    marketplace_metrics: unknown;
+    manufacturing_metrics: unknown;
+    emerging_tech_metrics: unknown;
     recommendations: string[];
   }> {
     // Generate comprehensive cross-module analytics

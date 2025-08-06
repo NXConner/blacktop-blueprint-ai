@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import OverWatchMap from '@/components/overwatch/OverWatchMap';
 import OverWatchControlPanel from '@/components/overwatch/OverWatchControlPanel';
-import ResponsiveContainer from '@/components/ui/responsive-container';
+import { ResponsiveContainer } from '@/components/ui/responsive-container';
 
 const OverWatch: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -295,8 +295,9 @@ const OverWatch: React.FC = () => {
             </div>
           </TabsContent>
         </Tabs>
+      </div>
 
-        {isFullscreen && (
+      {isFullscreen && (
           <div className="fixed top-6 right-6 z-60">
             <Button
               variant="outline"

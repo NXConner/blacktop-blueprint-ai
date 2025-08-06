@@ -491,7 +491,7 @@ class VeteranCertificationService {
   async generateComplianceReport(businessId: string): Promise<{
     business_info: VeteranBusinessInfo;
     certifications: VeteranCertification[];
-    compliance_status: any;
+    compliance_status: unknown;
     contract_activity: {
       opportunities_viewed: number;
       applications_submitted: number;
@@ -550,7 +550,7 @@ class VeteranCertificationService {
   }
 
   // Utility methods
-  private async validateCertificationData(certification: any): Promise<void> {
+  private async validateCertificationData(certification: unknown): Promise<void> {
     // Validate veteran info
     if (!certification.owner_veteran_info?.dd214_verified) {
       throw new Error('DD-214 verification is required for veteran certification');
@@ -575,7 +575,7 @@ class VeteranCertificationService {
 
     // Validate required documents
     const requiredDocs = this.getRequiredDocuments(certification.certification_type);
-    const providedDocTypes = certification.documents?.map((doc: any) => doc.document_type) || [];
+    const providedDocTypes = certification.documents?.map((doc: unknown) => doc.document_type) || [];
     
     for (const requiredDoc of requiredDocs) {
       if (!providedDocTypes.includes(requiredDoc)) {

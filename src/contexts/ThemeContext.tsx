@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Theme, ThemeContextType, Wallpaper } from '@/types/theme';
 import { themes } from '@/lib/themes';
 
@@ -72,9 +72,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     // Save to localStorage
     localStorage.setItem('theme-id', theme.id);
-  }, [currentTheme, currentWallpaper]);
+  }, [currentTheme, currentWallpaper, applyWallpaper]);
 
-  const applyWallpaper = (wallpaper: Wallpaper) => {
+  const applyWallpaper = useCallback((wallpaper: Wallpaper) => {
     const root = document.documentElement;
     
     switch (wallpaper.type) {
@@ -90,7 +90,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.jpg')`);
         break;
     }
-  };
+      }, []);
 
   const getWallpaperGradient = (wallpaperUrl: string): string => {
     const gradients: Record<string, string> = {

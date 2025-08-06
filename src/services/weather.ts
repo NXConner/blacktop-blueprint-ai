@@ -79,7 +79,7 @@ interface ForecastResponse {
 }
 
 class WeatherService {
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
   private readonly CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
   // Get current weather for a location
@@ -392,7 +392,7 @@ class WeatherService {
   }
 
   // Transform weather alerts
-  private transformWeatherAlerts(alerts: any[], location: GeoCoordinate): WeatherAlert[] {
+  private transformWeatherAlerts(alerts: unknown[], location: GeoCoordinate): WeatherAlert[] {
     return alerts.map(alert => ({
       id: crypto.randomUUID(),
       type: this.mapAlertType(alert.event),

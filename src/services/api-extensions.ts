@@ -1,10 +1,18 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ApiResponse, PaginatedResponse } from '@/types/database';
+import type { 
+  DashboardStats, ProcessedAnalytics, AdvancedSearchParams, SearchResult,
+  IntegrationData, BulkOperationResult, SystemHealth 
+} from '@/types/analytics';
+import type {
+  FleetAnalytics, SearchParams, FleetReportData, WorkSessionData,
+  NotificationData, IntegrationSyncResult, BulkOperationParams
+} from '@/types/api-extensions';
 
 // Analytics API for dashboard and reporting
 export const analyticsApi = {
   // Get dashboard statistics
-  async getDashboardStats(timeframe: 'day' | 'week' | 'month' = 'week'): Promise<ApiResponse<any>> {
+  async getDashboardStats(timeframe: 'day' | 'week' | 'month' = 'week'): Promise<ApiResponse<DashboardStats>> {
     try {
       const now = new Date();
       let startDate: Date;
@@ -48,13 +56,14 @@ export const analyticsApi = {
       };
 
       return { data: stats, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error instanceof Error ? error.message : "Unknown error" : 'Unknown error occurred';
+      return { data: null, success: false, message };
     }
   },
 
   // Get project performance metrics
-  async getProjectMetrics(projectId: string): Promise<ApiResponse<any>> {
+  async getProjectMetrics(projectId: string): Promise<ApiResponse<ProcessedAnalytics>> {
     try {
       const [
         { data: project },
@@ -85,13 +94,13 @@ export const analyticsApi = {
       };
 
       return { data: metrics, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
   // Get fleet performance analytics
-  async getFleetAnalytics(timeframe: string = 'week'): Promise<ApiResponse<any>> {
+  async getFleetAnalytics(timeframe: string = 'week'): Promise<ApiResponse<FleetAnalytics>> {
     try {
       const { data: vehicles, error } = await supabase
         .from('fleet_vehicles')
@@ -111,8 +120,8 @@ export const analyticsApi = {
       };
 
       return { data: analytics, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   }
 };
@@ -124,14 +133,14 @@ export const reportingApi = {
     includeFinancials?: boolean;
     includeTasks?: boolean;
     includeTimeline?: boolean;
-  } = {}): Promise<ApiResponse<any>> {
+  } = {}): Promise<ApiResponse<SearchResult<unknown>>> {
     try {
       const baseQuery = supabase.from('projects').select('*').eq('id', projectId).single();
       const { data: project, error: projectError } = await baseQuery;
 
       if (projectError) throw projectError;
 
-      const reportData: any = { project };
+      const reportData: unknown = { project };
 
       if (options.includeFinancials) {
         const { data: costs } = await supabase
@@ -167,13 +176,13 @@ export const reportingApi = {
 
       reportData.generatedAt = new Date().toISOString();
       return { data: reportData, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
   // Generate fleet report
-  async generateFleetReport(): Promise<ApiResponse<any>> {
+  async generateFleetReport(): Promise<ApiResponse<FleetReportData>> {
     try {
       const [
         { data: vehicles },
@@ -199,8 +208,8 @@ export const reportingApi = {
       };
 
       return { data: reportData, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   }
 };
@@ -216,7 +225,7 @@ export const mobileApi = {
     app_version?: string;
     os_version?: string;
     model?: string;
-  }): Promise<ApiResponse<any>> {
+  }): Promise<ApiResponse<SearchResult<unknown>>> {
     try {
       const { data, error } = await supabase
         .from('mobile_devices')
@@ -231,8 +240,8 @@ export const mobileApi = {
 
       if (error) throw error;
       return { data, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
@@ -243,8 +252,8 @@ export const mobileApi = {
     session_token: string;
     start_time: string;
     ip_address?: string;
-    location?: any;
-  }): Promise<ApiResponse<any>> {
+    location?: unknown;
+  }): Promise<ApiResponse<SearchResult<unknown>>> {
     try {
       const { data, error } = await supabase
         .from('mobile_sessions')
@@ -254,13 +263,13 @@ export const mobileApi = {
 
       if (error) throw error;
       return { data, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
   // End mobile session
-  async endSession(sessionId: string): Promise<ApiResponse<any>> {
+  async endSession(sessionId: string): Promise<ApiResponse<WorkSessionData>> {
     try {
       const endTime = new Date().toISOString();
       
@@ -286,8 +295,8 @@ export const mobileApi = {
 
       if (error) throw error;
       return { data, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
@@ -299,8 +308,8 @@ export const mobileApi = {
     feature_name: string;
     action_type?: string;
     duration?: number;
-    metadata?: any;
-  }): Promise<ApiResponse<any>> {
+    metadata?: unknown;
+  }): Promise<ApiResponse<SearchResult<unknown>>> {
     try {
       const { data, error } = await supabase
         .from('app_usage_metrics')
@@ -310,8 +319,8 @@ export const mobileApi = {
 
       if (error) throw error;
       return { data, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
@@ -327,13 +336,13 @@ export const mobileApi = {
 
       if (error) throw error;
       return { data: data || [], success: true };
-    } catch (error: any) {
-      return { data: [], success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: [], success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
   // Mark notification as read
-  async markNotificationRead(notificationId: string): Promise<ApiResponse<any>> {
+  async markNotificationRead(notificationId: string): Promise<ApiResponse<NotificationData>> {
     try {
       const { data, error } = await supabase
         .from('mobile_notifications')
@@ -344,8 +353,8 @@ export const mobileApi = {
 
       if (error) throw error;
       return { data, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   }
 };
@@ -356,10 +365,10 @@ export const searchApi = {
   async globalSearch(query: string, options: {
     tables?: string[];
     limit?: number;
-  } = {}): Promise<ApiResponse<any>> {
+  } = {}): Promise<ApiResponse<SearchResult<unknown>>> {
     try {
       const { tables = ['projects', 'employees', 'fleet_vehicles'], limit = 10 } = options;
-      const results: any = {};
+      const results: unknown = {};
 
       // Search projects
       if (tables.includes('projects')) {
@@ -392,8 +401,8 @@ export const searchApi = {
       }
 
       return { data: results, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   }
 };
@@ -420,8 +429,8 @@ export const geolocationApi = {
       }) || [];
 
       return { data: nearbyProjects, success: true };
-    } catch (error: any) {
-      return { data: [], success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: [], success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   },
 
@@ -436,7 +445,7 @@ export const geolocationApi = {
     heading?: number;
     battery_level?: number;
     signal_strength?: number;
-  }): Promise<ApiResponse<any>> {
+  }): Promise<ApiResponse<SearchResult<unknown>>> {
     try {
       const { data, error } = await supabase
         .from('gps_locations')
@@ -449,8 +458,8 @@ export const geolocationApi = {
 
       if (error) throw error;
       return { data, success: true };
-    } catch (error: any) {
-      return { data: null, success: false, message: error.message };
+    } catch (error: unknown) {
+      return { data: null, success: false, message: error instanceof Error ? error.message : "Unknown error" };
     }
   }
 };

@@ -119,7 +119,7 @@ class FleetTrackingService {
   }
 
   // Handle fleet status updates
-  private handleFleetStatusUpdate(payload: any): void {
+  private handleFleetStatusUpdate(payload: unknown): void {
     const { old: oldData, new: newData, eventType } = payload;
 
     if (eventType === 'UPDATE' && newData) {
