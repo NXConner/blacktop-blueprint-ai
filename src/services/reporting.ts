@@ -589,7 +589,7 @@ class ReportingService {
           <p>Active Vehicles: {{summary.activeVehicles}}</p>
           <p>Total Routes: {{summary.totalRoutes}}</p>
           <p>Total Distance: {{summary.totalDistance}} km</p>
-          <p>Total Fuel Cost: ${{summary.totalFuelCost}}</p>
+          <p>Total Fuel Cost: $\{{summary.totalFuelCost}}</p>
         </body>
       </html>
     `;
