@@ -1,0 +1,23 @@
+<svg width="60" height="52" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hexgrid" width="60" height="52" patternUnits="userSpaceOnUse">
+      <!-- Hexagon path -->
+      <path d="M15,4 L45,4 L52,20 L45,36 L15,36 L8,20 Z" 
+            fill="none" 
+            stroke="rgba(168, 85, 247, 0.4)" 
+            stroke-width="1"/>
+      <path d="M45,4 L75,4 L82,20 L75,36 L45,36 L38,20 Z" 
+            fill="none" 
+            stroke="rgba(168, 85, 247, 0.4)" 
+            stroke-width="1"/>
+      <path d="M30,30 L60,30 L67,46 L60,62 L30,62 L23,46 Z" 
+            fill="none" 
+            stroke="rgba(168, 85, 247, 0.4)" 
+            stroke-width="1"/>
+      <!-- Connection points -->
+      <circle cx="30" cy="20" r="1.5" fill="rgba(168, 85, 247, 0.6)"/>
+      <circle cx="45" cy="36" r="1.5" fill="rgba(168, 85, 247, 0.6)"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#hexgrid)"/>
+</svg>
