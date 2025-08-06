@@ -51,7 +51,10 @@ export const themes: Theme[] = [
     wallpapers: [
       { name: 'Tactical Grid', url: 'tactical-grid', preview: 'tactical-grid-preview', type: 'pattern' },
       { name: 'Camo Pattern', url: 'camo-pattern', preview: 'camo-pattern-preview', type: 'pattern' },
-      { name: 'Military Base', url: 'military-base', preview: 'military-base-preview', type: 'image' },
+      { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
+      { name: 'Hex Grid', url: 'hex-grid', preview: 'hex-grid-preview', type: 'pattern' },
+      { name: 'Pure Black', url: 'pure-black', preview: 'pure-black-preview', type: 'gradient' },
+      { name: 'Void', url: 'void', preview: 'void-preview', type: 'gradient' },
     ],
   },
   {
@@ -101,9 +104,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(200 100% 70% / 0.3)',
     },
     wallpapers: [
-      { name: 'Control Room', url: 'control-room', preview: 'control-room-preview', type: 'image' },
       { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
-      { name: 'Data Center', url: 'data-center', preview: 'data-center-preview', type: 'image' },
+      { name: 'Data Matrix', url: 'data-matrix', preview: 'data-matrix-preview', type: 'pattern' },
+      { name: 'Hex Grid', url: 'hex-grid', preview: 'hex-grid-preview', type: 'pattern' },
+      { name: 'Tactical Grid', url: 'tactical-grid', preview: 'tactical-grid-preview', type: 'pattern' },
+      { name: 'Pure Black', url: 'pure-black', preview: 'pure-black-preview', type: 'gradient' },
     ],
   },
   {
@@ -154,8 +159,9 @@ export const themes: Theme[] = [
     },
     wallpapers: [
       { name: 'Pure Black', url: 'pure-black', preview: 'pure-black-preview', type: 'gradient' },
-      { name: 'Shadow Pattern', url: 'shadow-pattern', preview: 'shadow-pattern-preview', type: 'pattern' },
       { name: 'Void', url: 'void', preview: 'void-preview', type: 'gradient' },
+      { name: 'Data Matrix', url: 'data-matrix', preview: 'data-matrix-preview', type: 'pattern' },
+      { name: 'Geometric Minimal', url: 'geometric-minimal', preview: 'geometric-minimal-preview', type: 'pattern' },
     ],
   },
   {
@@ -257,9 +263,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(180 100% 50% / 0.3)',
     },
     wallpapers: [
-      { name: 'Cyber Grid', url: 'cyber-grid', preview: 'cyber-grid-preview', type: 'pattern' },
-      { name: 'Neon City', url: 'neon-city', preview: 'neon-city-preview', type: 'image' },
-      { name: 'Digital Matrix', url: 'digital-matrix', preview: 'digital-matrix-preview', type: 'pattern' },
+      { name: 'Neon Waves', url: 'neon-waves', preview: 'neon-waves-preview', type: 'pattern' },
+      { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
+      { name: 'Data Matrix', url: 'data-matrix', preview: 'data-matrix-preview', type: 'pattern' },
+      { name: 'Hex Grid', url: 'hex-grid', preview: 'hex-grid-preview', type: 'pattern' },
+      { name: 'Sunset Gradient', url: 'sunset-gradient', preview: 'sunset-gradient-preview', type: 'gradient' },
     ],
   },
 
@@ -311,9 +319,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(180 100% 60% / 0.3)',
     },
     wallpapers: [
-      { name: 'Synthwave Grid', url: 'synthwave-grid', preview: 'synthwave-grid-preview', type: 'pattern' },
-      { name: 'Neon Cityscape', url: 'neon-cityscape', preview: 'neon-cityscape-preview', type: 'image' },
-      { name: 'Electric Dreams', url: 'electric-dreams', preview: 'electric-dreams-preview', type: 'gradient' },
+      { name: 'Neon Waves', url: 'neon-waves', preview: 'neon-waves-preview', type: 'pattern' },
+      { name: 'Hex Grid', url: 'hex-grid', preview: 'hex-grid-preview', type: 'pattern' },
+      { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
+      { name: 'Neon Pulse', url: 'neon-pulse', preview: 'neon-pulse-preview', type: 'gradient' },
+      { name: 'Cyber Grid', url: 'cyber-grid', preview: 'cyber-grid-preview', type: 'gradient' },
     ],
   },
   {
@@ -415,9 +425,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(60 100% 50% / 0.3)',
     },
     wallpapers: [
-      { name: 'Matrix Code', url: 'matrix-code', preview: 'matrix-code-preview', type: 'pattern' },
-      { name: 'Terminal Grid', url: 'terminal-grid', preview: 'terminal-grid-preview', type: 'pattern' },
-      { name: 'Digital Rain', url: 'digital-rain', preview: 'digital-rain-preview', type: 'image' },
+      { name: 'Data Matrix', url: 'data-matrix', preview: 'data-matrix-preview', type: 'pattern' },
+      { name: 'Neon Waves', url: 'neon-waves', preview: 'neon-waves-preview', type: 'pattern' },
+      { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
+      { name: 'Organic Flow', url: 'organic-flow', preview: 'organic-flow-preview', type: 'pattern' },
+      { name: 'Northern Lights', url: 'northern-lights', preview: 'northern-lights-preview', type: 'gradient' },
     ],
   },
 
@@ -573,9 +585,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(210 100% 50% / 0.2)',
     },
     wallpapers: [
-      { name: 'Paper Texture', url: 'paper-texture', preview: 'paper-texture-preview', type: 'pattern' },
-      { name: 'Subtle Grid', url: 'subtle-grid', preview: 'subtle-grid-preview', type: 'pattern' },
-      { name: 'Clean Lines', url: 'clean-lines', preview: 'clean-lines-preview', type: 'gradient' },
+      { name: 'Geometric Minimal', url: 'geometric-minimal', preview: 'geometric-minimal-preview', type: 'pattern' },
+      { name: 'Organic Flow', url: 'organic-flow', preview: 'organic-flow-preview', type: 'pattern' },
+      { name: 'Hex Grid', url: 'hex-grid', preview: 'hex-grid-preview', type: 'pattern' },
+      { name: 'Pure Black', url: 'pure-black', preview: 'pure-black-preview', type: 'gradient' },
+      { name: 'Sunset Gradient', url: 'sunset-gradient', preview: 'sunset-gradient-preview', type: 'gradient' },
     ],
   },
 
@@ -679,9 +693,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(170 80% 60% / 0.3)',
     },
     wallpapers: [
-      { name: 'Deep Ocean', url: 'deep-ocean', preview: 'deep-ocean-preview', type: 'image' },
-      { name: 'Underwater Cave', url: 'underwater-cave', preview: 'underwater-cave-preview', type: 'image' },
-      { name: 'Coral Reef', url: 'coral-reef', preview: 'coral-reef-preview', type: 'pattern' },
+      { name: 'Organic Flow', url: 'organic-flow', preview: 'organic-flow-preview', type: 'pattern' },
+      { name: 'Hex Grid', url: 'hex-grid', preview: 'hex-grid-preview', type: 'pattern' },
+      { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
+      { name: 'Northern Lights', url: 'northern-lights', preview: 'northern-lights-preview', type: 'gradient' },
+      { name: 'Deep Space', url: 'deep-space', preview: 'deep-space-preview', type: 'gradient' },
     ],
   },
   {
@@ -837,9 +853,11 @@ export const themes: Theme[] = [
       glowAccent: '0 0 40px hsl(210 100% 60% / 0.3)',
     },
     wallpapers: [
-      { name: 'Asphalt Texture', url: 'asphalt-texture', preview: 'asphalt-texture-preview', type: 'pattern' },
-      { name: 'Construction Site', url: 'construction-site', preview: 'construction-site-preview', type: 'image' },
-      { name: 'Road Network', url: 'road-network', preview: 'road-network-preview', type: 'pattern' },
+      { name: 'Tactical Grid', url: 'tactical-grid', preview: 'tactical-grid-preview', type: 'pattern' },
+      { name: 'Geometric Minimal', url: 'geometric-minimal', preview: 'geometric-minimal-preview', type: 'pattern' },
+      { name: 'Circuit Board', url: 'circuit-board', preview: 'circuit-board-preview', type: 'pattern' },
+      { name: 'Starfield', url: 'starfield', preview: 'starfield-preview', type: 'pattern' },
+      { name: 'Void', url: 'void', preview: 'void-preview', type: 'gradient' },
     ],
   },
 ];

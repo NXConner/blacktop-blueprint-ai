@@ -1,0 +1,17 @@
+<svg width="200" height="150" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="organic" width="200" height="150" patternUnits="userSpaceOnUse">
+      <rect width="200" height="150" fill="rgba(0, 0, 0, 0.02)"/>
+      <!-- Flowing organic shapes -->
+      <path d="M0,75 Q50,25 100,75 Q150,125 200,75 L200,150 Q150,100 100,150 Q50,100 0,150 Z" 
+            fill="rgba(34, 197, 94, 0.15)"/>
+      <path d="M0,0 Q50,50 100,0 Q150,50 200,0 L200,75 Q150,25 100,75 Q50,25 0,75 Z" 
+            fill="rgba(34, 197, 94, 0.1)"/>
+      <!-- Leaf-like shapes -->
+      <ellipse cx="50" cy="40" rx="20" ry="8" fill="rgba(34, 197, 94, 0.2)" transform="rotate(30 50 40)"/>
+      <ellipse cx="150" cy="110" rx="15" ry="6" fill="rgba(34, 197, 94, 0.25)" transform="rotate(-45 150 110)"/>
+      <ellipse cx="75" cy="110" rx="18" ry="7" fill="rgba(34, 197, 94, 0.18)" transform="rotate(60 75 110)"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#organic)"/>
+</svg>

@@ -36,11 +36,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         break;
       case 'pattern':
         root.style.setProperty('--wallpaper-background', 
-          `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.svg')`);
+          `url('/wallpapers/${wallpaper.url}.svg'), ${currentTheme.gradients.background}`);
         break;
       case 'image':
         root.style.setProperty('--wallpaper-background', 
-          `${currentTheme.gradients.background}, url('/wallpapers/${wallpaper.url}.jpg')`);
+          `url('/wallpapers/${wallpaper.url}.jpg'), ${currentTheme.gradients.background}`);
         break;
     }
   }, [currentTheme.gradients.background]);
@@ -52,6 +52,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       'red-alert': 'linear-gradient(135deg, hsl(0 80% 8%), hsl(0 60% 15%), hsl(0 80% 8%))',
       'sunset-gradient': 'linear-gradient(135deg, hsl(15 100% 70%), hsl(35 100% 60%), hsl(320 60% 70%))',
       'northern-lights': 'linear-gradient(135deg, hsl(220 30% 8%), hsl(160 100% 25%), hsl(280 100% 25%), hsl(220 30% 8%))',
+      'neon-pulse': 'linear-gradient(45deg, hsl(300 100% 20%), hsl(200 100% 25%), hsl(300 100% 20%))',
+      'cyber-grid': 'linear-gradient(90deg, hsl(120 100% 5%), hsl(180 100% 8%), hsl(120 100% 5%))',
+      'deep-space': 'radial-gradient(ellipse at center, hsl(240 100% 5%) 0%, hsl(0 0% 1%) 100%)',
     };
     return gradients[wallpaperUrl] || currentTheme.gradients.background;
   };
@@ -117,8 +120,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setCurrentWallpaper(wallpaper);
     if (wallpaper) {
       localStorage.setItem('theme-wallpaper', JSON.stringify(wallpaper));
+      console.log('Wallpaper saved:', wallpaper);
     } else {
       localStorage.removeItem('theme-wallpaper');
+      console.log('Wallpaper cleared');
     }
   };
 
