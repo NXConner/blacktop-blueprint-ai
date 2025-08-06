@@ -21,7 +21,11 @@ import {
   LogOut,
   User,
   Package,
-  Download
+  Download,
+  BellRing,
+  MessageSquare,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +33,15 @@ import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { useNotifications } from '@/services/notifications';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface NavigationItem {
   name: string;
@@ -137,6 +150,7 @@ export function Navigation({ className }: NavigationProps) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const isActiveRoute = (href: string) => {
     return location.pathname === href;
@@ -148,6 +162,34 @@ export function Navigation({ className }: NavigationProps) {
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch(type) {
+      case 'success': return CheckCircle;
+      case 'warning': return AlertTriangle;
+      case 'info': return MessageSquare;
+      case 'error': return AlertTriangle;
+      default: return BellRing;
+    }
+  };
+
+  const getNotificationColor = (type: string) => {
+    switch(type) {
+      case 'success': return 'text-success';
+      case 'warning': return 'text-warning';
+      case 'info': return 'text-primary';
+      case 'error': return 'text-destructive';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const handleNotificationClick = (notificationId: string) => {
+    markAsRead(notificationId);
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
   };
 
   return (
@@ -210,41 +252,140 @@ export function Navigation({ className }: NavigationProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="glass-card hover:glow-accent relative min-h-[44px] min-w-[44px]"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-            >
-              3
-            </Badge>
-          </Button>
-          <ThemeSwitcher />
-          
-          {user ? (
-            <>
-              <div className="hidden sm:flex items-center gap-2 glass-card px-3 py-2 rounded-lg">
-                <User className="h-4 w-4" />
-                <span className="text-sm font-medium truncate max-w-24">
-                  {user.email?.split('@')[0]}
-                </span>
-              </div>
+          {/* Notifications Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleSignOut}
-                className="glass-card hover:glow-destructive min-h-[44px] min-w-[44px]"
-                title="Sign Out"
-                aria-label="Sign Out"
+                className="glass-card hover:glow-accent relative min-h-[44px] min-w-[44px]"
+                aria-label="Notifications"
               >
-                <LogOut className="h-5 w-5" />
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
               </Button>
-            </>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="glass-elevated w-80 max-h-96 overflow-y-auto">
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                Notifications
+                {unreadCount > 0 && (
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length > 0 ? (
+                <>
+                  {notifications.slice(0, 5).map((notification) => {
+                    const IconComponent = getNotificationIcon(notification.type);
+                    return (
+                      <DropdownMenuItem 
+                        key={notification.id} 
+                        className={cn(
+                          "flex items-start gap-3 p-3 cursor-pointer",
+                          !notification.read && "bg-accent/10"
+                        )}
+                        onClick={() => handleNotificationClick(notification.id)}
+                      >
+                        <IconComponent className={cn("h-4 w-4 mt-0.5 flex-shrink-0", getNotificationColor(notification.type))} />
+                        <div className="flex-1 min-w-0">
+                          <p className={cn("font-medium text-sm", !notification.read && "text-foreground")}>
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {notification.time}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  {unreadCount > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="flex items-center gap-2 justify-center cursor-pointer"
+                        onClick={handleMarkAllAsRead}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-sm">Mark all as read</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </>
+              ) : (
+                <DropdownMenuItem disabled>
+                  <div className="flex items-center gap-2 w-full justify-center py-2">
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">No notifications</span>
+                  </div>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 justify-center">
+                <span className="text-sm">View all notifications</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <ThemeSwitcher />
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 glass-card px-3 py-2 rounded-lg hover:glow-primary min-h-[44px]"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium truncate max-w-24 hidden sm:inline">
+                    {user.email?.split('@')[0]}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="glass-elevated w-56">
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Account
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Profile</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button
               variant="ghost"

@@ -3,6 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Additional utilities */
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
+
 /* Blacktop Blackout Design System - ISAC OS Dark Glassmorphism Theme */
 
 @layer base {
