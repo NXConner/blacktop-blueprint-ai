@@ -78,119 +78,226 @@ const WeatherMonitor: React.FC<WeatherMonitorProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const loadWeatherData = async () => {
+      setIsLoading(true);
+      try {
+        // Load current weather
+        const weatherResponse = await api.weather.getCurrent(selectedLocation);
+        if (weatherResponse.success) {
+          setCurrentWeather(weatherResponse.data);
+        }
+
+        // Load real forecast data
+        await loadWeatherForecast();
+        
+        // Load real weather alerts
+        await loadWeatherAlerts();
+        
+        // Generate operational impacts based on real weather data
+        await generateOperationalImpacts();
+
+        // Load projects for location selection
+        const projectsResponse = await api.projects.getAll();
+        if (projectsResponse.success) {
+          setProjects(projectsResponse.data);
+        }
+
+      } catch (error) {
+        console.error('Error loading weather data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     loadWeatherData();
     const interval = setInterval(loadWeatherData, 300000); // Refresh every 5 minutes
     return () => clearInterval(interval);
-  }, [projectId, selectedLocation]);
+  }, [selectedLocation]);
 
-  const loadWeatherData = async () => {
+  const loadWeatherForecast = async () => {
     try {
-      setIsLoading(true);
+      // Use the weather service to get real forecast data
+      const weatherService = await import('@/services/weather');
+      const forecast = await weatherService.weatherService.getForecast(selectedLocation);
       
-      // Load current weather
-      const weatherResponse = await api.weather.getCurrent(selectedLocation);
-      if (weatherResponse.success) {
-        setCurrentWeather(weatherResponse.data);
-      }
-
-      // Generate mock forecast data
-      generateWeatherForecast();
+      // Transform the forecast data to match our component structure
+      const transformedForecast = forecast.forecasts.map(forecastData => ({
+        date: forecastData.date,
+        day: new Date(forecastData.date).toLocaleDateString('en-US', { weekday: 'short' }),
+        temperature_high: Math.round(forecastData.temperature),
+        temperature_low: Math.round(forecastData.temperature - 10), // Estimate low temp
+        condition: mapWeatherCondition(forecastData.condition),
+        precipitation_chance: forecastData.precipitation_probability || 0,
+        wind_speed: Math.round(forecastData.wind_speed || 0),
+        humidity: forecastData.humidity || 50,
+        uv_index: forecastData.uv_index || 5,
+        work_suitability: calculateWorkSuitability(forecastData)
+      }));
       
-      // Generate mock alerts
-      generateWeatherAlerts();
-      
-      // Generate operational impacts
-      generateOperationalImpacts();
-
-      // Load projects for location selection
-      const projectsResponse = await api.projects.getAll();
-      if (projectsResponse.success) {
-        setProjects(projectsResponse.data);
-      }
-
+      setWeatherForecast(transformedForecast);
     } catch (error) {
-      console.error('Failed to load weather data:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading weather forecast:', error);
+      // Fallback to basic forecast if real data fails
+      generateBasicForecast();
     }
   };
 
-  const generateWeatherForecast = () => {
-    const forecast: WeatherForecast[] = [];
-    const conditions = ['sunny', 'partly_cloudy', 'cloudy', 'rainy', 'stormy'];
-    const workSuitability = ['excellent', 'good', 'fair', 'poor', 'not_recommended'];
+  const mapWeatherCondition = (apiCondition: string): string => {
+    const conditionMap: Record<string, string> = {
+      'clear': 'sunny',
+      'clouds': 'cloudy',
+      'rain': 'rainy',
+      'snow': 'snowy',
+      'thunderstorm': 'stormy',
+      'drizzle': 'rainy',
+      'mist': 'foggy',
+      'fog': 'foggy'
+    };
+    
+    return conditionMap[apiCondition.toLowerCase()] || 'cloudy';
+  };
 
+  const calculateWorkSuitability = (weatherData: any): 'excellent' | 'good' | 'fair' | 'poor' | 'hazardous' => {
+    const temp = weatherData.temperature;
+    const precipProb = weatherData.precipitation_probability || 0;
+    const windSpeed = weatherData.wind_speed || 0;
+
+    // Hazardous conditions
+    if (precipProb > 80 || windSpeed > 25 || temp < 32 || temp > 100) {
+      return 'hazardous';
+    }
+    
+    // Poor conditions
+    if (precipProb > 60 || windSpeed > 20 || temp < 40 || temp > 90) {
+      return 'poor';
+    }
+    
+    // Fair conditions
+    if (precipProb > 30 || windSpeed > 15 || temp < 50 || temp > 85) {
+      return 'fair';
+    }
+    
+    // Good conditions
+    if (precipProb > 10 || windSpeed > 10 || temp < 60 || temp > 80) {
+      return 'good';
+    }
+    
+    // Excellent conditions
+    return 'excellent';
+  };
+
+  const generateBasicForecast = () => {
+    // Fallback forecast generation
+    const forecast: WeatherForecast[] = [];
+    const baseTemp = currentWeather?.temperature || 70;
+    
     for (let i = 0; i < 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
       
-      const baseTemp = 65 + Math.random() * 20;
+      const tempVariation = Math.random() * 20 - 10;
       const precipChance = Math.random() * 100;
+      const conditions = ['sunny', 'cloudy', 'rainy', 'partly_cloudy'];
       const condition = conditions[Math.floor(Math.random() * conditions.length)];
       
-      let suitability = workSuitability[0]; // excellent
-      if (precipChance > 70 || condition === 'stormy') suitability = workSuitability[4]; // not_recommended
-      else if (precipChance > 50) suitability = workSuitability[3]; // poor
-      else if (precipChance > 30) suitability = workSuitability[2]; // fair
-      else if (precipChance > 10) suitability = workSuitability[1]; // good
-
       forecast.push({
-        date: date.toISOString(),
-        temperature_high: Math.round(baseTemp + Math.random() * 10),
-        temperature_low: Math.round(baseTemp - Math.random() * 15),
+        date: date.toISOString().split('T')[0],
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        temperature_high: Math.round(baseTemp + tempVariation + 5),
+        temperature_low: Math.round(baseTemp + tempVariation - 5),
         condition,
         precipitation_chance: Math.round(precipChance),
         wind_speed: Math.round(5 + Math.random() * 20),
         humidity: Math.round(40 + Math.random() * 40),
         uv_index: Math.round(1 + Math.random() * 10),
-        work_suitability: suitability as 'excellent' | 'good' | 'fair' | 'poor' | 'hazardous'
+        work_suitability: calculateWorkSuitability({
+          temperature: baseTemp + tempVariation,
+          precipitation_probability: precipChance,
+          wind_speed: 5 + Math.random() * 20
+        })
       });
     }
     
     setWeatherForecast(forecast);
   };
 
-  const generateWeatherAlerts = () => {
+  const loadWeatherAlerts = async () => {
+    try {
+      // Load real weather alerts from the weather service
+      const weatherService = await import('@/services/weather');
+      const alerts = await weatherService.weatherService.getWeatherAlerts(selectedLocation);
+      
+      // Transform alerts to our format and add operational context
+      const transformedAlerts = alerts.map(alert => ({
+        ...alert,
+        affected_operations: determineAffectedOperations(alert.type, alert.severity)
+      }));
+      
+      setWeatherAlerts(transformedAlerts);
+    } catch (error) {
+      console.error('Error loading weather alerts:', error);
+      // Generate operational alerts based on current weather conditions
+      generateOperationalAlerts();
+    }
+  };
+
+  const determineAffectedOperations = (alertType: string, severity: string): string[] => {
+    const operationImpacts: Record<string, string[]> = {
+      'precipitation': ['paving', 'crack_sealing', 'surface_prep', 'painting'],
+      'temperature': ['paving', 'hot_mix', 'concrete_work'],
+      'wind': ['crane_work', 'material_transport', 'safety_flagging', 'overhead_work'],
+      'thunderstorm': ['all_outdoor_operations'],
+      'snow': ['all_operations'],
+      'fog': ['transportation', 'survey_work', 'flagging'],
+      'ice': ['all_operations']
+    };
+
+    return operationImpacts[alertType] || ['general_operations'];
+  };
+
+  const generateOperationalAlerts = () => {
     const alerts: WeatherAlert[] = [];
     
-    // Generate some mock alerts based on weather conditions
-    if (Math.random() > 0.7) {
-      alerts.push({
-        id: '1',
-        type: 'precipitation',
-        severity: 'high',
-        title: 'Heavy Rain Warning',
-        message: 'Heavy rainfall expected in the next 2 hours. Consider suspending asphalt operations.',
-        timestamp: new Date().toISOString(),
-        action_required: true,
-        affected_operations: ['paving', 'crack_sealing', 'surface_prep']
-      });
-    }
+    if (currentWeather) {
+      // Generate alerts based on current weather conditions
+      if (currentWeather.precipitation_probability > 70) {
+        alerts.push({
+          id: `precip-${Date.now()}`,
+          type: 'precipitation',
+          severity: 'high',
+          title: 'Precipitation Alert',
+          message: `High chance of precipitation (${currentWeather.precipitation_probability}%). Consider rescheduling sensitive operations.`,
+          timestamp: new Date().toISOString(),
+          action_required: true,
+          affected_operations: ['paving', 'crack_sealing', 'surface_prep']
+        });
+      }
 
-    if (Math.random() > 0.8) {
-      alerts.push({
-        id: '2',
-        type: 'temperature',
-        severity: 'medium',
-        title: 'Temperature Advisory',
-        message: 'Temperatures will drop below optimal range for asphalt work after 4 PM.',
-        timestamp: new Date(Date.now() - 300000).toISOString(),
-        action_required: false,
-        affected_operations: ['paving', 'hot_mix']
-      });
-    }
+      if (currentWeather.wind_speed > 20) {
+        alerts.push({
+          id: `wind-${Date.now()}`,
+          type: 'wind',
+          severity: 'medium',
+          title: 'High Wind Advisory',
+          message: `Wind speeds of ${currentWeather.wind_speed} mph detected. Use caution with overhead operations.`,
+          timestamp: new Date().toISOString(),
+          action_required: true,
+          affected_operations: ['crane_work', 'material_transport', 'overhead_work']
+        });
+      }
 
-    if (Math.random() > 0.9) {
-      alerts.push({
-        id: '3',
-        type: 'wind',
-        severity: 'critical',
-        title: 'High Wind Alert',
-        message: 'Wind speeds exceeding 25 mph. Suspend all overhead operations immediately.',
-        timestamp: new Date(Date.now() - 600000).toISOString(),
-        action_required: true,
-        affected_operations: ['crane_work', 'material_transport', 'safety_flagging']
-      });
+      if (currentWeather.temperature < 40 || currentWeather.temperature > 95) {
+        alerts.push({
+          id: `temp-${Date.now()}`,
+          type: 'temperature',
+          severity: currentWeather.temperature < 32 || currentWeather.temperature > 100 ? 'high' : 'medium',
+          title: 'Temperature Advisory',
+          message: `Extreme temperature (${currentWeather.temperature}°F) may affect material performance and worker safety.`,
+          timestamp: new Date().toISOString(),
+          action_required: currentWeather.temperature < 32 || currentWeather.temperature > 100,
+          affected_operations: ['paving', 'hot_mix', 'concrete_work']
+        });
+      }
     }
 
     setWeatherAlerts(alerts);
