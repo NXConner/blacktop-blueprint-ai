@@ -94,6 +94,8 @@ export * from "./theme-switcher"
 export * from "./toast"
 export * from "./sonner"
 export * from "./particle-system"
+export * from "./webgl-particle-system"
+export * from "./volumetric-effects"
 export * from "./error-boundary"
 
 // Utility Hooks
