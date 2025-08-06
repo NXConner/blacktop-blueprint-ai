@@ -20,7 +20,8 @@ import {
   LogIn,
   LogOut,
   User,
-  Package
+  Package,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -112,6 +113,12 @@ const navigationItems: NavigationItem[] = [
     icon: Package,
     badge: 'NEW',
     description: 'Browse and install addon modules'
+  },
+  { 
+    name: 'Downloads', 
+    href: '/downloads', 
+    icon: Download,
+    description: 'Download mobile apps and installers'
   },
   { 
     name: 'Settings', 

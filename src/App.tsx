@@ -21,6 +21,7 @@ import ReportingAnalytics from "./pages/ReportingAnalytics";
 import SecurityCompliance from "./pages/SecurityCompliance";
 import Settings from "./pages/Settings";
 import Catalog from "./pages/Catalog";
+import Downloads from "./pages/Downloads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
                     <Route path="/security-compliance" element={<SecurityCompliance />} />
                     <Route path="/catalog" element={<Catalog />} />
                     <Route path="/marketplace" element={<Catalog />} />
+                    <Route path="/downloads" element={<Downloads />} />
                     <Route path="/settings" element={<Settings />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
