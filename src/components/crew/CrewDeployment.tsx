@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Users, 
   UserPlus,
@@ -96,6 +100,8 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [showCreateCrewModal, setShowCreateCrewModal] = useState(false);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
   const loadCrewData = useCallback(async () => {
     try {
@@ -298,6 +304,57 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
     }
   };
 
+  const handleCreateCrew = () => {
+    setShowCreateCrewModal(true);
+  };
+
+  const handleCreateTask = () => {
+    setShowCreateTaskModal(true);
+  };
+
+  const createCrew = async (crewData: { name: string; description?: string; supervisor_id?: string }) => {
+    try {
+      const response = await api.crews.create({
+        ...crewData,
+        company_id: companyId || '',
+        status: 'inactive',
+        current_project_id: null
+      });
+      
+      if (response.success) {
+        setShowCreateCrewModal(false);
+        loadCrewData(); // Refresh the data
+      }
+    } catch (error) {
+      console.error('Failed to create crew:', error);
+    }
+  };
+
+  const createTask = async (taskData: { 
+    title: string; 
+    description: string; 
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    assigned_crew: string;
+    estimated_hours: number;
+    location: string;
+    due_date: string;
+  }) => {
+    try {
+      // Create a new task with generated ID (simulated for now)
+      const newTask: CrewTask = {
+        id: `task-${Date.now()}`,
+        ...taskData,
+        status: 'pending',
+        actual_hours: undefined
+      };
+      
+      setTasks(prev => [...prev, newTask]);
+      setShowCreateTaskModal(false);
+    } catch (error) {
+      console.error('Failed to create task:', error);
+    }
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Deployment Overview Cards */}
@@ -422,7 +479,7 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
                     className="pl-10 w-64 glass-card"
                   />
                 </div>
-                <Button className="glow-primary">
+                <Button className="glow-primary" onClick={handleCreateCrew}>
                   <Plus className="w-4 h-4 mr-2" />
                   Create Crew
                 </Button>
@@ -532,9 +589,27 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
                         <Phone className="w-4 h-4 mr-2" />
                         Contact
                       </Button>
-                      <Button size="sm" variant="outline">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="glass-elevated">
+                          <DropdownMenuItem className="flex items-center gap-2">
+                            <Settings className="w-4 h-4" />
+                            Edit Crew
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="flex items-center gap-2">
+                            <Activity className="w-4 h-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="flex items-center gap-2 text-destructive">
+                            <XCircle className="w-4 h-4" />
+                            Remove
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </Card>
                 ))}
@@ -664,7 +739,7 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
           <Card className="glass-elevated p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold">Task Management</h3>
-              <Button className="glow-primary">
+              <Button className="glow-primary" onClick={handleCreateTask}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Task
               </Button>
@@ -724,9 +799,27 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
                       <Users className="w-4 h-4 mr-2" />
                       Reassign
                     </Button>
-                    <Button size="sm" variant="outline">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="glass-elevated">
+                        <DropdownMenuItem className="flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          Edit Task
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="flex items-center gap-2">
+                          <Activity className="w-4 h-4" />
+                          View Progress
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="flex items-center gap-2 text-destructive">
+                          <XCircle className="w-4 h-4" />
+                          Cancel Task
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </Card>
               ))}
@@ -792,6 +885,158 @@ const CrewDeployment: React.FC<CrewDeploymentProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Create Crew Modal */}
+      <Dialog open={showCreateCrewModal} onOpenChange={setShowCreateCrewModal}>
+        <DialogContent className="glass-elevated">
+          <DialogHeader>
+            <DialogTitle>Create New Crew</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="crew-name">Crew Name</Label>
+              <Input 
+                id="crew-name" 
+                placeholder="Enter crew name..."
+                className="glass-card"
+              />
+            </div>
+            <div>
+              <Label htmlFor="crew-description">Description (Optional)</Label>
+              <Textarea 
+                id="crew-description"
+                placeholder="Enter crew description..."
+                className="glass-card"
+              />
+            </div>
+            <div>
+              <Label htmlFor="supervisor">Supervisor</Label>
+              <Select>
+                <SelectTrigger className="glass-card">
+                  <SelectValue placeholder="Select supervisor" />
+                </SelectTrigger>
+                <SelectContent className="glass-elevated">
+                  {employees.filter(emp => emp.role === 'supervisor').map((supervisor) => (
+                    <SelectItem key={supervisor.id} value={supervisor.id}>
+                      {supervisor.first_name} {supervisor.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateCrewModal(false)}>
+              Cancel
+            </Button>
+            <Button className="glow-primary" onClick={() => {
+              // For now, create with placeholder data
+              createCrew({
+                name: "New Crew",
+                description: "Created via modal"
+              });
+            }}>
+              Create Crew
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Task Modal */}
+      <Dialog open={showCreateTaskModal} onOpenChange={setShowCreateTaskModal}>
+        <DialogContent className="glass-elevated">
+          <DialogHeader>
+            <DialogTitle>Create New Task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="task-title">Task Title</Label>
+              <Input 
+                id="task-title" 
+                placeholder="Enter task title..."
+                className="glass-card"
+              />
+            </div>
+            <div>
+              <Label htmlFor="task-description">Description</Label>
+              <Textarea 
+                id="task-description"
+                placeholder="Enter task description..."
+                className="glass-card"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="task-priority">Priority</Label>
+                <Select>
+                  <SelectTrigger className="glass-card">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-elevated">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="task-crew">Assign to Crew</Label>
+                <Select>
+                  <SelectTrigger className="glass-card">
+                    <SelectValue placeholder="Select crew" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-elevated">
+                    {crews.map((crew) => (
+                      <SelectItem key={crew.id} value={crew.id}>
+                        {crew.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="task-hours">Estimated Hours</Label>
+                <Input 
+                  id="task-hours" 
+                  type="number"
+                  placeholder="0"
+                  className="glass-card"
+                />
+              </div>
+              <div>
+                <Label htmlFor="task-location">Location</Label>
+                <Input 
+                  id="task-location" 
+                  placeholder="Task location..."
+                  className="glass-card"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateTaskModal(false)}>
+              Cancel
+            </Button>
+            <Button className="glow-primary" onClick={() => {
+              // For now, create with placeholder data
+              createTask({
+                title: "New Task",
+                description: "Created via modal",
+                priority: "medium",
+                assigned_crew: crews[0]?.id || "",
+                estimated_hours: 8,
+                location: "Construction Site",
+                due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+              });
+            }}>
+              Create Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {isLoading && (
         <div className="flex items-center justify-center py-24">

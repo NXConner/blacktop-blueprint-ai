@@ -359,25 +359,97 @@ export default function Settings() {
                     <Palette className="h-5 w-5 animate-glow" />
                     Theme Selection
                   </CardTitle>
-                  <CardDescription>Choose your preferred visual theme</CardDescription>
+                  <CardDescription>Choose your preferred visual theme from all available options</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {availableThemes.slice(0, 6).map((theme) => (
-                      <Button
-                        key={theme.id}
-                        variant={currentTheme.id === theme.id ? "default" : "outline"}
-                        className={`glass-card p-4 h-auto flex flex-col gap-2 transition-all duration-300 ${
-                          currentTheme.id === theme.id ? 'glow-primary' : 'hover:glow-soft'
-                        }`}
-                        onClick={() => setTheme(theme.id)}
-                      >
-                        <div className="text-sm font-medium">{theme.name}</div>
+                <CardContent className="space-y-6">
+                  {/* Current Theme Display */}
+                  <div className="glass-card p-4 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+                        <Palette className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-primary">{currentTheme.name}</p>
+                        <p className="text-xs text-muted-foreground">{currentTheme.description}</p>
+                      </div>
+                      <div className="flex gap-1 ml-auto">
                         <Badge variant="secondary" className="text-xs">
-                          {theme.category}
+                          {currentTheme.category}
                         </Badge>
-                      </Button>
-                    ))}
+                        <Badge variant={currentTheme.isDark ? "default" : "outline"} className="text-xs">
+                          {currentTheme.isDark ? "Dark" : "Light"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Theme Categories */}
+                  <div className="space-y-4">
+                    {/* Industry Themes */}
+                    {availableThemes.filter(t => t.category === 'industry').length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Industry Themes</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {availableThemes.filter(t => t.category === 'industry').map((theme) => (
+                            <Button
+                              key={theme.id}
+                              variant={currentTheme.id === theme.id ? "default" : "outline"}
+                              className={`glass-card p-3 h-auto flex flex-col gap-1 transition-all duration-300 ${
+                                currentTheme.id === theme.id ? 'glow-primary' : 'hover:glow-soft'
+                              }`}
+                              onClick={() => setTheme(theme.id)}
+                            >
+                              <div className="text-sm font-medium">{theme.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">{theme.description}</div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom Themes */}
+                    {availableThemes.filter(t => t.category === 'custom').length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Custom Themes</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {availableThemes.filter(t => t.category === 'custom').map((theme) => (
+                            <Button
+                              key={theme.id}
+                              variant={currentTheme.id === theme.id ? "default" : "outline"}
+                              className={`glass-card p-3 h-auto flex flex-col gap-1 transition-all duration-300 ${
+                                currentTheme.id === theme.id ? 'glow-primary' : 'hover:glow-soft'
+                              }`}
+                              onClick={() => setTheme(theme.id)}
+                            >
+                              <div className="text-sm font-medium">{theme.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">{theme.description}</div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Default Themes */}
+                    {availableThemes.filter(t => t.category === 'default').length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Default Themes</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {availableThemes.filter(t => t.category === 'default').map((theme) => (
+                            <Button
+                              key={theme.id}
+                              variant={currentTheme.id === theme.id ? "default" : "outline"}
+                              className={`glass-card p-3 h-auto flex flex-col gap-1 transition-all duration-300 ${
+                                currentTheme.id === theme.id ? 'glow-primary' : 'hover:glow-soft'
+                              }`}
+                              onClick={() => setTheme(theme.id)}
+                            >
+                              <div className="text-sm font-medium">{theme.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">{theme.description}</div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
