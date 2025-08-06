@@ -1,0 +1,23 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="stream-flow" width="50" height="100" patternUnits="userSpaceOnUse">
+      <rect width="50" height="100" fill="hsl(220 25% 8%)"/>
+      <path d="M 10 0 L 10 100" stroke="hsl(210 100% 60%)" stroke-width="1" opacity="0.6"/>
+      <path d="M 25 0 L 25 100" stroke="hsl(210 100% 70%)" stroke-width="1.5" opacity="0.8"/>
+      <path d="M 40 0 L 40 100" stroke="hsl(210 100% 50%)" stroke-width="1" opacity="0.5"/>
+      <circle cx="10" cy="20" r="2" fill="hsl(210 100% 70%)" opacity="0.8"/>
+      <circle cx="25" cy="60" r="1.5" fill="hsl(210 100% 80%)" opacity="0.9"/>
+      <circle cx="40" cy="80" r="1" fill="hsl(210 100% 60%)" opacity="0.7"/>
+      <rect x="8" y="40" width="4" height="8" fill="hsl(210 100% 60%)" opacity="0.4"/>
+      <rect x="23" y="30" width="4" height="6" fill="hsl(210 100% 70%)" opacity="0.5"/>
+    </pattern>
+    <pattern id="data-points" width="30" height="30" patternUnits="userSpaceOnUse">
+      <rect width="30" height="30" fill="none"/>
+      <circle cx="5" cy="5" r="0.5" fill="hsl(200 100% 70%)" opacity="0.6"/>
+      <circle cx="15" cy="15" r="0.8" fill="hsl(180 100% 60%)" opacity="0.7"/>
+      <circle cx="25" cy="25" r="0.3" fill="hsl(210 100% 80%)" opacity="0.8"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#stream-flow)"/>
+  <rect width="100" height="100" fill="url(#data-points)"/>
+</svg>

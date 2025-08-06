@@ -544,12 +544,32 @@ export default function Settings() {
                     <Button
                       key={wallpaper.name}
                       variant={currentWallpaper?.name === wallpaper.name ? "default" : "outline"}
-                      className={`glass-card aspect-video flex flex-col gap-2 transition-all duration-300 ${
+                      className={`glass-card aspect-video flex flex-col gap-2 transition-all duration-300 relative overflow-hidden ${
                         currentWallpaper?.name === wallpaper.name ? 'glow-primary' : 'hover:glow-soft'
                       }`}
                       onClick={() => setWallpaper(wallpaper)}
                     >
-                      <div className="h-6 w-6 rounded bg-gradient-to-br from-primary/20 to-accent/20" />
+                      {wallpaper.type === 'gradient' ? (
+                        <div 
+                          className="h-6 w-6 rounded" 
+                          style={{ 
+                            background: wallpaper.url === 'pure-black' ? 'linear-gradient(0deg, hsl(0 0% 2%), hsl(0 0% 4%))' :
+                                      wallpaper.url === 'void' ? 'radial-gradient(circle at 50% 50%, hsl(0 0% 6%) 0%, hsl(0 0% 2%) 100%)' :
+                                      wallpaper.url === 'red-alert' ? 'linear-gradient(135deg, hsl(0 80% 8%), hsl(0 60% 15%), hsl(0 80% 8%))' :
+                                      wallpaper.url === 'sunset-gradient' ? 'linear-gradient(135deg, hsl(15 100% 70%), hsl(35 100% 60%), hsl(320 60% 70%))' :
+                                      wallpaper.url === 'northern-lights' ? 'linear-gradient(135deg, hsl(220 30% 8%), hsl(160 100% 25%), hsl(280 100% 25%), hsl(220 30% 8%))' :
+                                      'var(--gradient-primary)'
+                          }} 
+                        />
+                      ) : (
+                        <div 
+                          className="h-6 w-6 rounded bg-cover bg-center" 
+                          style={{ 
+                            backgroundImage: `url('/wallpapers/${wallpaper.url}.svg')`,
+                            backgroundColor: 'var(--muted)'
+                          }} 
+                        />
+                      )}
                       <span className="text-xs">{wallpaper.name}</span>
                     </Button>
                   ))}
