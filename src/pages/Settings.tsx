@@ -42,6 +42,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import ResponsiveContainer from '@/components/ui/responsive-container';
 
 interface SettingsState {
   // Visual Settings
@@ -261,8 +262,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6 animate-fade-in">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-background overflow-x-safe animate-fade-in">
+      <ResponsiveContainer size="xl" className="py-6">
         {/* Header */}
         <div className="mb-8 animate-slide-up">
           <div className="flex items-center gap-3 mb-4">
@@ -276,7 +277,7 @@ export default function Settings() {
           </div>
           
           {/* Quick Actions */}
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2 sm:gap-3 flex-wrap">
             <Button 
               onClick={saveSettings} 
               disabled={!hasChanges}
@@ -921,7 +922,7 @@ export default function Settings() {
             </Card>
           </div>
         )}
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 }
