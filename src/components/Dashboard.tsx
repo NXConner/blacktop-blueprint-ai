@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ interface DashboardWidget {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [widgets] = useState<DashboardWidget[]>([
     {
       id: 'employees',
@@ -132,34 +134,34 @@ const Dashboard = () => {
           <Button variant="default" className="glow-primary">
             Emergency Override
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/overwatch'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/overwatch')}>
             OverWatch Center
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/pavement-scan'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/pavement-scan')}>
             PavementScan Pro
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/atlas-hub'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/atlas-hub')}>
             Atlas Hub
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/crew-management'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/crew-management')}>
             Deploy Crew
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/weather-station'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/weather-station')}>
             Weather Station
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/cost-control'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/cost-control')}>
             Cost Analysis
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/mobile-app'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/mobile-app')}>
             Mobile App
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/ai-optimization'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/ai-optimization')}>
             AI Optimization
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/reporting-analytics'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/reporting-analytics')}>
             Reports & Analytics
           </Button>
-          <Button variant="outline" className="glass-card" onClick={() => window.location.href = '/security-compliance'}>
+          <Button variant="outline" className="glass-card" onClick={() => navigate('/security-compliance')}>
             Security & Compliance
           </Button>
         </div>
@@ -207,7 +209,7 @@ const Dashboard = () => {
             </Badge>
           </div>
           <div className="h-64 bg-muted/20 rounded-lg relative border border-glass-border overflow-hidden cursor-pointer"
-               onClick={() => window.location.href = '/overwatch'}>
+               onClick={() => navigate('/overwatch')}>
             {/* Simulated Map Preview */}
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800">
               <div className="absolute inset-0 opacity-20">

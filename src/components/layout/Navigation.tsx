@@ -153,7 +153,8 @@ export function Navigation({ className }: NavigationProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const isActiveRoute = (href: string) => {
-    return location.pathname === href;
+    if (href === '/') return location.pathname === '/';
+    return location.pathname === href || location.pathname.startsWith(href + '/');
   };
 
   const toggleSidebar = () => {
@@ -227,27 +228,31 @@ export function Navigation({ className }: NavigationProps) {
 
         {/* Center Section - Quick Nav */}
         <nav className="hidden lg:flex items-center gap-1">
-          {navigationItems.slice(0, 6).map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
-                "transition-all duration-200 hover:glass-card",
-                isActiveRoute(item.href) 
-                  ? "glass-card glow-primary text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span className="hidden xl:inline">{item.name}</span>
-              {item.badge && (
-                <Badge variant="secondary" className="text-xs px-1 py-0">
-                  {item.badge}
-                </Badge>
-              )}
-            </Link>
-          ))}
+          {navigationItems.slice(0, 6).map((item) => {
+            const active = isActiveRoute(item.href);
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
+                  "transition-all duration-200 hover:glass-card",
+                  active
+                    ? "glass-card glow-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                <span className="hidden xl:inline">{item.name}</span>
+                {item.badge && (
+                  <Badge variant="secondary" className="text-xs px-1 py-0">
+                    {item.badge}
+                  </Badge>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right Section */}
@@ -447,41 +452,47 @@ export function Navigation({ className }: NavigationProps) {
 
           {/* Navigation Items */}
           <nav className="space-y-2">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setIsSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg",
-                  "transition-all duration-200 group",
-                  isActiveRoute(item.href)
-                    ? "glass-card glow-primary text-primary border border-primary/20"
-                    : "hover:glass-card hover:text-foreground text-muted-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{item.name}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                        {item.badge}
-                      </Badge>
+            {navigationItems.map((item) => {
+              const active = isActiveRoute(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg",
+                    "transition-all duration-200 group",
+                    active
+                      ? "glass-card glow-primary text-primary border border-primary/20"
+                      : "hover:glass-card hover:text-foreground text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{item.name}</span>
+                      {item.badge && (
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {item.description}
+                      </p>
                     )}
                   </div>
-                  {item.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-                <ChevronRight className={cn(
-                  "h-4 w-4 transition-transform opacity-0 group-hover:opacity-100",
-                  isActiveRoute(item.href) && "opacity-100"
-                )} />
-              </Link>
-            ))}
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 transition-transform opacity-0 group-hover:opacity-100",
+                      isActiveRoute(item.href) && "opacity-100"
+                    )}
+                  />
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Bottom Section */}
