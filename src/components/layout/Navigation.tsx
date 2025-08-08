@@ -25,7 +25,8 @@ import {
   BellRing,
   MessageSquare,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -152,9 +153,21 @@ export function Navigation({ className }: NavigationProps) {
   const { user, signOut } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
+  const requiresAuth = (href: string) => {
+    return ['/crew-management','/cost-control','/reporting-analytics','/security-compliance','/settings'].includes(href);
+  };
+
   const isActiveRoute = (href: string) => {
     if (href === '/') return location.pathname === '/';
     return location.pathname === href || location.pathname.startsWith(href + '/');
+  };
+
+  const handleProtectedClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    const anchor = e.currentTarget as HTMLAnchorElement;
+    if (!user && requiresAuth(anchor.getAttribute('href') || '')) {
+      e.preventDefault();
+      setAuthModalOpen(true);
+    }
   };
 
   const toggleSidebar = () => {
@@ -230,21 +243,26 @@ export function Navigation({ className }: NavigationProps) {
         <nav className="hidden lg:flex items-center gap-1">
           {navigationItems.slice(0, 6).map((item) => {
             const active = isActiveRoute(item.href);
+            const locked = !user && requiresAuth(item.href);
             return (
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={handleProtectedClick}
                 aria-current={active ? 'page' : undefined}
+                aria-disabled={locked ? true : undefined}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
                   "transition-all duration-200 hover:glass-card",
                   active
                     ? "glass-card glow-primary text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                  locked && "opacity-70"
                 )}
               >
                 <item.icon className="h-4 w-4" />
                 <span className="hidden xl:inline">{item.name}</span>
+                {locked && <Lock className="h-3.5 w-3.5 opacity-80" aria-label="Locked" />}
                 {item.badge && (
                   <Badge variant="secondary" className="text-xs px-1 py-0">
                     {item.badge}
@@ -454,24 +472,28 @@ export function Navigation({ className }: NavigationProps) {
           <nav className="space-y-2">
             {navigationItems.map((item) => {
               const active = isActiveRoute(item.href);
+              const locked = !user && requiresAuth(item.href);
               return (
                 <Link
                   key={item.href}
                   to={item.href}
+                  onClick={handleProtectedClick}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => setIsSidebarOpen(false)}
+                  aria-disabled={locked ? true : undefined}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg",
                     "transition-all duration-200 group",
                     active
                       ? "glass-card glow-primary text-primary border border-primary/20"
-                      : "hover:glass-card hover:text-foreground text-muted-foreground"
+                      : "hover:glass-card hover:text-foreground text-muted-foreground",
+                    locked && "opacity-70"
                   )}
                 >
                   <item.icon className="h-5 w-5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">{item.name}</span>
+                      {locked && <Lock className="h-3.5 w-3.5 opacity-80" aria-label="Locked" />}
                       {item.badge && (
                         <Badge variant="secondary" className="text-xs px-1.5 py-0">
                           {item.badge}

@@ -81,7 +81,7 @@ export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
           
           <Button 
             variant="outline"
-            onClick={() => window.location.href = '/'}
+            onClick={() => (history.pushState(null, '', '/'), window.dispatchEvent(new PopStateEvent('popstate')))}
             className="glass-card border-glass-border hover:glow-accent"
           >
             <Home className="w-4 h-4 mr-2" />
