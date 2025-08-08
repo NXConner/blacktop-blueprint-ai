@@ -35,6 +35,7 @@ import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useNotifications } from '@/services/notifications';
+import { prefetchRoute } from '@/routes';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -248,6 +249,8 @@ export function Navigation({ className }: NavigationProps) {
               <Link
                 key={item.href}
                 to={item.href}
+                onMouseEnter={() => prefetchRoute(item.href)}
+                onFocus={() => prefetchRoute(item.href)}
                 onClick={handleProtectedClick}
                 aria-current={active ? 'page' : undefined}
                 aria-disabled={locked ? true : undefined}
@@ -477,6 +480,8 @@ export function Navigation({ className }: NavigationProps) {
                 <Link
                   key={item.href}
                   to={item.href}
+                  onMouseEnter={() => prefetchRoute(item.href)}
+                  onFocus={() => prefetchRoute(item.href)}
                   onClick={handleProtectedClick}
                   aria-current={active ? 'page' : undefined}
                   aria-disabled={locked ? true : undefined}

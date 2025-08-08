@@ -41,3 +41,29 @@ export const routes: AppRoute[] = [
   { path: '/settings', element: Settings, requiresAuth: true },
   { path: '*', element: NotFound },
 ];
+
+// Direct dynamic import loaders for prefetching
+export const routeLoaders: Record<string, () => Promise<unknown>> = {
+  '/': () => import('./pages/Index'),
+  '/overwatch': () => import('./pages/OverWatch'),
+  '/pavement-scan': () => import('./pages/PavementScan'),
+  '/atlas-hub': () => import('./pages/AtlasHub'),
+  '/crew-management': () => import('./pages/CrewManagement'),
+  '/weather-station': () => import('./pages/WeatherStation'),
+  '/cost-control': () => import('./pages/CostControl'),
+  '/mobile-app': () => import('./pages/MobileApp'),
+  '/ai-optimization': () => import('./pages/AIOptimization'),
+  '/reporting-analytics': () => import('./pages/ReportingAnalytics'),
+  '/security-compliance': () => import('./pages/SecurityCompliance'),
+  '/catalog': () => import('./pages/Catalog'),
+  '/marketplace': () => import('./pages/Catalog'),
+  '/downloads': () => import('./pages/Downloads'),
+  '/settings': () => import('./pages/Settings'),
+};
+
+export function prefetchRoute(path: string): Promise<void> {
+  const loader = routeLoaders[path];
+  return loader ? loader().then(() => {}) : Promise.resolve();
+}
+
+export const protectedPaths = routes.filter(r => r.requiresAuth).map(r => r.path);
