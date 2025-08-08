@@ -73,7 +73,7 @@ const App = () => (
               />
               <BrowserRouter>
                 <Navigation />
-                <main className="lg:ml-72 pt-16 relative z-10 min-h-screen" aria-live="polite">
+                <main id="main-content" className="lg:ml-72 pt-16 relative z-10 min-h-screen" aria-live="polite">
                   <Suspense fallback={<PageLoading text="Loading module..." /> }>
                     <Routes>
                       {routes.map(({ path, element: Element, requiresAuth }) => {
