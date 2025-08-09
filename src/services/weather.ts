@@ -1,5 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { WeatherData, WeatherForecast, WeatherAlert, GeoCoordinate } from '@/types/database';
+import { getValidatedJson } from '@/lib/http';
+import { z } from 'zod';
 
 // Weather API configuration
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY || 'demo_key';
@@ -20,63 +22,44 @@ const WEATHER_CONDITION_MAP: Record<string, 'clear' | 'cloudy' | 'rain' | 'snow'
   'heavy snow': 'snow',
 };
 
-interface OpenWeatherMapResponse {
-  coord: { lon: number; lat: number };
-  weather: Array<{
-    id: number;
-    main: string;
-    description: string;
-    icon: string;
-  }>;
-  main: {
-    temp: number;
-    feels_like: number;
-    temp_min: number;
-    temp_max: number;
-    pressure: number;
-    humidity: number;
-  };
-  wind: {
-    speed: number;
-    deg: number;
-    gust?: number;
-  };
-  rain?: {
-    '1h'?: number;
-    '3h'?: number;
-  };
-  snow?: {
-    '1h'?: number;
-    '3h'?: number;
-  };
-  dt: number;
-  sys: {
-    country: string;
-    sunrise: number;
-    sunset: number;
-  };
-  timezone: number;
-  name: string;
-}
+const WeatherSchema = z.object({
+  coord: z.object({ lon: z.number(), lat: z.number() }),
+  weather: z.array(z.object({ id: z.number(), main: z.string(), description: z.string(), icon: z.string() })),
+  main: z.object({
+    temp: z.number(),
+    feels_like: z.number(),
+    temp_min: z.number(),
+    temp_max: z.number(),
+    pressure: z.number(),
+    humidity: z.number(),
+  }),
+  wind: z.object({ speed: z.number(), deg: z.number(), gust: z.number().optional() }),
+  rain: z.object({ '1h': z.number().optional(), '3h': z.number().optional() }).optional(),
+  snow: z.object({ '1h': z.number().optional(), '3h': z.number().optional() }).optional(),
+  dt: z.number(),
+  sys: z.object({ country: z.string(), sunrise: z.number(), sunset: z.number() }),
+  timezone: z.number(),
+  name: z.string(),
+});
 
-interface ForecastResponse {
-  list: Array<{
-    dt: number;
-    main: OpenWeatherMapResponse['main'];
-    weather: OpenWeatherMapResponse['weather'];
-    wind: OpenWeatherMapResponse['wind'];
-    rain?: OpenWeatherMapResponse['rain'];
-    snow?: OpenWeatherMapResponse['snow'];
-    dt_txt: string;
-  }>;
-  city: {
-    id: number;
-    name: string;
-    coord: { lat: number; lon: number };
-    country: string;
-    timezone: number;
-  };
-}
+const ForecastSchema = z.object({
+  list: z.array(z.object({
+    dt: z.number(),
+    main: WeatherSchema.shape.main,
+    weather: WeatherSchema.shape.weather,
+    wind: WeatherSchema.shape.wind,
+    rain: WeatherSchema.shape.rain.optional(),
+    snow: WeatherSchema.shape.snow.optional(),
+    dt_txt: z.string(),
+  })),
+  city: z.object({
+    id: z.number(),
+    name: z.string(),
+    coord: z.object({ lat: z.number(), lon: z.number() }),
+    country: z.string(),
+    timezone: z.number(),
+  }),
+});
 
 class WeatherService {
   private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
@@ -88,33 +71,26 @@ class WeatherService {
     const cached = this.cache.get(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      return cached.data;
+      return cached.data as WeatherData;
     }
 
     try {
       const [longitude, latitude] = location.coordinates;
-      const response = await fetch(
-        `${WEATHER_API_BASE_URL}/weather?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric`
-      );
+      const url = `${WEATHER_API_BASE_URL}/weather?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric`;
+      const data = await getValidatedJson(url, WeatherSchema, { timeoutMs: 8_000 });
 
-      if (!response.ok) {
-        throw new Error(`Weather API error: ${response.status}`);
-      }
-
-      const data: OpenWeatherMapResponse = await response.json();
       const weatherData = this.transformCurrentWeatherData(data, location);
 
       // Cache the result
       this.cache.set(cacheKey, { data: weatherData, timestamp: Date.now() });
 
-      // Store in database
-      await this.storeWeatherData(weatherData);
+      // Store in database (best effort)
+      void this.storeWeatherData(weatherData);
 
       return weatherData;
     } catch (error) {
       console.error('Failed to fetch current weather:', error);
-      
-      // Fallback to cached data or default values
+      // Fallback to minimal data
       const fallbackData: WeatherData = {
         id: crypto.randomUUID(),
         location_coordinates: location,
@@ -140,34 +116,26 @@ class WeatherService {
     const cached = this.cache.get(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      return cached.data;
+      return cached.data as WeatherForecast;
     }
 
     try {
       const [longitude, latitude] = location.coordinates;
-      const response = await fetch(
-        `${WEATHER_API_BASE_URL}/forecast?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Weather API error: ${response.status}`);
-      }
-
-      const data: ForecastResponse = await response.json();
+      const url = `${WEATHER_API_BASE_URL}/forecast?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric`;
+      const data = await getValidatedJson(url, ForecastSchema, { timeoutMs: 8_000 });
       const forecast = this.transformForecastData(data, location);
 
       // Cache the result
       this.cache.set(cacheKey, { data: forecast, timestamp: Date.now() });
 
-      // Store forecast data in database
-      await Promise.all(
+      // Store forecast data in database (best effort)
+      void Promise.all(
         forecast.forecasts.map(forecastData => this.storeWeatherData(forecastData))
       );
 
       return forecast;
     } catch (error) {
       console.error('Failed to fetch weather forecast:', error);
-      
       return {
         location,
         forecasts: [],
@@ -342,7 +310,7 @@ class WeatherService {
   }
 
   // Transform OpenWeatherMap data to our format
-  private transformCurrentWeatherData(data: OpenWeatherMapResponse, location: GeoCoordinate): WeatherData {
+  private transformCurrentWeatherData(data: z.infer<typeof WeatherSchema>, location: GeoCoordinate): WeatherData {
     const description = data.weather[0]?.description.toLowerCase() || 'clear';
     const weatherCondition = WEATHER_CONDITION_MAP[description] || 'clear';
 
@@ -363,7 +331,7 @@ class WeatherService {
   }
 
   // Transform forecast data
-  private transformForecastData(data: ForecastResponse, location: GeoCoordinate): WeatherForecast {
+  private transformForecastData(data: z.infer<typeof ForecastSchema>, location: GeoCoordinate): WeatherForecast {
     const forecasts: WeatherData[] = data.list.map((item, index) => {
       const description = item.weather[0]?.description.toLowerCase() || 'clear';
       const weatherCondition = WEATHER_CONDITION_MAP[description] || 'clear';

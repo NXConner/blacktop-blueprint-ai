@@ -67,4 +67,6 @@ export interface ThemeContextType {
   setTheme: (themeId: string) => void;
   setWallpaper: (wallpaper: Wallpaper | null) => void;
   toggleDarkMode: () => void;
+  reducedMotion: boolean;
+  setReducedMotion: (value: boolean) => void;
 }

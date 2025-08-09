@@ -91,6 +91,7 @@ interface SettingsState {
 
 export default function Settings() {
   const { currentTheme, availableThemes, setTheme, currentWallpaper, setWallpaper } = useTheme();
+  const { reducedMotion, setReducedMotion } = useTheme();
   
   const [settings, setSettings] = useState<SettingsState>({
     // Visual Settings
@@ -591,6 +592,16 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Reduced Motion</p>
+                      <p className="text-sm text-muted-foreground">Minimize animations for accessibility and performance</p>
+                    </div>
+                    <Switch
+                      checked={reducedMotion}
+                      onCheckedChange={(v) => setReducedMotion(!!v)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
                     <Label htmlFor="high-contrast">High Contrast Mode</Label>
                     <Switch 
                       id="high-contrast"
@@ -609,11 +620,20 @@ export default function Settings() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="reduced-motion">Reduced Motion</Label>
+                    <Label htmlFor="keyboard-nav">Enhanced Keyboard Navigation</Label>
                     <Switch 
-                      id="reduced-motion"
-                      checked={settings.reducedMotion}
-                      onCheckedChange={(checked) => updateSetting('reducedMotion', checked)}
+                      id="keyboard-nav"
+                      checked={settings.keyboardNavigation}
+                      onCheckedChange={(checked) => updateSetting('keyboardNavigation', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="focus-indicators">Focus Indicators</Label>
+                    <Switch 
+                      id="focus-indicators"
+                      checked={settings.focusIndicators}
+                      onCheckedChange={(checked) => updateSetting('focusIndicators', checked)}
                     />
                   </div>
                 </CardContent>

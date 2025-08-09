@@ -27,6 +27,26 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return savedWallpaper ? JSON.parse(savedWallpaper) : null;
   });
 
+  const [reducedMotion, setReducedMotion] = useState<boolean>(() => {
+    const stored = localStorage.getItem('reduced-motion');
+    if (stored !== null) return stored === 'true';
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(media.matches);
+    if (!localStorage.getItem('reduced-motion')) {
+      media.addEventListener?.('change', onChange);
+    }
+    return () => media.removeEventListener?.('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('motion-reduce', reducedMotion);
+    localStorage.setItem('reduced-motion', String(reducedMotion));
+  }, [reducedMotion]);
+
   const applyWallpaper = useCallback((wallpaper: Wallpaper) => {
     const root = document.documentElement;
     
@@ -154,7 +174,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setTheme,
     setWallpaper,
     toggleDarkMode,
-  };
+    reducedMotion,
+    setReducedMotion,
+  } as ThemeContextType;
 
   return (
     <ThemeContext.Provider value={value}>

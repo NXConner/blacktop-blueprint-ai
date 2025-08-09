@@ -1,30 +1,62 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Navigation } from "@/components/layout/Navigation";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ErrorBoundary, ErrorFallback } from "@/components/ui/error-boundary";
 import { ParticleSystem } from "@/components/ui/particle-system";
-import Index from "./pages/Index";
-import OverWatch from "./pages/OverWatch";
-import PavementScan from "./pages/PavementScan";
-import AtlasHub from "./pages/AtlasHub";
-import CrewManagement from "./pages/CrewManagement";
-import WeatherStation from "./pages/WeatherStation";
-import CostControl from "./pages/CostControl";
-import MobileApp from "./pages/MobileApp";
-import AIOptimization from "./pages/AIOptimization";
-import ReportingAnalytics from "./pages/ReportingAnalytics";
-import SecurityCompliance from "./pages/SecurityCompliance";
-import Settings from "./pages/Settings";
-import Catalog from "./pages/Catalog";
-import Downloads from "./pages/Downloads";
-import NotFound from "./pages/NotFound";
+import { Suspense } from "react";
+import { PageLoading } from "@/components/ui/loading";
+import { routes } from "./routes";
+import { toast } from "@/hooks/use-toast";
+import { RouteFocus } from "@/components/router/RouteFocus";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, _query) => {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast({ title: "Request failed", description: message, variant: "destructive" });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, _mutation) => {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast({ title: "Action failed", description: message, variant: "destructive" });
+    },
+  }),
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: true,
+      retry: 2,
+      retryDelay: attempt => Math.min(1000 * 2 ** attempt, 10_000),
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return <PageLoading text="Verifying access..." />;
+  }
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+function RouteBoundary({ children }: { children: JSX.Element }) {
+  return (
+    <ErrorBoundary fallback={<ErrorFallback />}>{children}</ErrorBoundary>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,26 +74,26 @@ const App = () => (
               />
               <BrowserRouter>
                 <Navigation />
-                <main className="lg:ml-72 pt-16 relative z-10 min-h-screen">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/overwatch" element={<OverWatch />} />
-                    <Route path="/pavement-scan" element={<PavementScan />} />
-                    <Route path="/atlas-hub" element={<AtlasHub />} />
-                    <Route path="/crew-management" element={<CrewManagement />} />
-                    <Route path="/weather-station" element={<WeatherStation />} />
-                    <Route path="/cost-control" element={<CostControl />} />
-                    <Route path="/mobile-app" element={<MobileApp />} />
-                    <Route path="/ai-optimization" element={<AIOptimization />} />
-                    <Route path="/reporting-analytics" element={<ReportingAnalytics />} />
-                    <Route path="/security-compliance" element={<SecurityCompliance />} />
-                    <Route path="/catalog" element={<Catalog />} />
-                    <Route path="/marketplace" element={<Catalog />} />
-                    <Route path="/downloads" element={<Downloads />} />
-                    <Route path="/settings" element={<Settings />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                <RouteFocus />
+                <main id="main-content" className="lg:ml-72 pt-16 relative z-10 min-h-screen" aria-live="polite">
+                  <Suspense fallback={<PageLoading text="Loading module..." /> }>
+                    <Routes>
+                      {routes.map(({ path, element: Element, requiresAuth }) => {
+                        const node = (
+                          <RouteBoundary>
+                            <Element />
+                          </RouteBoundary>
+                        );
+                        return (
+                          <Route
+                            key={path}
+                            path={path}
+                            element={requiresAuth ? <ProtectedRoute>{node}</ProtectedRoute> : node}
+                          />
+                        );
+                      })}
+                    </Routes>
+                  </Suspense>
                 </main>
               </BrowserRouter>
             </div>
