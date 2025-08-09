@@ -2,6 +2,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/contexts/ThemeContext"
 
 // Animation variants
 const animatedVariants = cva(
@@ -63,6 +64,7 @@ const AnimatedContainer = React.forwardRef<HTMLDivElement, AnimatedContainerProp
   ({ className, animation, delay, hover, asChild = false, trigger = "mount", children, ...props }, ref) => {
     const [isVisible, setIsVisible] = React.useState(trigger === "mount")
     const containerRef = React.useRef<HTMLDivElement>(null)
+    const { reducedMotion } = useTheme()
 
     // Combine refs
     React.useImperativeHandle(ref, () => containerRef.current!, [])
@@ -91,14 +93,15 @@ const AnimatedContainer = React.forwardRef<HTMLDivElement, AnimatedContainerProp
     }, [trigger])
 
     const Comp = asChild ? Slot : "div"
+    const effectiveAnimation = reducedMotion ? "none" : (animation || "none")
     
     return (
       <Comp
         className={cn(
           animatedVariants({ 
-            animation: isVisible ? animation : "none", 
-            delay, 
-            hover, 
+            animation: isVisible ? effectiveAnimation : "none", 
+            delay: reducedMotion ? "none" : delay, 
+            hover: reducedMotion ? "none" : hover, 
             className 
           })
         )}
@@ -123,6 +126,7 @@ export interface FloatingElementProps extends React.HTMLAttributes<HTMLDivElemen
 
 const FloatingElement = React.forwardRef<HTMLDivElement, FloatingElementProps>(
   ({ className, duration = "normal", intensity = "normal", asChild = false, ...props }, ref) => {
+    const { reducedMotion } = useTheme()
     const durationClass = {
       slow: "animate-float-slow",
       normal: "animate-float",
@@ -139,8 +143,8 @@ const FloatingElement = React.forwardRef<HTMLDivElement, FloatingElementProps>(
     
     return (
       <Comp
-        className={cn(durationClass, className)}
-        style={intensityStyle}
+        className={cn(reducedMotion ? undefined : durationClass, className)}
+        style={reducedMotion ? undefined : intensityStyle}
         ref={ref}
         {...props}
       />
@@ -159,6 +163,7 @@ export interface PulsingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 
 const PulsingIndicator = React.forwardRef<HTMLDivElement, PulsingIndicatorProps>(
   ({ className, color = "primary", size = "default", speed = "normal", variant = "dot", ...props }, ref) => {
+    const { reducedMotion } = useTheme()
     const colorClass = {
       primary: "bg-primary",
       accent: "bg-accent",
@@ -191,7 +196,7 @@ const PulsingIndicator = React.forwardRef<HTMLDivElement, PulsingIndicatorProps>
         className={cn(
           colorClass,
           sizeClass,
-          speedClass,
+          reducedMotion ? undefined : speedClass,
           variantClass,
           variant === "ring" && `border-${color}`,
           className
@@ -212,6 +217,7 @@ export interface StaggeredContainerProps extends React.HTMLAttributes<HTMLDivEle
 
 const StaggeredContainer = React.forwardRef<HTMLDivElement, StaggeredContainerProps>(
   ({ className, staggerDelay = 100, children, ...props }, ref) => {
+    const { reducedMotion } = useTheme()
     const childrenArray = React.Children.toArray(children)
 
     return (
@@ -219,8 +225,8 @@ const StaggeredContainer = React.forwardRef<HTMLDivElement, StaggeredContainerPr
         {childrenArray.map((child, index) => (
           <div
             key={index}
-            className="animate-scale-in"
-            style={{ animationDelay: `${index * staggerDelay}ms` }}
+            className={reducedMotion ? undefined : "animate-scale-in"}
+            style={reducedMotion ? undefined : { animationDelay: `${index * staggerDelay}ms` }}
           >
             {child}
           </div>
@@ -241,6 +247,7 @@ export interface RevealOnScrollProps extends React.HTMLAttributes<HTMLDivElement
 
 const RevealOnScroll = React.forwardRef<HTMLDivElement, RevealOnScrollProps>(
   ({ className, direction = "up", threshold = 0.1, once = true, asChild = false, children, ...props }, ref) => {
+    const { reducedMotion } = useTheme()
     const [isVisible, setIsVisible] = React.useState(false)
     const elementRef = React.useRef<HTMLDivElement>(null)
 
@@ -248,7 +255,7 @@ const RevealOnScroll = React.forwardRef<HTMLDivElement, RevealOnScrollProps>(
     React.useImperativeHandle(ref, () => elementRef.current!, [])
 
     React.useEffect(() => {
-      if (!elementRef.current) return
+      if (!elementRef.current || reducedMotion) return
 
       const observer = new IntersectionObserver(
         ([entry]) => {
@@ -266,7 +273,7 @@ const RevealOnScroll = React.forwardRef<HTMLDivElement, RevealOnScrollProps>(
 
       observer.observe(elementRef.current)
       return () => observer.disconnect()
-    }, [threshold, once])
+    }, [threshold, once, reducedMotion])
 
     const animationClass = {
       up: "animate-slide-up",
@@ -282,7 +289,7 @@ const RevealOnScroll = React.forwardRef<HTMLDivElement, RevealOnScrollProps>(
       <Comp
         className={cn(
           "transition-all duration-500",
-          isVisible ? animationClass : "opacity-0 translate-y-4",
+          reducedMotion ? undefined : (isVisible ? animationClass : "opacity-0 translate-y-4"),
           className
         )}
         ref={elementRef}
