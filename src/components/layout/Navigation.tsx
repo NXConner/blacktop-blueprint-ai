@@ -165,10 +165,14 @@ export function Navigation({ className }: NavigationProps) {
 
   const handleProtectedClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     const anchor = e.currentTarget as HTMLAnchorElement;
-    if (!user && requiresAuth(anchor.getAttribute('href') || '')) {
+    const href = anchor.getAttribute('href') || '';
+    if (!user && requiresAuth(href)) {
       e.preventDefault();
       setAuthModalOpen(true);
+      return;
     }
+    // Close sidebar on navigation (useful on mobile)
+    setIsSidebarOpen(false);
   };
 
   const toggleSidebar = () => {
