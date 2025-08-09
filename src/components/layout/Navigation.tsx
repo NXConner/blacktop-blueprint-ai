@@ -36,6 +36,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useNotifications } from '@/services/notifications';
 import { prefetchRoute } from '@/routes';
+import { protectedPaths } from '@/routes';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -154,9 +155,8 @@ export function Navigation({ className }: NavigationProps) {
   const { user, signOut } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
-  const requiresAuth = (href: string) => {
-    return ['/crew-management','/cost-control','/reporting-analytics','/security-compliance','/settings'].includes(href);
-  };
+  const protectedSet = React.useMemo(() => new Set(protectedPaths), []);
+  const requiresAuth = (href: string) => protectedSet.has(href);
 
   const isActiveRoute = (href: string) => {
     if (href === '/') return location.pathname === '/';
