@@ -12,6 +12,7 @@ import { Suspense } from "react";
 import { PageLoading } from "@/components/ui/loading";
 import { routes } from "./routes";
 import { toast } from "@/hooks/use-toast";
+import { RouteFocus } from "@/components/router/RouteFocus";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -73,6 +74,7 @@ const App = () => (
               />
               <BrowserRouter>
                 <Navigation />
+                <RouteFocus />
                 <main id="main-content" className="lg:ml-72 pt-16 relative z-10 min-h-screen" aria-live="polite">
                   <Suspense fallback={<PageLoading text="Loading module..." /> }>
                     <Routes>
