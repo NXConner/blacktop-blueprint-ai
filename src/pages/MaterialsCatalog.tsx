@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { businessConfigService, BusinessProfile } from '@/services/business-config';
+import { updateMaterialPrice } from '@/services/materials-pricing';
 import { Save } from 'lucide-react';
 
 const MaterialsCatalog: React.FC = () => {
@@ -20,7 +21,9 @@ const MaterialsCatalog: React.FC = () => {
   };
 
   const save = async () => {
-    if (profile) await businessConfigService.setProfile({ materialPrices: profile.materialPrices });
+    if (!profile) return;
+    await businessConfigService.setProfile({ materialPrices: profile.materialPrices });
+    await Promise.all(Object.entries(profile.materialPrices).map(([k, v]) => updateMaterialPrice(k, v.price)));
   };
 
   if (!profile) return null;

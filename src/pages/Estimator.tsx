@@ -35,8 +35,15 @@ const Estimator: React.FC = () => {
     let milesRT = 0;
     let region: any = 'VA';
     if (address) {
-      const [biz, job] = await Promise.all([geocodeAddress(businessAddress), geocodeAddress(address)]);
-      if (biz && job) milesRT = Math.round(haversineMiles({ lat: biz.lat, lon: biz.lon }, { lat: job.lat, lon: job.lon }) * 2);
+      const supplierAddress = `${profile.supplier.address}, ${profile.supplier.city}, ${profile.supplier.state} ${profile.supplier.zip}`;
+      const [biz, sup, job] = await Promise.all([geocodeAddress(businessAddress), geocodeAddress(supplierAddress), geocodeAddress(address)]);
+      if (biz && sup && job) {
+        const leg1 = haversineMiles(biz, sup);
+        const leg2 = haversineMiles(sup, biz);
+        const leg3 = haversineMiles(biz, job);
+        const leg4 = haversineMiles(job, biz);
+        milesRT = Math.round(leg1 + leg2 + leg3 + leg4);
+      }
       const regionDetected = detectRegionFromAddress(address);
       if (regionDetected !== 'OTHER') region = regionDetected;
     }
@@ -72,8 +79,15 @@ const Estimator: React.FC = () => {
     let milesRT = 0;
     let region: any = 'VA';
     if (address) {
-      const [biz, job] = await Promise.all([geocodeAddress(businessAddress), geocodeAddress(address)]);
-      if (biz && job) milesRT = Math.round(haversineMiles({ lat: biz.lat, lon: biz.lon }, { lat: job.lat, lon: job.lon }) * 2);
+      const supplierAddress = `${profile.supplier.address}, ${profile.supplier.city}, ${profile.supplier.state} ${profile.supplier.zip}`;
+      const [biz, sup, job] = await Promise.all([geocodeAddress(businessAddress), geocodeAddress(supplierAddress), geocodeAddress(address)]);
+      if (biz && sup && job) {
+        const leg1 = haversineMiles(biz, sup);
+        const leg2 = haversineMiles(sup, biz);
+        const leg3 = haversineMiles(biz, job);
+        const leg4 = haversineMiles(job, biz);
+        milesRT = Math.round(leg1 + leg2 + leg3 + leg4);
+      }
       const regionDetected = detectRegionFromAddress(address);
       if (regionDetected !== 'OTHER') region = regionDetected;
     }

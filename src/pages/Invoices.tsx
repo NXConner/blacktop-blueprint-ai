@@ -53,7 +53,20 @@ const Invoices: React.FC = () => {
                 <div className="text-right">
                   <div className="font-medium">Total</div>
                   <div className="text-3xl font-bold">${selected.payload?.total?.toFixed?.(2)}</div>
+                  <div className="text-sm">Paid: ${selected.payload?.amountPaid?.toFixed?.(2) || '0.00'}</div>
+                  <div className="text-sm">Status: {selected.payload?.status || 'unpaid'}</div>
                 </div>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <input className="border rounded px-2 py-1 text-sm" placeholder="Payment amount" id="payamt" />
+                <Button variant="outline" onClick={async () => {
+                  const amt = parseFloat((document.getElementById('payamt') as HTMLInputElement).value || '0');
+                  if (!amt || amt <= 0) return;
+                  const mod = await import('@/services/payments');
+                  await mod.recordPayment(selected.id, amt);
+                  const { data } = await supabase.from('invoices').select('*').eq('id', selected.id).maybeSingle();
+                  setSelected(data as any);
+                }}>Record Payment</Button>
               </div>
               <table className="w-full text-sm">
                 <thead>

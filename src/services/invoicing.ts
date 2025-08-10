@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { asphaltEstimator, EstimateBreakdown, EstimateInputs } from '@/services/estimators/asphalt-estimator';
+import { computeSalesTax } from '@/services/tax';
 
 export interface InvoiceItem { description: string; amount: number; }
 export interface InvoicePayload {
@@ -12,6 +13,8 @@ export interface InvoicePayload {
   tax?: number;
   total: number;
   createdAt: string;
+  status?: 'unpaid' | 'partial' | 'paid';
+  amountPaid?: number;
 }
 
 class InvoicingService {
@@ -25,16 +28,22 @@ class InvoicingService {
     items.push({ description: 'Overhead', amount: breakdown.overhead });
     items.push({ description: 'Profit', amount: breakdown.profit });
 
+    const preTax = breakdown.subtotal + breakdown.overhead + breakdown.profit;
+    const region = (inputs.travel.region === 'VA' || inputs.travel.region === 'NC') ? inputs.travel.region : 'VA';
+    const tax = await computeSalesTax(region, preTax);
+
     const payload: InvoicePayload = {
       id: crypto.randomUUID(),
       clientName: client?.name,
       clientAddress: client?.address,
       projectName,
       items,
-      subtotal: breakdown.subtotal + breakdown.overhead + breakdown.profit,
-      tax: 0,
-      total: breakdown.total,
+      subtotal: preTax,
+      tax,
+      total: preTax + tax,
       createdAt: new Date().toISOString(),
+      status: 'unpaid',
+      amountPaid: 0,
     };
 
     try {
