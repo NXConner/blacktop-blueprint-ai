@@ -10,6 +10,7 @@ import { asphaltEstimator } from '@/services/estimators/asphalt-estimator';
 import { businessConfigService } from '@/services/business-config';
 import { fuelPriceService } from '@/services/fuel-price';
 import { MapPin, Calculator, Fuel } from 'lucide-react';
+import { geocodeAddress, haversineMiles, detectRegionFromAddress } from '@/services/geocoding';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
@@ -21,15 +22,25 @@ const Estimator: React.FC = () => {
     const area = Number(data.get('area') || 0);
     const cracks = Number(data.get('cracks') || 0);
     const porosity = (data.get('porosity') as 'normal' | 'older') || 'normal';
+    const address = String(data.get('address') || '');
 
     const profile = await businessConfigService.getProfile();
-    const fuel = await fuelPriceService.getPrice('VA', 'regular');
+    const businessAddress = `${profile.address}, ${profile.city}, ${profile.state} ${profile.zip}`;
+    let milesRT = 0;
+    let region: any = 'VA';
+    if (address) {
+      const [biz, job] = await Promise.all([geocodeAddress(businessAddress), geocodeAddress(address)]);
+      if (biz && job) milesRT = Math.round(haversineMiles({ lat: biz.lat, lon: biz.lon }, { lat: job.lat, lon: job.lon }) * 2);
+      const regionDetected = detectRegionFromAddress(address);
+      if (regionDetected !== 'OTHER') region = regionDetected;
+    }
+    const fuel = await fuelPriceService.getPrice(region, 'regular');
 
     const estimate = await asphaltEstimator.estimate({
       serviceType: 'driveway',
       sealcoat: { areaSqFt: area, porosity },
       crackFill: { linearFeet: cracks },
-      travel: { region: 'VA', milesRoundTrip: 0 },
+      travel: { region, milesRoundTrip: milesRT },
     });
 
     setResult({ estimate, profile, fuel });
@@ -43,13 +54,25 @@ const Estimator: React.FC = () => {
     const porosity = (data.get('porosity') as 'normal' | 'older') || 'normal';
     const stalls = Number(data.get('stalls') || 0);
     const cracks = Number(data.get('cracks') || 0);
+    const address = String(data.get('address') || '');
+
+    const profile = await businessConfigService.getProfile();
+    const businessAddress = `${profile.address}, ${profile.city}, ${profile.state} ${profile.zip}`;
+    let milesRT = 0;
+    let region: any = 'VA';
+    if (address) {
+      const [biz, job] = await Promise.all([geocodeAddress(businessAddress), geocodeAddress(address)]);
+      if (biz && job) milesRT = Math.round(haversineMiles({ lat: biz.lat, lon: biz.lon }, { lat: job.lat, lon: job.lon }) * 2);
+      const regionDetected = detectRegionFromAddress(address);
+      if (regionDetected !== 'OTHER') region = regionDetected;
+    }
 
     const estimate = await asphaltEstimator.estimate({
       serviceType: 'parking_lot',
       sealcoat: { areaSqFt: area, porosity },
       crackFill: { linearFeet: cracks },
       striping: { standardStalls: stalls },
-      travel: { region: 'VA', milesRoundTrip: 0 },
+      travel: { region, milesRoundTrip: milesRT },
     });
 
     setResult({ estimate });
@@ -88,6 +111,10 @@ const Estimator: React.FC = () => {
                   <Label htmlFor="cracks">Crack Filling (linear ft)</Label>
                   <Input id="cracks" name="cracks" type="number" min={0} />
                 </div>
+                <div className="col-span-2">
+                  <Label htmlFor="addr">Job Address (optional)</Label>
+                  <Input id="addr" name="address" placeholder="Street, City, ST ZIP" />
+                </div>
               </div>
 
               <Separator className="my-4" />
@@ -123,6 +150,10 @@ const Estimator: React.FC = () => {
                 <div>
                   <Label htmlFor="cracks_pl">Crack Filling (linear ft)</Label>
                   <Input id="cracks_pl" name="cracks" type="number" min={0} />
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="addr_pl">Job Address (optional)</Label>
+                  <Input id="addr_pl" name="address" placeholder="Street, City, ST ZIP" />
                 </div>
               </div>
 
