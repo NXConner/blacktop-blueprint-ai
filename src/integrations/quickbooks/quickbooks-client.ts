@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getEnv } from '@/lib/env';
 
 // QuickBooks API configuration
 interface QuickBooksConfig {
@@ -100,10 +101,10 @@ class QuickBooksClient {
 
   constructor() {
     this.config = {
-      clientId: process.env.QUICKBOOKS_CLIENT_ID || '',
-      clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET || '',
-      environment: (process.env.QUICKBOOKS_ENVIRONMENT as 'sandbox' | 'production') || 'sandbox',
-      redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || 'http://localhost:3000/auth/quickbooks/callback',
+      clientId: getEnv('QUICKBOOKS_CLIENT_ID'),
+      clientSecret: getEnv('QUICKBOOKS_CLIENT_SECRET'),
+      environment: (getEnv('QUICKBOOKS_ENVIRONMENT') as 'sandbox' | 'production') || 'sandbox',
+      redirectUri: getEnv('QUICKBOOKS_REDIRECT_URI') || 'http://localhost:3000/auth/quickbooks/callback',
       scope: ['com.intuit.quickbooks.accounting']
     };
 

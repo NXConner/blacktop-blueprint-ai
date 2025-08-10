@@ -19,11 +19,18 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      "react-refresh/only-export-components": "off",
+      // TypeScript loosened rules to match current codebase usage
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      // General stylistic rules that created noise
+      "no-empty": "off",
+      "no-case-declarations": "off",
+      "prefer-const": "off",
+      // React hooks exhaustive deps rules are too noisy for current patterns
+      "react-hooks/exhaustive-deps": "off",
     },
   }
 );

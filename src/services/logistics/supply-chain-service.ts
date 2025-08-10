@@ -873,7 +873,8 @@ class SupplyChainService {
   private async findOptimalRoute(origin: Location, destination: Location): Promise<TransportRoute> {
     try {
       // Integrate with real routing APIs (Google Maps, HERE, etc.)
-      const routingApiKey = process.env.VITE_ROUTING_API_KEY;
+      const { getEnv } = await import("@/lib/env");
+      const routingApiKey = getEnv("VITE_ROUTING_API_KEY");
       if (!routingApiKey) {
         throw new Error('Routing API key not configured');
       }
@@ -1057,7 +1058,8 @@ class SupplyChainService {
   private async getCurrentFuelPrice(): Promise<number> {
     try {
       // Get real-time fuel prices from government API
-      const response = await fetch('https://api.eia.gov/v2/petroleum/pri/gnd/data/?api_key=' + process.env.VITE_EIA_API_KEY);
+      const { getEnv } = await import("@/lib/env");
+      const response = await fetch('https://api.eia.gov/v2/petroleum/pri/gnd/data/?api_key=' + getEnv('VITE_EIA_API_KEY'));
       if (response.ok) {
         const data = await response.json();
         return data.response?.data?.[0]?.value || 3.85; // Default diesel price

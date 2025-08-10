@@ -574,7 +574,8 @@ const TerrainMapper: React.FC<TerrainMapperProps> = ({
   };
 
   const processPointCloudData = async (file: File): Promise<TerrainAnalysis> => {
-    const apiKey = process.env.VITE_POINT_CLOUD_API_KEY;
+    const { getEnv } = await import("@/lib/env");
+    const apiKey = getEnv("VITE_POINT_CLOUD_API_KEY");
     if (!apiKey) {
       throw new Error('Point cloud processing API key not configured');
     }

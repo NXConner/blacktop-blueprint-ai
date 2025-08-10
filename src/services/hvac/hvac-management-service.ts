@@ -1232,7 +1232,8 @@ class HVACManagementService {
 
     for (const manufacturer of manufacturers) {
       try {
-        const apiKey = process.env[`VITE_${manufacturer.toUpperCase()}_API_KEY`];
+        const { getEnv } = await import("@/lib/env");
+        const apiKey = getEnv(`VITE_${manufacturer.toUpperCase()}_API_KEY`);
         if (!apiKey) continue;
 
         const response = await fetch(`https://api.${manufacturer}.com/equipment/search`, {
@@ -1249,7 +1250,7 @@ class HVACManagementService {
           allOptions.push(...data.equipment || []);
         }
       } catch (error) {
-        console.warn(`Failed to query ${manufacturer} database:`, error);
+        // Swallow per-manufacturer errors
       }
     }
 

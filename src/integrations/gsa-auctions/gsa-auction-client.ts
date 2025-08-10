@@ -189,7 +189,7 @@ class GSAAuctionClient {
   private baseUrl: string = 'https://api.gsaauctions.gov/api/v1';
 
   constructor() {
-    this.apiKey = process.env.GSA_AUCTIONS_API_KEY || '';
+    this.apiKey = '';
   }
 
   // Auction Discovery
@@ -465,7 +465,8 @@ class GSAAuctionClient {
     try {
       // GSA API endpoint for surplus auctions
       const apiUrl = 'https://api.gsa.gov/technology/auctions/v1/auctions';
-      const apiKey = process.env.VITE_GSA_API_KEY;
+      const { getEnv } = await import("@/lib/env");
+      const apiKey = getEnv("VITE_GSA_API_KEY");
       
       if (!apiKey) {
         console.warn('GSA API key not configured, falling back to database data');
@@ -530,7 +531,8 @@ class GSAAuctionClient {
   private async fetchAuctionItems(auctionNumber: string): Promise<Omit<AuctionItem, 'id'>[]> {
     try {
       const apiUrl = `https://api.gsa.gov/technology/auctions/v1/auctions/${auctionNumber}/items`;
-      const apiKey = process.env.VITE_GSA_API_KEY;
+      const { getEnv } = await import("@/lib/env");
+      const apiKey = getEnv("VITE_GSA_API_KEY");
       
       if (!apiKey) {
         return [];

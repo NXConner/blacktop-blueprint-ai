@@ -605,7 +605,8 @@ class VeteranCertificationService {
   // Fetch contract opportunities from SAM.gov API
   private async fetchFromSAMAPI(): Promise<any[]> {
     try {
-      const apiKey = process.env.VITE_SAM_GOV_API_KEY;
+      const { getEnv } = await import("@/lib/env");
+      const apiKey = getEnv("VITE_SAM_GOV_API_KEY");
       if (!apiKey) {
         console.warn('SAM.gov API key not configured, falling back to database data');
         return [];

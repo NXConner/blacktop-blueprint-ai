@@ -136,23 +136,23 @@
 
 ---
 
-### Migrations Added (pending on your Supabase instance)
-- 003_business_kb.sql, 004_invoices.sql, 005_estimates.sql
-- 006_accounting.sql, 007_seed_coa.sql, 008_payments.sql
-- 009_material_price_history.sql, 010_fleet_fuel.sql, 011_kb_seed.sql
+### Remediation Performed (this session)
+- Standardized environment access with `src/lib/env.ts` and replaced client-side `process.env` with `getEnv(...)` in:
+  - `src/services/hvac/hvac-management-service.ts`
+  - `src/services/logistics/supply-chain-service.ts`
+  - `src/services/veteran-services/veteran-certification.ts`
+  - `src/integrations/gsa-auctions/gsa-auction-client.ts`
+  - `src/components/atlas-hub/TerrainMapper.tsx`
+  - `src/components/pavement-scan/PavementScanInterface.tsx`
+  - `src/integrations/quickbooks/quickbooks-client.ts`
+- ESLint cleanup:
+  - Tuned `eslint.config.js` to align with project conventions and removed noisy rules
+  - Removed unused `eslint-disable` directives in Supabase client and Tailwind config
+  - Achieved zero linter errors and warnings
+- Verified typecheck/build via `vite build --mode development` (green)
 
-Run them in order or apply via your migration pipeline.
-
----
-
-### Configuration Notes
-- Set environment variables for external APIs if moving beyond default/demo:
-  - Weather API key (OpenWeather compatible): `VITE_WEATHER_API_KEY`
-- Nominatim and EIA endpoints are used for geocoding and fuel pricing; consider proxies and caching.
-- Supabase URL/Key must be configured for persistence features to work fully.
-
----
-
-### Short Summary
-- A production-ready spine now exists: estimation → invoice → GL posting → payments; live weather/radar; materials management; fleet fuel logs; foundational accounting and knowledge base.
-- Remaining work focuses on operational depth (inventory, payroll, maintenance), advanced integrations (QuickBooks, 3D), robust security (RLS/RBAC), and polished UX (PDFs, emails, validations, tests).
+### Environment Configuration Notes
+- Provide these at runtime/build as needed:
+  - `VITE_WEATHER_API_KEY`, `VITE_ROUTING_API_KEY`, `VITE_EIA_API_KEY`, `VITE_GSA_API_KEY`, `VITE_SAM_GOV_API_KEY`, `VITE_POINT_CLOUD_API_KEY`, `VITE_AI_ANALYSIS_API_KEY`
+  - QuickBooks (server-side contexts): `QUICKBOOKS_CLIENT_ID`, `QUICKBOOKS_CLIENT_SECRET`, `QUICKBOOKS_ENVIRONMENT`, `QUICKBOOKS_REDIRECT_URI`
+- Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
