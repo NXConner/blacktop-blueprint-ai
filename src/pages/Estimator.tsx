@@ -13,6 +13,7 @@ import { MapPin, Calculator, Fuel } from 'lucide-react';
 import { geocodeAddress, haversineMiles, detectRegionFromAddress } from '@/services/geocoding';
 import { Slider } from '@/components/ui/slider';
 import { invoicingService } from '@/services/invoicing';
+import { postInvoiceToGL } from '@/services/accounting/invoice-posting';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
@@ -155,7 +156,8 @@ const Estimator: React.FC = () => {
                 <Button type="button" variant="outline" onClick={async () => {
                   if (!result) return;
                   const iv = await invoicingService.createFromEstimate(result.inputs || {}, { name: '', address: '' }, 'Estimate');
-                  alert('Invoice created: ' + iv.id);
+                  const jeId = await postInvoiceToGL(iv);
+                  alert('Invoice created and posted. JE: ' + (jeId || 'n/a'));
                 }}>Create Invoice</Button>
               </div>
             </form>
@@ -212,7 +214,8 @@ const Estimator: React.FC = () => {
                 <Button type="button" variant="outline" onClick={async () => {
                   if (!result) return;
                   const iv = await invoicingService.createFromEstimate(result.inputs || {}, { name: '', address: '' }, 'Estimate');
-                  alert('Invoice created: ' + iv.id);
+                  const jeId = await postInvoiceToGL(iv);
+                  alert('Invoice created and posted. JE: ' + (jeId || 'n/a'));
                 }}>Create Invoice</Button>
               </div>
             </form>
