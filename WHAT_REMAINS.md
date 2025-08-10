@@ -114,10 +114,8 @@
   - [ ] Payments UI/receipts; invoice lifecycle and email sending (real)
   - [ ] QuickBooks/Quicken module wiring; CoA mapping and sync routines
   - [ ] Enhanced GL posting per COGS category and project WIP
-- Payroll
-  - [ ] Crew time tracking UI and payroll export formats
-  - [ ] Accurate payroll tax tables (FICA caps, FUTA/SUTA by state)
 - Fleet/Equipment
+  - [x] Vehicle creation modal in Fleet Dashboard
   - [ ] Maintenance schedules, reminders, utilization reports
   - [ ] DOT/compliance checklists and document storage
 - Weather/Map
@@ -126,6 +124,8 @@
 - Materials & Suppliers
   - [ ] Receipt ingestion (OCR/CSV) to update material prices automatically
   - [ ] Inventory management and supplier POs/bills
+- Cost Tracking
+  - [x] Cost entry creation modal in Cost Analyzer
 - AI/Imaging/3D
   - [ ] Photo tagging and auto counting (CompanyCam-like)
   - [ ] 3D upload pipeline and viewer; integrations with SkyeBrowse/PropertyIntel

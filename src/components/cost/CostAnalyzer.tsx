@@ -32,6 +32,10 @@ import {
 import { format } from 'date-fns';
 import { api } from '@/services/api';
 import { CostEntry, Project, Material } from '@/types/database';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { costApi } from "@/services/api";
 
 interface CostAnalyzerProps {
   projectId?: string;
@@ -105,6 +109,34 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
   });
   const [viewPeriod, setViewPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [isLoading, setIsLoading] = useState(true);
+
+  const { toast } = useToast();
+  const [isAddCostOpen, setIsAddCostOpen] = useState(false);
+  const [newCost, setNewCost] = useState({
+    project_id: projectId || "",
+    category: "materials" as string,
+    description: "",
+    quantity: 1,
+    unit_cost: 0,
+    vendor: "",
+    entry_date: new Date().toISOString().slice(0, 10),
+  });
+
+  const handleAddCost = async () => {
+    try {
+      const total_cost = newCost.quantity * newCost.unit_cost;
+      const payload: any = { ...newCost, total_cost };
+      const result = await costApi.addEntry(payload);
+      if (result.success && result.data) {
+        toast({ title: "Cost entry added", description: newCost.description || newCost.category });
+        setIsAddCostOpen(false);
+      } else {
+        throw new Error(result.message || "Failed to add cost entry");
+      }
+    } catch (error) {
+      toast({ title: "Failed to add cost", description: (error as Error).message, variant: "destructive" });
+    }
+  };
 
   const loadCostData = useCallback(async () => {
     try {
@@ -729,11 +761,49 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
           <Card className="glass-elevated p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold">Cost Entry Management</h3>
-              <Button className="glow-primary" onClick={() => console.log('Add Cost Entry clicked - TODO: Implement cost entry creation modal')}>
+              <Button className="glow-primary" onClick={() => setIsAddCostOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Cost Entry
               </Button>
             </div>
+
+            <Dialog open={isAddCostOpen} onOpenChange={setIsAddCostOpen}>
+              <DialogContent className="glass-elevated">
+                <DialogHeader>
+                  <DialogTitle>Add Cost Entry</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+                  <div>
+                    <Label>Category</Label>
+                    <Input value={newCost.category} onChange={(e) => setNewCost({ ...newCost, category: e.target.value })} placeholder="materials, labor, equipment" />
+                  </div>
+                  <div>
+                    <Label>Vendor</Label>
+                    <Input value={newCost.vendor} onChange={(e) => setNewCost({ ...newCost, vendor: e.target.value })} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Description</Label>
+                    <Input value={newCost.description} onChange={(e) => setNewCost({ ...newCost, description: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Quantity</Label>
+                    <Input type="number" value={newCost.quantity} onChange={(e) => setNewCost({ ...newCost, quantity: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <Label>Unit Cost</Label>
+                    <Input type="number" value={newCost.unit_cost} onChange={(e) => setNewCost({ ...newCost, unit_cost: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <Label>Date</Label>
+                    <Input type="date" value={newCost.entry_date} onChange={(e) => setNewCost({ ...newCost, entry_date: e.target.value })} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddCostOpen(false)}>Cancel</Button>
+                  <Button className="glow-primary" onClick={handleAddCost}>Save</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <div className="space-y-4">
               {/* Recent cost entries */}
