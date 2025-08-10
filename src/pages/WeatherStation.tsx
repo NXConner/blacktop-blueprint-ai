@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import WeatherMonitor from '@/components/weather/WeatherMonitor';
 import RadarMap from '@/components/map/RadarMap';
+import { getGeofenceWeatherRisk } from '@/services/geofence';
 
 const WeatherStation: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState({
@@ -35,9 +36,14 @@ const WeatherStation: React.FC = () => {
     dew_point: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [risk, setRisk] = useState<{ upcomingRain: boolean; precipitationChance: number } | null>(null);
 
   useEffect(() => {
     loadSystemStatus();
+    (async () => {
+      const r = await getGeofenceWeatherRisk(12);
+      if (r) setRisk({ upcomingRain: r.upcomingRain, precipitationChance: r.precipitationChance });
+    })();
   }, []);
 
   const loadSystemStatus = async () => {
@@ -121,6 +127,11 @@ const WeatherStation: React.FC = () => {
               <Activity className="w-4 h-4 mr-2" />
               {systemStatus.stations_online} Stations Online
             </Badge>
+            {risk && (
+              <Badge variant={risk.upcomingRain ? 'destructive' : 'secondary'} className="glass-card">
+                Rain Risk {risk.upcomingRain ? `${risk.precipitationChance}%` : 'Low'}
+              </Badge>
+            )}
             <Badge 
               variant={getHealthBadge(systemStatus.system_health) as "default" | "destructive" | "outline" | "secondary"}
               className={`glass-card ${getHealthColor(systemStatus.system_health)}`}
