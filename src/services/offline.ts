@@ -285,6 +285,36 @@ class OfflineService {
     });
   }
 
+  // Preferences API
+  async setPreference<T = unknown>(key: string, value: T): Promise<void> {
+    if (!this.db) await this.initDB();
+
+    const record = { key, value, updatedAt: new Date().toISOString() };
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['preferences'], 'readwrite');
+      const store = transaction.objectStore('preferences');
+      const request = store.put(record);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getPreference<T = unknown>(key: string): Promise<T | null> {
+    if (!this.db) await this.initDB();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['preferences'], 'readonly');
+      const store = transaction.objectStore('preferences');
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result ? (result.value as T) : null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // Save form draft
   async saveDraft(formType: string, formData: unknown): Promise<string> {
     if (!this.db) await this.initDB();
@@ -456,6 +486,8 @@ export function useOffline() {
     sync: offlineService.forcSync.bind(offlineService),
     cacheData: offlineService.cacheData.bind(offlineService),
     getCachedData: offlineService.getCachedData.bind(offlineService),
+    setPreference: offlineService.setPreference.bind(offlineService),
+    getPreference: offlineService.getPreference.bind(offlineService),
     saveDraft: offlineService.saveDraft.bind(offlineService),
     getDrafts: offlineService.getDrafts.bind(offlineService),
     deleteDraft: offlineService.deleteDraft.bind(offlineService),
