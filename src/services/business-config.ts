@@ -28,6 +28,7 @@ export interface BusinessProfile {
   trailers: Array<{ lengthFeet: number; description?: string }>;
   equipment: Array<{ name: string; description?: string }>;
   materialPrices: Record<string, MaterialPrice>;
+  estimatorDefaults?: { overheadPct: number; profitPct: number };
 }
 
 export const defaultBusinessProfile: BusinessProfile = {
@@ -67,7 +68,8 @@ export const defaultBusinessProfile: BusinessProfile = {
     prep_seal: { name: 'Prep Seal (5-gal)', unit: 'bucket', price: 50 },
     fast_dry: { name: 'Fast Dry (5-gal)', unit: 'bucket', price: 50 },
     crack_filler_box: { name: 'CrackMaster Parking Lot LP (30 lb)', unit: 'box', price: 44.99 }
-  }
+  },
+  estimatorDefaults: { overheadPct: 10, profitPct: 20 }
 };
 
 class BusinessConfigService {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,16 @@ const Estimator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [overhead, setOverhead] = useState(10);
   const [profit, setProfit] = useState(20);
+
+  useEffect(() => {
+    (async () => {
+      const p = await businessConfigService.getProfile();
+      if (p.estimatorDefaults) {
+        setOverhead(p.estimatorDefaults.overheadPct);
+        setProfit(p.estimatorDefaults.profitPct);
+      }
+    })();
+  }, []);
 
   const handleDriveway = async (form: HTMLFormElement) => {
     setLoading(true);
