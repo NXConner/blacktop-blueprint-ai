@@ -71,6 +71,10 @@ const Estimator: React.FC = () => {
     const area = Number(data.get('area') || 0);
     const porosity = (data.get('porosity') as 'normal' | 'older') || 'normal';
     const stalls = Number(data.get('stalls') || 0);
+    const arrows = Number(data.get('arrows') || 0);
+    const crosswalks = Number(data.get('crosswalks') || 0);
+    const handicap = Number(data.get('handicap') || 0);
+    const colors = Number(data.get('colors') || 1);
     const cracks = Number(data.get('cracks') || 0);
     const address = String(data.get('address') || '');
 
@@ -96,7 +100,7 @@ const Estimator: React.FC = () => {
       serviceType: 'parking_lot',
       sealcoat: { areaSqFt: area, porosity },
       crackFill: { linearFeet: cracks },
-      striping: { standardStalls: stalls },
+      striping: { standardStalls: stalls, arrows, crosswalks, handicapSpots: handicap, paintColors: colors },
       travel: { region, milesRoundTrip: milesRT },
       overheadPct: overhead,
       profitMarginPct: profit,
@@ -200,12 +204,24 @@ const Estimator: React.FC = () => {
                   <Input id="stalls" name="stalls" type="number" min={0} />
                 </div>
                 <div>
+                  <Label htmlFor="arrows">Arrows</Label>
+                  <Input id="arrows" name="arrows" type="number" min={0} />
+                </div>
+                <div>
+                  <Label htmlFor="crosswalks">Crosswalks</Label>
+                  <Input id="crosswalks" name="crosswalks" type="number" min={0} />
+                </div>
+                <div>
                   <Label htmlFor="cracks_pl">Crack Filling (linear ft)</Label>
                   <Input id="cracks_pl" name="cracks" type="number" min={0} />
                 </div>
                 <div>
                   <Label htmlFor="handicap">Handicap Spots</Label>
                   <Input id="handicap" name="handicap" type="number" min={0} />
+                </div>
+                <div>
+                  <Label htmlFor="colors">Paint Colors</Label>
+                  <Input id="colors" name="colors" type="number" min={1} defaultValue={1} />
                 </div>
                 <div className="col-span-2">
                   <Label htmlFor="addr_pl">Job Address (optional)</Label>
