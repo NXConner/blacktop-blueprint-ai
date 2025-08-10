@@ -143,6 +143,18 @@ const navigationItems: NavigationItem[] = [
     description: 'System security management'
   },
   { 
+    name: 'Estimates', 
+    href: '/estimates', 
+    icon: Calculator,
+    description: 'Saved estimates'
+  },
+  { 
+    name: 'Invoices', 
+    href: '/invoices', 
+    icon: DollarSign,
+    description: 'Invoices and billing'
+  },
+  { 
     name: 'Marketplace', 
     href: '/catalog', 
     icon: Package,

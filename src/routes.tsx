@@ -25,6 +25,8 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const MaterialsCatalog = lazy(() => import('./pages/MaterialsCatalog'));
 const Estimator = lazy(() => import('./pages/Estimator'));
 const Payroll = lazy(() => import('./pages/Payroll'));
+const Estimates = lazy(() => import('./pages/Estimates'));
+const Invoices = lazy(() => import('./pages/Invoices'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -43,6 +45,8 @@ export const routes: AppRoute[] = [
   { path: '/estimator', element: Estimator },
   { path: '/payroll', element: Payroll, requiresAuth: true },
   { path: '/materials', element: MaterialsCatalog },
+  { path: '/estimates', element: Estimates },
+  { path: '/invoices', element: Invoices },
   { path: '/downloads', element: Downloads },
   { path: '/settings', element: Settings, requiresAuth: true },
   { path: '*', element: NotFound },
@@ -66,6 +70,8 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/estimator': () => import('./pages/Estimator'),
   '/payroll': () => import('./pages/Payroll'),
   '/materials': () => import('./pages/MaterialsCatalog'),
+  '/estimates': () => import('./pages/Estimates'),
+  '/invoices': () => import('./pages/Invoices'),
   '/downloads': () => import('./pages/Downloads'),
   '/settings': () => import('./pages/Settings'),
 };

@@ -1,0 +1,96 @@
+import React, { useEffect, useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { Download } from 'lucide-react';
+
+interface InvoiceRow { id: string; payload: any; created_at: string }
+
+const Invoices: React.FC = () => {
+  const [rows, setRows] = useState<InvoiceRow[]>([]);
+  const [selected, setSelected] = useState<InvoiceRow | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+      setRows((data as any[]) || []);
+    })();
+  }, []);
+
+  return (
+    <div className="min-h-screen p-6">
+      <h1 className="text-3xl font-bold mb-4">Invoices</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="glass-card p-4">
+          <div className="space-y-2">
+            {rows.map(r => (
+              <div key={r.id} className={`p-2 rounded border cursor-pointer ${selected?.id===r.id?'border-primary':'border-glass-border'}`} onClick={() => setSelected(r)}>
+                <div className="text-sm font-medium">{r.payload?.clientName || 'Client'}</div>
+                <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</div>
+                <div className="text-xs">Total: ${r.payload?.total?.toFixed?.(2)}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card className="glass-card p-6 lg:col-span-2">
+          {!selected ? (
+            <div className="text-muted-foreground">Select an invoice</div>
+          ) : (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <div className="text-2xl font-bold">Invoice</div>
+                  <div className="text-sm text-muted-foreground">ID: {selected.id}</div>
+                </div>
+                <Button variant="outline" onClick={() => window.print()}><Download className="w-4 h-4 mr-2" />Print/PDF</Button>
+              </div>
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                  <div className="font-medium">Bill To</div>
+                  <div>{selected.payload?.clientName || 'Client Name'}</div>
+                  <div className="text-sm text-muted-foreground whitespace-pre-line">{selected.payload?.clientAddress || ''}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium">Total</div>
+                  <div className="text-3xl font-bold">${selected.payload?.total?.toFixed?.(2)}</div>
+                </div>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b border-glass-border">
+                    <th className="py-2">Description</th>
+                    <th className="py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selected.payload?.items?.map((it: any, idx: number) => (
+                    <tr key={idx} className="border-b border-glass-border">
+                      <td className="py-2">{it.description}</td>
+                      <td className="py-2 text-right">${it.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td className="py-2 font-medium">Subtotal</td>
+                    <td className="py-2 text-right">${selected.payload?.subtotal?.toFixed?.(2)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-medium">Tax</td>
+                    <td className="py-2 text-right">${selected.payload?.tax?.toFixed?.(2) || '0.00'}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-bold text-lg">Total</td>
+                    <td className="py-2 text-right font-bold text-lg">${selected.payload?.total?.toFixed?.(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Invoices;
