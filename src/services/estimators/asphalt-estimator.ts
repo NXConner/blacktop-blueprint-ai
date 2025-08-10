@@ -1,5 +1,6 @@
 import { businessConfigService } from '@/services/business-config';
 import { fuelPriceService, Region } from '@/services/fuel-price';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Porosity = 'normal' | 'older';
 export type ServiceType = 'driveway' | 'parking_lot';
@@ -67,7 +68,7 @@ export interface EstimateBreakdown {
 const sqFtPerGallonMixed = (porosity: Porosity) => (porosity === 'older' ? 70 : 82);
 
 export class AsphaltEstimatorService {
-  async estimate(inputs: EstimateInputs): Promise<EstimateBreakdown> {
+  async estimate(inputs: EstimateInputs, persist: boolean = false): Promise<EstimateBreakdown> {
     const profile = await businessConfigService.getProfile();
     const blendedRate = profile.employees.blendedRatePerHour ?? 50;
     const laborCount = profile.employees.fullTime + profile.employees.partTime * 0.5;
@@ -93,7 +94,7 @@ export class AsphaltEstimatorService {
       materials.sand_bag = Math.ceil(sandBags);
       materials.water_gallon = Math.ceil(waterGallons);
 
-      if (oilSpotAreaSqFt > 0) {
+      if (oilSpotAreaSqFt && oilSpotAreaSqFt > 0) {
         const coveragePerBucket = 900; // 5-gal covers 750-1000 sq ft, average 900
         const buckets = Math.ceil(oilSpotAreaSqFt / coveragePerBucket);
         materials.prep_seal = buckets;
@@ -176,7 +177,7 @@ export class AsphaltEstimatorService {
     const profit = (subtotal + overhead) * ((inputs.profitMarginPct ?? 20) / 100);
     const total = subtotal + overhead + profit;
 
-    return {
+    const breakdown: EstimateBreakdown = {
       materials,
       laborHours,
       laborCost,
@@ -188,6 +189,20 @@ export class AsphaltEstimatorService {
       profit,
       total,
     };
+
+    if (persist) {
+      try {
+        await supabase.from('estimates').insert({
+          client_name: null,
+          client_address: null,
+          service_type: inputs.serviceType,
+          inputs,
+          breakdown,
+        });
+      } catch (_) {}
+    }
+
+    return breakdown;
   }
 }
 

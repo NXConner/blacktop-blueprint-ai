@@ -12,6 +12,7 @@ import { fuelPriceService } from '@/services/fuel-price';
 import { MapPin, Calculator, Fuel } from 'lucide-react';
 import { geocodeAddress, haversineMiles, detectRegionFromAddress } from '@/services/geocoding';
 import { Slider } from '@/components/ui/slider';
+import { invoicingService } from '@/services/invoicing';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
@@ -39,14 +40,15 @@ const Estimator: React.FC = () => {
     }
     const fuel = await fuelPriceService.getPrice(region, 'regular');
 
-    const estimate = await asphaltEstimator.estimate({
+    const inputPayload = {
       serviceType: 'driveway',
       sealcoat: { areaSqFt: area, porosity },
       crackFill: { linearFeet: cracks },
       travel: { region, milesRoundTrip: milesRT },
       overheadPct: overhead,
       profitMarginPct: profit,
-    });
+    } as const;
+    const estimate = await asphaltEstimator.estimate(inputPayload, true);
 
     setResult({ estimate, profile, fuel });
     setLoading(false);
@@ -72,7 +74,7 @@ const Estimator: React.FC = () => {
       if (regionDetected !== 'OTHER') region = regionDetected;
     }
 
-    const estimate = await asphaltEstimator.estimate({
+    const inputPayload = {
       serviceType: 'parking_lot',
       sealcoat: { areaSqFt: area, porosity },
       crackFill: { linearFeet: cracks },
@@ -80,7 +82,8 @@ const Estimator: React.FC = () => {
       travel: { region, milesRoundTrip: milesRT },
       overheadPct: overhead,
       profitMarginPct: profit,
-    });
+    } as const;
+    const estimate = await asphaltEstimator.estimate(inputPayload, true);
 
     setResult({ estimate });
     setLoading(false);
@@ -149,6 +152,11 @@ const Estimator: React.FC = () => {
                   <Calculator className="w-4 h-4 mr-2" /> Calculate
                 </Button>
                 <Button type="button" variant="outline" onClick={() => window.print()}>Export PDF</Button>
+                <Button type="button" variant="outline" onClick={async () => {
+                  if (!result) return;
+                  const iv = await invoicingService.createFromEstimate(result.inputs || {}, { name: '', address: '' }, 'Estimate');
+                  alert('Invoice created: ' + iv.id);
+                }}>Create Invoice</Button>
               </div>
             </form>
           </Card>
@@ -201,6 +209,11 @@ const Estimator: React.FC = () => {
                   <Calculator className="w-4 h-4 mr-2" /> Calculate
                 </Button>
                 <Button type="button" variant="outline" onClick={() => window.print()}>Export PDF</Button>
+                <Button type="button" variant="outline" onClick={async () => {
+                  if (!result) return;
+                  const iv = await invoicingService.createFromEstimate(result.inputs || {}, { name: '', address: '' }, 'Estimate');
+                  alert('Invoice created: ' + iv.id);
+                }}>Create Invoice</Button>
               </div>
             </form>
           </Card>
