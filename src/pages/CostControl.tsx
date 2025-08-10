@@ -15,9 +15,11 @@ import {
   Target,
   Clock,
   CheckCircle,
-  PieChart
+  PieChart,
+  Fuel
 } from 'lucide-react';
 import CostAnalyzer from '@/components/cost/CostAnalyzer';
+import { fuelPriceService } from '@/services/fuel-price';
 
 const CostControl: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState({
@@ -34,9 +36,19 @@ const CostControl: React.FC = () => {
     cash_flow: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [fuel, setFuel] = useState<{ va: number; vaDiesel: number; nc: number; ncDiesel: number } | null>(null);
 
   useEffect(() => {
     loadSystemStatus();
+    (async () => {
+      const [va, vaD, nc, ncD] = await Promise.all([
+        fuelPriceService.getPrice('VA', 'regular'),
+        fuelPriceService.getPrice('VA', 'diesel'),
+        fuelPriceService.getPrice('NC', 'regular'),
+        fuelPriceService.getPrice('NC', 'diesel'),
+      ]);
+      setFuel({ va: va.pricePerGallon, vaDiesel: vaD.pricePerGallon, nc: nc.pricePerGallon, ncDiesel: ncD.pricePerGallon });
+    })();
   }, []);
 
   const loadSystemStatus = async () => {
@@ -135,6 +147,19 @@ const CostControl: React.FC = () => {
             >
               <Settings className="w-4 h-4 mr-2" />
               Configure
+            </Button>
+            {fuel && (
+              <Badge variant="outline" className="glass-card">
+                <Fuel className="w-4 h-4 mr-2" />
+                VA ${fuel.va.toFixed(2)} | VA Diesel ${fuel.vaDiesel.toFixed(2)} | NC ${fuel.nc.toFixed(2)} | NC Diesel ${fuel.ncDiesel.toFixed(2)}
+              </Badge>
+            )}
+            <Button
+              variant="outline"
+              className="glass-card"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
             </Button>
           </div>
         </div>

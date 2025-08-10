@@ -22,6 +22,13 @@ const Catalog = lazy(() => import('./pages/Catalog'));
 const Downloads = lazy(() => import('./pages/Downloads'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const MaterialsCatalog = lazy(() => import('./pages/MaterialsCatalog'));
+const Estimator = lazy(() => import('./pages/Estimator'));
+const Payroll = lazy(() => import('./pages/Payroll'));
+const Estimates = lazy(() => import('./pages/Estimates'));
+const Invoices = lazy(() => import('./pages/Invoices'));
+const FleetFuel = lazy(() => import('./pages/FleetFuel'));
+const SupplierReceipts = lazy(() => import('./pages/SupplierReceipts'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -37,6 +44,13 @@ export const routes: AppRoute[] = [
   { path: '/security-compliance', element: SecurityCompliance, requiresAuth: true },
   { path: '/catalog', element: Catalog },
   { path: '/marketplace', element: Catalog },
+  { path: '/estimator', element: Estimator },
+  { path: '/payroll', element: Payroll, requiresAuth: true },
+  { path: '/materials', element: MaterialsCatalog },
+  { path: '/estimates', element: Estimates },
+  { path: '/invoices', element: Invoices },
+  { path: '/fleet-fuel', element: FleetFuel },
+  { path: '/supplier-receipts', element: SupplierReceipts },
   { path: '/downloads', element: Downloads },
   { path: '/settings', element: Settings, requiresAuth: true },
   { path: '*', element: NotFound },
@@ -57,6 +71,13 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/security-compliance': () => import('./pages/SecurityCompliance'),
   '/catalog': () => import('./pages/Catalog'),
   '/marketplace': () => import('./pages/Catalog'),
+  '/estimator': () => import('./pages/Estimator'),
+  '/payroll': () => import('./pages/Payroll'),
+  '/materials': () => import('./pages/MaterialsCatalog'),
+  '/estimates': () => import('./pages/Estimates'),
+  '/invoices': () => import('./pages/Invoices'),
+  '/fleet-fuel': () => import('./pages/FleetFuel'),
+  '/supplier-receipts': () => import('./pages/SupplierReceipts'),
   '/downloads': () => import('./pages/Downloads'),
   '/settings': () => import('./pages/Settings'),
 };

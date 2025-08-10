@@ -26,7 +26,9 @@ import {
   MessageSquare,
   AlertTriangle,
   CheckCircle,
-  Lock
+  Lock,
+  Calculator,
+  Fuel
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -98,6 +100,24 @@ const navigationItems: NavigationItem[] = [
     description: 'Financial oversight'
   },
   { 
+    name: 'Estimator', 
+    href: '/estimator', 
+    icon: Calculator,
+    description: 'Driveway and Parking Lot estimation'
+  },
+  { 
+    name: 'Materials', 
+    href: '/materials', 
+    icon: Package,
+    description: 'Materials & pricing'
+  },
+  { 
+    name: 'Payroll', 
+    href: '/payroll', 
+    icon: Users,
+    description: 'Run payroll and taxes'
+  },
+  { 
     name: 'Mobile App', 
     href: '/mobile-app', 
     icon: Smartphone,
@@ -124,11 +144,35 @@ const navigationItems: NavigationItem[] = [
     description: 'System security management'
   },
   { 
+    name: 'Estimates', 
+    href: '/estimates', 
+    icon: Calculator,
+    description: 'Saved estimates'
+  },
+  { 
+    name: 'Invoices', 
+    href: '/invoices', 
+    icon: DollarSign,
+    description: 'Invoices and billing'
+  },
+  { 
     name: 'Marketplace', 
     href: '/catalog', 
     icon: Package,
     badge: 'NEW',
     description: 'Browse and install addon modules'
+  },
+  { 
+    name: 'Fleet Fuel', 
+    href: '/fleet-fuel', 
+    icon: Fuel,
+    description: 'Fuel logs & costs'
+  },
+  { 
+    name: 'Supplier Receipts', 
+    href: '/supplier-receipts', 
+    icon: Package,
+    description: 'Update materials prices'
   },
   { 
     name: 'Downloads', 

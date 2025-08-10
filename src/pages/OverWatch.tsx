@@ -12,7 +12,7 @@ import {
   RefreshCw,
   AlertTriangle
 } from 'lucide-react';
-import OverWatchMap from '@/components/overwatch/OverWatchMap';
+import OverWatchLeafletMap from '@/components/overwatch/OverWatchLeafletMap';
 import OverWatchControlPanel from '@/components/overwatch/OverWatchControlPanel';
 import { ResponsiveContainer } from '@/components/ui/responsive-container';
 
@@ -88,10 +88,7 @@ const OverWatch: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Main Map */}
               <div className="lg:col-span-2">
-                <OverWatchMap 
-                  height={isFullscreen ? "calc(100vh - 200px)" : "600px"}
-                  className="w-full"
-                />
+                <OverWatchLeafletMap height={isFullscreen ? "calc(100vh - 200px)" : "600px"} />
               </div>
 
               {/* Live Status Panel */}

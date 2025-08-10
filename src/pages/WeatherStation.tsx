@@ -19,6 +19,8 @@ import {
   TrendingUp
 } from 'lucide-react';
 import WeatherMonitor from '@/components/weather/WeatherMonitor';
+import RadarMap from '@/components/map/RadarMap';
+import { getGeofenceWeatherRisk } from '@/services/geofence';
 
 const WeatherStation: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState({
@@ -34,9 +36,14 @@ const WeatherStation: React.FC = () => {
     dew_point: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [risk, setRisk] = useState<{ upcomingRain: boolean; precipitationChance: number } | null>(null);
 
   useEffect(() => {
     loadSystemStatus();
+    (async () => {
+      const r = await getGeofenceWeatherRisk(12);
+      if (r) setRisk({ upcomingRain: r.upcomingRain, precipitationChance: r.precipitationChance });
+    })();
   }, []);
 
   const loadSystemStatus = async () => {
@@ -120,6 +127,11 @@ const WeatherStation: React.FC = () => {
               <Activity className="w-4 h-4 mr-2" />
               {systemStatus.stations_online} Stations Online
             </Badge>
+            {risk && (
+              <Badge variant={risk.upcomingRain ? 'destructive' : 'secondary'} className="glass-card">
+                Rain Risk {risk.upcomingRain ? `${risk.precipitationChance}%` : 'Low'}
+              </Badge>
+            )}
             <Badge 
               variant={getHealthBadge(systemStatus.system_health) as "default" | "destructive" | "outline" | "secondary"}
               className={`glass-card ${getHealthColor(systemStatus.system_health)}`}
@@ -216,7 +228,7 @@ const WeatherStation: React.FC = () => {
       {/* Main Content */}
       {!isLoading && (
         <Tabs defaultValue="monitor" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="monitor" className="flex items-center gap-2">
               <Cloud className="w-4 h-4" />
               Weather Monitor
@@ -229,11 +241,20 @@ const WeatherStation: React.FC = () => {
               <AlertTriangle className="w-4 h-4" />
               Alert Management
             </TabsTrigger>
+            <TabsTrigger value="radar" className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Radar & Map
+            </TabsTrigger>
           </TabsList>
 
           {/* Weather Monitor Tab */}
           <TabsContent value="monitor">
             <WeatherMonitor className="w-full" />
+          </TabsContent>
+
+          {/* Radar Tab */}
+          <TabsContent value="radar">
+            <RadarMap className="w-full" />
           </TabsContent>
 
           {/* Environmental Analysis Tab */}

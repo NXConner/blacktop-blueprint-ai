@@ -17,7 +17,8 @@ import {
   RefreshCw,
   ZoomIn,
   Target,
-  Activity
+  Activity,
+  ExternalLink
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { PavementScan } from '@/types/database';
@@ -720,6 +721,25 @@ const PavementScanInterface: React.FC<ScanInterfaceProps> = ({
               </div>
             )}
           </Card>
+        </TabsContent>
+      </Tabs>
+      <Tabs defaultValue="analysis">
+        <TabsList>
+          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+          <TabsTrigger value="drone">Drone & 3D</TabsTrigger>
+        </TabsList>
+        <TabsContent value="analysis">
+          {/* existing analysis UI would render here */}
+        </TabsContent>
+        <TabsContent value="drone">
+          <div className="p-4 border rounded">
+            <div className="flex items-center gap-2 mb-2"><Camera className="w-4 h-4" /><div className="font-medium">Drone & 3D Capture</div></div>
+            <p className="text-sm text-muted-foreground mb-3">Use SkyeBrowse or PropertyIntel to capture 3D scans and upload outputs (LAS/LAZ/PLY). This stub prepares the integration points.</p>
+            <div className="flex gap-2 text-sm">
+              <a className="underline" href="https://www.skyebrowse.com" target="_blank" rel="noreferrer"><ExternalLink className="inline w-3 h-3" /> SkyeBrowse</a>
+              <a className="underline" href="https://www.propertyintel.com" target="_blank" rel="noreferrer"><ExternalLink className="inline w-3 h-3" /> PropertyIntel</a>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
