@@ -22,6 +22,9 @@ const Catalog = lazy(() => import('./pages/Catalog'));
 const Downloads = lazy(() => import('./pages/Downloads'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const MaterialsCatalog = lazy(() => import('./pages/MaterialsCatalog'));
+const Estimator = lazy(() => import('./pages/Estimator'));
+const Payroll = lazy(() => import('./pages/Payroll'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -37,6 +40,9 @@ export const routes: AppRoute[] = [
   { path: '/security-compliance', element: SecurityCompliance, requiresAuth: true },
   { path: '/catalog', element: Catalog },
   { path: '/marketplace', element: Catalog },
+  { path: '/estimator', element: Estimator },
+  { path: '/payroll', element: Payroll, requiresAuth: true },
+  { path: '/materials', element: MaterialsCatalog },
   { path: '/downloads', element: Downloads },
   { path: '/settings', element: Settings, requiresAuth: true },
   { path: '*', element: NotFound },
@@ -57,6 +63,9 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/security-compliance': () => import('./pages/SecurityCompliance'),
   '/catalog': () => import('./pages/Catalog'),
   '/marketplace': () => import('./pages/Catalog'),
+  '/estimator': () => import('./pages/Estimator'),
+  '/payroll': () => import('./pages/Payroll'),
+  '/materials': () => import('./pages/MaterialsCatalog'),
   '/downloads': () => import('./pages/Downloads'),
   '/settings': () => import('./pages/Settings'),
 };

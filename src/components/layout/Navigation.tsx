@@ -26,7 +26,8 @@ import {
   MessageSquare,
   AlertTriangle,
   CheckCircle,
-  Lock
+  Lock,
+  Calculator
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -96,6 +97,24 @@ const navigationItems: NavigationItem[] = [
     href: '/cost-control', 
     icon: DollarSign,
     description: 'Financial oversight'
+  },
+  { 
+    name: 'Estimator', 
+    href: '/estimator', 
+    icon: Calculator,
+    description: 'Driveway and Parking Lot estimation'
+  },
+  { 
+    name: 'Materials', 
+    href: '/materials', 
+    icon: Package,
+    description: 'Materials & pricing'
+  },
+  { 
+    name: 'Payroll', 
+    href: '/payroll', 
+    icon: Users,
+    description: 'Run payroll and taxes'
   },
   { 
     name: 'Mobile App', 

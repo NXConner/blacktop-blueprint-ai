@@ -23,6 +23,7 @@ import {
   Globe
 } from 'lucide-react';
 import MobileInterface from '@/components/mobile/MobileInterface';
+import AINotes from '@/components/ai/AINotes';
 
 import ResponsiveContainer from '@/components/ui/responsive-container';
 
@@ -227,6 +228,10 @@ const MobileApp: React.FC = () => {
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <Mic className="w-4 h-4" />
+            Notes
           </TabsTrigger>
         </TabsList>
 
@@ -558,6 +563,11 @@ const MobileApp: React.FC = () => {
               </div>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Notes Tab */}
+        <TabsContent value="notes">
+          <AINotes />
         </TabsContent>
       </Tabs>
 
