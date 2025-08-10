@@ -39,6 +39,7 @@ export interface StripingInputs {
   arrows?: number;
   crosswalks?: number;
   pricePerLinearFoot?: number; // override
+  paintColors?: number; // number of distinct colors used
 }
 
 export interface EstimateInputs {
@@ -148,9 +149,10 @@ export class AsphaltEstimatorService {
 
     // Striping (parking lots)
     if (inputs.serviceType === 'parking_lot' && inputs.striping) {
-      const { standardStalls = 0, doubleStalls = 0, handicapSpots = 0, arrows = 0, crosswalks = 0 } = inputs.striping;
+      const { standardStalls = 0, doubleStalls = 0, handicapSpots = 0, arrows = 0, crosswalks = 0, paintColors = 1 } = inputs.striping;
       const linearFeet = standardStalls * 20 + doubleStalls * 25 + arrows * 10 + crosswalks * 25;
-      materials.paint_gallons = Math.ceil(linearFeet / 300); // ~300 lf/gal typical
+      const colorMultiplier = Math.max(1, paintColors);
+      materials.paint_gallons = Math.ceil((linearFeet / 300) * colorMultiplier); // adjust for colors
       laborHours += (linearFeet / 200) * 0.5; // fast operation
       if (handicapSpots > 0) {
         materials.handicap_stencil_sets = handicapSpots;

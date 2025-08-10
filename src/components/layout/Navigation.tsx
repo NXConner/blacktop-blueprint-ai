@@ -27,7 +27,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Lock,
-  Calculator
+  Calculator,
+  Fuel
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -160,6 +161,18 @@ const navigationItems: NavigationItem[] = [
     icon: Package,
     badge: 'NEW',
     description: 'Browse and install addon modules'
+  },
+  { 
+    name: 'Fleet Fuel', 
+    href: '/fleet-fuel', 
+    icon: Fuel,
+    description: 'Fuel logs & costs'
+  },
+  { 
+    name: 'Supplier Receipts', 
+    href: '/supplier-receipts', 
+    icon: Package,
+    description: 'Update materials prices'
   },
   { 
     name: 'Downloads', 

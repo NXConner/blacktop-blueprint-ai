@@ -3,23 +3,34 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Download } from 'lucide-react';
+import { getARAging } from '@/services/payments';
 
 interface InvoiceRow { id: string; payload: any; created_at: string }
 
 const Invoices: React.FC = () => {
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [selected, setSelected] = useState<InvoiceRow | null>(null);
+  const [aging, setAging] = useState<{ current: number; thirty: number; sixty: number; ninety: number }>({ current: 0, thirty: 0, sixty: 0, ninety: 0 });
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
       setRows((data as any[]) || []);
+      setAging(await getARAging());
     })();
   }, []);
 
   return (
     <div className="min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-4">Invoices</h1>
+      <Card className="glass-card p-3 mb-4">
+        <div className="grid grid-cols-4 text-center text-sm">
+          <div>Current: ${aging.current.toFixed(2)}</div>
+          <div>30: ${aging.thirty.toFixed(2)}</div>
+          <div>60: ${aging.sixty.toFixed(2)}</div>
+          <div>90+: ${aging.ninety.toFixed(2)}</div>
+        </div>
+      </Card>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="glass-card p-4">
           <div className="space-y-2">
