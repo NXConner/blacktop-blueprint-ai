@@ -14,6 +14,7 @@ import { geocodeAddress, haversineMiles, detectRegionFromAddress } from '@/servi
 import { Slider } from '@/components/ui/slider';
 import { invoicingService } from '@/services/invoicing';
 import { postInvoiceToGL } from '@/services/accounting/invoice-posting';
+import { C30_1978, computeSk550Load, checkVehicleLoad } from '@/services/transport';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
@@ -51,7 +52,9 @@ const Estimator: React.FC = () => {
     } as const;
     const estimate = await asphaltEstimator.estimate(inputPayload, true);
 
-    setResult({ estimate, profile, fuel });
+    const load = computeSk550Load(Math.min(550, Math.max(0, area / 100))); // rough gallons heuristic
+    const gvwr = checkVehicleLoad(C30_1978, [load]);
+    setResult({ estimate, profile, fuel, transport: gvwr });
     setLoading(false);
   };
 
@@ -86,7 +89,9 @@ const Estimator: React.FC = () => {
     } as const;
     const estimate = await asphaltEstimator.estimate(inputPayload, true);
 
-    setResult({ estimate });
+    const load = computeSk550Load(Math.min(550, Math.max(0, area / 100)));
+    const gvwr = checkVehicleLoad(C30_1978, [load]);
+    setResult({ estimate, transport: gvwr });
     setLoading(false);
   };
 
@@ -225,7 +230,17 @@ const Estimator: React.FC = () => {
 
       {result && (
         <Card className="glass-card mt-6 p-4">
-          <pre className="text-xs overflow-auto max-h-96">{JSON.stringify(result, null, 2)}</pre>
+          <div className="grid grid-cols-2 gap-4">
+            <pre className="text-xs overflow-auto max-h-96 bg-muted/30 p-2 rounded">{JSON.stringify(result, null, 2)}</pre>
+            {result.transport && (
+              <div className="text-sm">
+                <div className="font-medium mb-1">Transport Load Check</div>
+                <div>Total Weight: {Math.round(result.transport.total).toLocaleString()} lbs</div>
+                <div>Within GVWR: {result.transport.within ? 'Yes' : 'No'}</div>
+                <div>Usage: {(result.transport.pct*100).toFixed(1)}%</div>
+              </div>
+            )}
+          </div>
         </Card>
       )}
     </div>
