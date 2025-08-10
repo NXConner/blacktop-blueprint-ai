@@ -11,10 +11,13 @@ import { businessConfigService } from '@/services/business-config';
 import { fuelPriceService } from '@/services/fuel-price';
 import { MapPin, Calculator, Fuel } from 'lucide-react';
 import { geocodeAddress, haversineMiles, detectRegionFromAddress } from '@/services/geocoding';
+import { Slider } from '@/components/ui/slider';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const [overhead, setOverhead] = useState(10);
+  const [profit, setProfit] = useState(20);
 
   const handleDriveway = async (form: HTMLFormElement) => {
     setLoading(true);
@@ -41,6 +44,8 @@ const Estimator: React.FC = () => {
       sealcoat: { areaSqFt: area, porosity },
       crackFill: { linearFeet: cracks },
       travel: { region, milesRoundTrip: milesRT },
+      overheadPct: overhead,
+      profitMarginPct: profit,
     });
 
     setResult({ estimate, profile, fuel });
@@ -73,6 +78,8 @@ const Estimator: React.FC = () => {
       crackFill: { linearFeet: cracks },
       striping: { standardStalls: stalls },
       travel: { region, milesRoundTrip: milesRT },
+      overheadPct: overhead,
+      profitMarginPct: profit,
     });
 
     setResult({ estimate });
@@ -111,6 +118,14 @@ const Estimator: React.FC = () => {
                   <Label htmlFor="cracks">Crack Filling (linear ft)</Label>
                   <Input id="cracks" name="cracks" type="number" min={0} />
                 </div>
+                <div>
+                  <Label htmlFor="oil">Oil spot area (sq ft)</Label>
+                  <Input id="oil" name="oil" type="number" min={0} />
+                </div>
+                <div>
+                  <Label htmlFor="fastdry">Fast dry buckets (0 for auto)</Label>
+                  <Input id="fastdry" name="fastdry" type="number" min={0} />
+                </div>
                 <div className="col-span-2">
                   <Label htmlFor="addr">Job Address (optional)</Label>
                   <Input id="addr" name="address" placeholder="Street, City, ST ZIP" />
@@ -118,14 +133,22 @@ const Estimator: React.FC = () => {
               </div>
 
               <Separator className="my-4" />
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" /> Job site address will be entered when generating the final proposal.
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <div className="mb-2 text-sm">Overhead: {overhead}%</div>
+                  <Slider value={[overhead]} min={0} max={30} step={1} onValueChange={v => setOverhead(v[0])} />
+                </div>
+                <div>
+                  <div className="mb-2 text-sm">Profit: {profit}%</div>
+                  <Slider value={[profit]} min={0} max={40} step={1} onValueChange={v => setProfit(v[0])} />
+                </div>
               </div>
 
               <div className="mt-4 flex gap-3">
                 <Button type="submit" disabled={loading}>
                   <Calculator className="w-4 h-4 mr-2" /> Calculate
                 </Button>
+                <Button type="button" variant="outline" onClick={() => window.print()}>Export PDF</Button>
               </div>
             </form>
           </Card>
@@ -151,6 +174,10 @@ const Estimator: React.FC = () => {
                   <Label htmlFor="cracks_pl">Crack Filling (linear ft)</Label>
                   <Input id="cracks_pl" name="cracks" type="number" min={0} />
                 </div>
+                <div>
+                  <Label htmlFor="handicap">Handicap Spots</Label>
+                  <Input id="handicap" name="handicap" type="number" min={0} />
+                </div>
                 <div className="col-span-2">
                   <Label htmlFor="addr_pl">Job Address (optional)</Label>
                   <Input id="addr_pl" name="address" placeholder="Street, City, ST ZIP" />
@@ -158,14 +185,22 @@ const Estimator: React.FC = () => {
               </div>
 
               <Separator className="my-4" />
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Fuel className="w-4 h-4" /> Fuel price fetched at calculation time for VA/NC.
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <div className="mb-2 text-sm">Overhead: {overhead}%</div>
+                  <Slider value={[overhead]} min={0} max={30} step={1} onValueChange={v => setOverhead(v[0])} />
+                </div>
+                <div>
+                  <div className="mb-2 text-sm">Profit: {profit}%</div>
+                  <Slider value={[profit]} min={0} max={40} step={1} onValueChange={v => setProfit(v[0])} />
+                </div>
               </div>
 
               <div className="mt-4 flex gap-3">
                 <Button type="submit" disabled={loading}>
                   <Calculator className="w-4 h-4 mr-2" /> Calculate
                 </Button>
+                <Button type="button" variant="outline" onClick={() => window.print()}>Export PDF</Button>
               </div>
             </form>
           </Card>
