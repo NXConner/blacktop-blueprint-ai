@@ -19,6 +19,7 @@ const milesToMeters = (miles: number) => miles * 1609.34;
 const OverWatchLeafletMap: React.FC<{ height?: string }> = ({ height = '600px' }) => {
   const [center, setCenter] = useState<[number, number]>([36.6418, -80.2667]);
   const [radiusMiles, setRadiusMiles] = useState<number>(15);
+  const [basemap, setBasemap] = useState<'osm' | 'esri' | 'stamen'>('osm');
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -64,8 +65,23 @@ const OverWatchLeafletMap: React.FC<{ height?: string }> = ({ height = '600px' }
         </div>
       </div>
       <div style={{ height }}>
+        <div className="absolute z-[1000] m-2 p-1 bg-background/80 rounded border border-glass-border">
+          <select className="text-xs bg-transparent" value={basemap} onChange={e => setBasemap(e.target.value as any)}>
+            <option value="osm">OSM</option>
+            <option value="esri">ESRI Imagery</option>
+            <option value="stamen">Stamen Terrain</option>
+          </select>
+        </div>
         <MapContainer center={center} zoom={10} style={{ height: '100%', width: '100%' }}>
-          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          {basemap === 'osm' && (
+            <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          )}
+          {basemap === 'esri' && (
+            <TileLayer attribution='&copy; ESRI' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+          )}
+          {basemap === 'stamen' && (
+            <TileLayer attribution='&copy; Stamen' url="https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png" />
+          )}
           <WMSTileLayer url="https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi" params={{ layers: 'nexrad-n0r-900913', transparent: true, format: 'image/png' }} opacity={0.5} />
           <Circle center={center} radius={circleMeters} pathOptions={{ color: '#22c55e', weight: 2, fillOpacity: 0.05 }} />
           {vehicles.map(v => (

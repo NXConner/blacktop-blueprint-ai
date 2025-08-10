@@ -78,7 +78,13 @@ export class AsphaltEstimatorService {
     let laborHours = 0;
     let equipmentFuelCost = 0;
     let travelFuelCost = 0;
-    let mobilizationFee = 200; // midpoint of typical range
+    // Mobilization tiers by distance and job size
+    const miles = inputs.travel.milesRoundTrip || 0;
+    const areaSqFt = inputs.sealcoat?.areaSqFt || 0;
+    let mobilizationFee = 150;
+    if (miles > 20) mobilizationFee = 200;
+    if (miles > 50) mobilizationFee = 300;
+    if (areaSqFt > 50000) mobilizationFee += 100;
 
     // Sealcoating
     if (inputs.sealcoat) {
