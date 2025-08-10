@@ -54,6 +54,7 @@ const Invoices: React.FC = () => {
                   <div className="text-sm text-muted-foreground">ID: {selected.id}</div>
                 </div>
                 <Button variant="outline" onClick={() => window.print()}><Download className="w-4 h-4 mr-2" />Print/PDF</Button>
+                <Button variant="outline" onClick={() => alert('Email sent (stub).')}>Email</Button>
               </div>
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
