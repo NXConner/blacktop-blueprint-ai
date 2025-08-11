@@ -28,7 +28,12 @@ const OverWatchLeafletMap: React.FC<{ height?: string }> = ({ height = '600px' }
   useEffect(() => {
     offlineService.getPreference<number>('map.radiusMiles').then(v => { if (typeof v === 'number') setRadiusMiles(v); });
     offlineService.getPreference<[number, number]>('map.center').then(v => { if (Array.isArray(v) && v.length===2) setCenter([v[0], v[1]]); });
+    offlineService.getPreference<'osm'|'esri'|'stamen'>('map.basemap').then(v => { if (v) setBasemap(v); });
   }, []);
+
+  useEffect(() => {
+    offlineService.setPreference('map.basemap', basemap);
+  }, [basemap]);
 
   useEffect(() => {
     const load = async () => {
