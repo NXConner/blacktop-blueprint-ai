@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Activity, Crosshair, Layers, Map, Radar } from 'lucide-react';
-import { MapContainer, TileLayer, WMSTileLayer, Marker, Circle, useMap } from 'react-leaflet';
-import L, { LatLngExpression } from 'leaflet';
+import { Activity, Crosshair, Layers, Map, Radar, Maximize2, CornerDownRight, Search, RefreshCcw } from 'lucide-react';
+import { MapContainer, TileLayer, WMSTileLayer, Marker, Circle, useMap, Polyline } from 'react-leaflet';
+import L, { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -25,7 +25,21 @@ function RecenterMap({ center }: { center: LatLngExpression }) {
   return null;
 }
 
+function MapEnhancements() {
+  const map = useMap();
+  useEffect(() => {
+    const scale = L.control.scale({ metric: false });
+    scale.addTo(map);
+    return () => {
+      scale.remove();
+    };
+  }, [map]);
+  return null;
+}
+
 const UnifiedMap: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Core state
   const [center, setCenter] = useState<LatLngExpression>(BUSINESS_COORDS);
   const [radiusMiles, setRadiusMiles] = useState<number>(15);
@@ -43,6 +57,11 @@ const UnifiedMap: React.FC = () => {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+
+  // Geocoding
+  const [searchText, setSearchText] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<Array<{ display: string; coords: [number, number] }>>([]);
 
   // Load preferences
   useEffect(() => {
@@ -68,6 +87,7 @@ const UnifiedMap: React.FC = () => {
 
   // Data refresh
   useEffect(() => {
+    let abort = false;
     const load = async () => {
       try {
         setStatus('connecting');
@@ -76,17 +96,30 @@ const UnifiedMap: React.FC = () => {
           api.crews.getAll(),
           api.alerts.getActive(),
         ]);
-        if (v.success) setVehicles(v.data || []);
-        if (c.success) setCrews(c.data || []);
-        if (a.success) setAlerts(a.data || []);
-        setStatus('connected');
+        if (!abort) {
+          if (v.success) setVehicles(v.data || []);
+          if (c.success) setCrews(c.data || []);
+          if (a.success) setAlerts(a.data || []);
+          setStatus('connected');
+        }
       } catch {
-        setStatus('disconnected');
+        if (!abort) setStatus('disconnected');
       }
     };
     load();
-    const t = setInterval(load, 10000);
-    return () => clearInterval(t);
+    const t = setInterval(load, 12000);
+    return () => { abort = true; clearInterval(t); };
+  }, []);
+
+  // Keyboard shortcuts for quick radius tweaks
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '+' || e.key === '=') setRadiusMiles(v => Math.min(50, v + 1));
+      if (e.key === '-' || e.key === '_') setRadiusMiles(v => Math.max(1, v - 1));
+      if (e.key.toLowerCase() === 'r') setRadarEnabled(v => !v);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const circleMeters = useMemo(() => milesToMeters(radiusMiles), [radiusMiles]);
@@ -103,8 +136,50 @@ const UnifiedMap: React.FC = () => {
     );
   };
 
+  // Fit to data (vehicles/crews/alerts + center)
+  const computeBounds = (): LatLngBoundsExpression | null => {
+    const points: [number, number][] = [];
+    if (Array.isArray(center)) points.push([center[0] as number, center[1] as number]);
+    vehicles.forEach(v => points.push([v.location.coordinates[1], v.location.coordinates[0]]));
+    crews.forEach(() => points.push([36.64 + Math.random()*0.1, -80.26 + Math.random()*0.1]));
+    alerts.forEach(() => points.push([36.61 + Math.random()*0.15, -80.24 + Math.random()*0.15]));
+    if (points.length < 2) return null;
+    return L.latLngBounds(points as any);
+  };
+
+  // Geocode search (Nominatim)
+  const search = async () => {
+    if (!searchText || searching) return;
+    setSearching(true);
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=5` , { headers: { 'Accept': 'application/json' } });
+      const data = await resp.json();
+      const mapped = (data || []).map((r: any) => ({ display: r.display_name as string, coords: [Number(r.lat), Number(r.lon)] as [number, number] }));
+      setResults(mapped);
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const vehicleMarkers = useMemo(() => showVehicles ? vehicles.map(v => (
+    <Marker key={`veh-${v.vehicle_id}`} position={[v.location.coordinates[1], v.location.coordinates[0]] as any} icon={DefaultIcon}>
+    </Marker>
+  )) : null, [showVehicles, vehicles]);
+
+  const crewMarkers = useMemo(() => showCrews ? crews.map((c, i) => (
+    <Marker key={`crew-${c.crew_id || i}`} position={[36.64 + Math.random()*0.1, -80.26 + Math.random()*0.1] as any} icon={DefaultIcon}>
+    </Marker>
+  )) : null, [showCrews, crews]);
+
+  const alertMarkers = useMemo(() => showAlerts ? alerts.map((a, i) => (
+    <Marker key={`alert-${a.id || i}`} position={[36.61 + Math.random()*0.15, -80.24 + Math.random()*0.15] as any} icon={DefaultIcon}>
+    </Marker>
+  )) : null, [showAlerts, alerts]);
+
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4" ref={containerRef}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-primary" />
@@ -114,6 +189,30 @@ const UnifiedMap: React.FC = () => {
           </Badge>
         </div>
         <div className="flex gap-2">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              className="pl-7 pr-8 py-1 text-sm rounded-md border border-glass-border bg-background/70"
+              placeholder="Search address or place"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void search(); }}
+            />
+            <Button size="icon" variant="ghost" className="absolute right-0 top-0 h-full" onClick={search} disabled={searching}>
+              {searching ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CornerDownRight className="w-4 h-4" />}
+            </Button>
+            {results.length > 0 && (
+              <div className="absolute z-[1001] mt-1 w-[340px] max-h-48 overflow-auto rounded-md border border-glass-border bg-background/95 shadow">
+                {results.map((r, idx) => (
+                  <div key={idx} className="px-2 py-1 text-xs hover:bg-muted/40 cursor-pointer" onClick={() => {
+                    setCenter(r.coords);
+                    setResults([]);
+                    void offlineService.setPreference('map.unified.center', r.coords);
+                  }}>{r.display}</div>
+                ))}
+              </div>
+            )}
+          </div>
           <Button variant="outline" size="sm" onClick={locate}><Crosshair className="w-4 h-4 mr-1" /> Locate</Button>
         </div>
       </div>
@@ -137,11 +236,11 @@ const UnifiedMap: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 text-sm">
             <input id="vehToggle" type="checkbox" checked={showVehicles} onChange={e => setShowVehicles(e.target.checked)} />
-            <label htmlFor="vehToggle">Vehicles</label>
+            <label htmlFor="vehToggle">Vehicles ({vehicles.length})</label>
             <input id="crewToggle" type="checkbox" className="ml-3" checked={showCrews} onChange={e => setShowCrews(e.target.checked)} />
-            <label htmlFor="crewToggle">Crews</label>
+            <label htmlFor="crewToggle">Crews ({crews.length})</label>
             <input id="alertToggle" type="checkbox" className="ml-3" checked={showAlerts} onChange={e => setShowAlerts(e.target.checked)} />
-            <label htmlFor="alertToggle">Alerts</label>
+            <label htmlFor="alertToggle">Alerts ({alerts.length})</label>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <div className="w-56">
@@ -149,11 +248,33 @@ const UnifiedMap: React.FC = () => {
               <Slider value={[radiusMiles]} min={1} max={50} step={1} onValueChange={(v) => setRadiusMiles(v[0] as number)} />
             </div>
           </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setRadiusMiles(15)}><RefreshCcw className="w-4 h-4 mr-1" /> Reset Radius</Button>
+            <Button size="sm" variant="outline" onClick={() => {
+              const b = computeBounds();
+              const mapEl = containerRef.current?.querySelector('.leaflet-container');
+              if (b && mapEl) {
+                // trigger fit via dispatching a custom event picked up by a hidden MapConsumer
+                const ev = new CustomEvent('fit-bounds', { detail: b });
+                mapEl.dispatchEvent(ev);
+              }
+            }}><Maximize2 className="w-4 h-4 mr-1" /> Fit to Data</Button>
+          </div>
         </div>
 
         <div style={{ height: '70vh' }}>
-          <MapContainer center={center as [number, number]} zoom={10} style={{ height: '100%', width: '100%' }}>
+          <MapContainer center={center as [number, number]} zoom={10} preferCanvas style={{ height: '100%', width: '100%' }} whenCreated={(map) => {
+            // Custom event listener to call fitBounds from above button
+            const container = (map as any)._container as HTMLElement;
+            const handler = (e: Event) => {
+              const detail = (e as CustomEvent).detail as LatLngBoundsExpression;
+              map.fitBounds(detail, { padding: [24, 24] });
+            };
+            container.addEventListener('fit-bounds', handler);
+            (map as any)._fitHandler = handler;
+          }}>
             <RecenterMap center={center} />
+            <MapEnhancements />
             {basemap === 'osm' && (
               <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             )}
@@ -174,17 +295,9 @@ const UnifiedMap: React.FC = () => {
 
             <Circle center={center} radius={circleMeters} pathOptions={{ color: '#22c55e', weight: 2, fillOpacity: 0.05 }} />
 
-            {showVehicles && vehicles.map(v => (
-              <Marker key={v.vehicle_id} position={[v.location.coordinates[1], v.location.coordinates[0]] as any} icon={DefaultIcon} />
-            ))}
-
-            {showCrews && crews.map(c => (
-              <Marker key={c.crew_id} position={[36.64 + Math.random()*0.1, -80.26 + Math.random()*0.1] as any} icon={DefaultIcon} />
-            ))}
-
-            {showAlerts && alerts.map(a => (
-              <Marker key={a.id} position={[36.61 + Math.random()*0.15, -80.24 + Math.random()*0.15] as any} icon={DefaultIcon} />
-            ))}
+            {vehicleMarkers}
+            {crewMarkers}
+            {alertMarkers}
           </MapContainer>
         </div>
       </Card>
