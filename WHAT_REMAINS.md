@@ -121,7 +121,8 @@
 - Weather/Map
   - [ ] Geofence push alerts and auto schedule adjustment hooks
   - [x] Saved basemap preference in OverWatch map
-  - [ ] Saved overlays preferences and overlay management tool
+  - [x] Radar overlay toggle + opacity with persisted preferences (OverWatch, RadarMap)
+  - [ ] Additional overlay management tool (custom layers library)
 - Materials & Suppliers
   - [x] Receipt ingestion (CSV) to update material prices automatically
   - [ ] Inventory management and supplier POs/bills
