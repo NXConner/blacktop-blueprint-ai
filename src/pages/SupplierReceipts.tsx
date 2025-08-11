@@ -43,7 +43,8 @@ const SupplierReceipts: React.FC = () => {
               const price = parseFloat((document.getElementById('mp') as HTMLInputElement).value || '0');
               if (!key || !price) return;
               await updateMaterialPrice(key, price);
-              alert('Updated');
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
+              import('@/components/ui/use-toast').then(({ useToast }) => useToast().toast({ title: 'Price updated', description: `${key} -> $${price.toFixed(2)}` }));
             }}>Update Price</Button>
           </div>
         </div>
