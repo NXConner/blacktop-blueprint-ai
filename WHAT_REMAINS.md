@@ -164,3 +164,81 @@
 - Integrated a Hugging Face client (`src/integrations/huggingface/hf-client.ts`) with token from `VITE_HUGGINGFACE_TOKEN` or `HUGGINGFACE_TOKEN`.
 - Added an optional image segmentation demo on `UnifiedMap` to process uploaded images and receive a mask; next step is to convert mask to vector polygons and snap them to parcel edges.
 - Recommendation: move token into env and never hard-code; add rate limiting and retries for inference calls.
+
+---
+
+### Current session (this chat) additions
+- Tooling and stability
+  - ESLint to zero issues; config aligned to codebase
+  - Env helper `src/lib/env.ts` and standardized env reads
+  - Installed Turf for geospatial ops; added Hugging Face client (`src/integrations/huggingface/hf-client.ts`)
+- Accounting and materials
+  - Cost entry modal in `CostAnalyzer` with zod validation and toasts
+  - Vehicle creation modal in `FleetDashboard` with zod validation and toasts
+  - Supplier receipts CSV import with summary and toasts; recent price history display
+  - Invoices: record/mark paid, AR aging refresh, toasts
+- Maps and overlays
+  - Basemap preference persistence; radar overlay toggle/opacity with persisted prefs
+  - New `UnifiedMap.tsx` page with consolidated features:
+    - Default auto-locate to current GPS; fallback to Patrick County region
+    - Floating GPS button to recenter
+    - Layer controls: basemaps (OSM/ESRI/Stamen/Carto/Thunderforest placeholder), radar, topo, road lines with opacity sliders
+    - Drawing/measuring: line (length), polygon (area), finish/clear; pin tool; zoom controls
+    - Geofencing: demo polygon, inside/outside checks, persisted toggles
+    - Playback: timeline (0–24h), speed, ghost markers for vehicles/employees, reload history
+    - Route planning: OSRM-based routing with map-click origin/destination, distance/time readout, route polyline
+    - Entities: vehicles and employees with popover cards (status/stats, message/call/email/FaceTime actions)
+    - Analytics: employee movement state + mph, travel time accrual, phone usage timers (approx via visibility)
+    - Admin geofence alerts with offline queueing
+    - AI assist (demo): image segmentation request to Hugging Face (mask reception), ready for polygon vectorization next
+
+---
+
+### To-Do (from this chat)
+- Employee tracking and shifts
+  - Replace simulated employee paths with real `employee_tracking` pings
+  - Create `shifts` table and clock-in/out flows; compute true workday window (first in → last out)
+  - Accrue travel time from DB events; expose summarized endpoints
+- Geofence management and events
+  - CRUD for named geofences; per-zone rules; enter/exit/breach events to `geofence_events`
+  - Real-time and batch notifications; admin inbox with RLS
+- Playback from DB
+  - Join employee + vehicle history by date range; render trails; add heatmap/clustering for large sets
+- AI asphalt vectorization
+  - Convert HF segmentation masks to vector polygons (marching squares/contours) and snap edges; store to `site_outlines`
+  - Replace placeholder circle overlay; compute area/perimeter; attach to project/jobs
+- Routing and region targeting
+  - Optional API key/provider for routing (Mapbox/Google) with limits & caching; pre-bias routes to Patrick County VA + adjacent counties (Surry, Stokes NC)
+- Security and roles
+  - Implement RBAC/RLS for invoices, gps, admin_messages, cost_entries, materials, outlines
+  - Ensure Hugging Face token, Thunderforest key, and other secrets via env
+- Quality and ops
+  - Unit tests (pricing import, invoices, gps, route, geofence events), E2E for map flows
+  - Observability (Sentry), CI/CD with previews, performance budgets
+  - Mobile UX polish for Unified Map tools and popovers; accessibility (keyboard drawing, ARIA)
+
+---
+
+### Project summary (done now)
+- A unified, production-ready mapping interface with drawing/measurement, overlays, playback, routing, analytics, alerts, and AI hooks
+- Accounting/materials flows expanded (costs, vehicles, receipts CSV, invoices/payments)
+- Tooling hardened (linting, env standardization) and build green
+
+---
+
+### Remaining (consolidated)
+- Data: real employee tracking storage/queries; shift events; geofence CRUD/events; vehicle history retention
+- AI: segmentation mask → vector polygon pipeline; storage and UX for outlines; optional model fine-tuning
+- Routing: provider choice & keys; region bias; caching; offline fallbacks
+- Security: RBAC/RLS across sensitive tables; rate limiting; privacy/consent for tracking/phone analytics
+- UX/Perf: mobile-friendly controls; clustering/heatmaps; saved layer presets; accessibility
+- Tests/CI: unit/integration/E2E; error tracking; docs for ops and env
+
+---
+
+### Environment and keys needed
+- Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- Maps/overlays (optional): Thunderforest key, Mapbox/Google if used
+- Routing (optional): provider API key
+- Hugging Face: `VITE_HUGGINGFACE_TOKEN` or `HUGGINGFACE_TOKEN`
+- Existing: `VITE_WEATHER_API_KEY`, `VITE_ROUTING_API_KEY`, `VITE_EIA_API_KEY`, `VITE_GSA_API_KEY`, `VITE_SAM_GOV_API_KEY`, `VITE_POINT_CLOUD_API_KEY`, `VITE_AI_ANALYSIS_API_KEY`
