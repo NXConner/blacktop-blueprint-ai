@@ -122,7 +122,7 @@
   - [ ] Geofence push alerts and auto schedule adjustment hooks
   - [ ] Saved basemap/overlays preferences and overlay management tool
 - Materials & Suppliers
-  - [ ] Receipt ingestion (OCR/CSV) to update material prices automatically
+  - [x] Receipt ingestion (CSV) to update material prices automatically
   - [ ] Inventory management and supplier POs/bills
 - Cost Tracking
   - [x] Cost entry creation modal in Cost Analyzer
