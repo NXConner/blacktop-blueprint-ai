@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Activity, Crosshair, Layers, Map, Radar, Maximize2, CornerDownRight, Search, RefreshCcw } from 'lucide-react';
+import { Activity, Crosshair, Layers, Map, Radar, Maximize2, CornerDownRight, Search, RefreshCcw, Pause, Play, SkipBack, SkipForward, Timer } from 'lucide-react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Circle, useMap, Polyline } from 'react-leaflet';
 import L, { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -358,6 +358,70 @@ const UnifiedMap: React.FC = () => {
     }
   };
 
+  // Playback state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackHour, setPlaybackHour] = useState(0); // 0..24
+  const [playbackSpeed, setPlaybackSpeed] = useState(4); // x speed
+  const [vehicleHistory, setVehicleHistory] = useState<Record<string, { ts: number; lat: number; lon: number }[]>>({});
+  const [empHistory, setEmpHistory] = useState<Array<{ id: string; ts: number; lat: number; lon: number }>>([]);
+
+  const startOfDay = useMemo(() => {
+    const d = new Date(); d.setHours(0,0,0,0); return d.getTime();
+  }, []);
+
+  const refreshPlaybackData = async () => {
+    // Fetch vehicle history for last 24h for vehicles present
+    const ids = vehicles.map(v => v.vehicle_id).slice(0, 5); // limit to 5 for demo
+    const history: Record<string, { ts: number; lat: number; lon: number }[]> = {};
+    for (const id of ids) {
+      try {
+        const res = await api.gps.getVehicleHistory(id, 24);
+        if (res.success) {
+          history[id] = (res.data || []).map((r: any) => ({ ts: new Date(r.timestamp).getTime(), lat: r.location_coordinates.coordinates[1], lon: r.location_coordinates.coordinates[0] })).sort((a,b) => a.ts - b.ts);
+        }
+      } catch { /* ignore */ }
+    }
+    setVehicleHistory(history);
+
+    // Simulate employee history based on crew count
+    const emps: Array<{ id: string; ts: number; lat: number; lon: number }> = [];
+    for (let i=0; i<Math.min(5, crews.length); i++) {
+      const id = crews[i].supervisor_id || `emp-${i}`;
+      for (let h=0; h<=24; h+=1) {
+        const ts = startOfDay + h*60*60*1000;
+        emps.push({ id, ts, lat: 36.64 + Math.sin((i+1)*h/5)*0.05, lon: -80.26 + Math.cos((i+1)*h/5)*0.05 });
+      }
+    }
+    setEmpHistory(emps);
+  };
+
+  useEffect(() => { void refreshPlaybackData(); }, [vehicles.length, crews.length]);
+
+  // Playback loop
+  useEffect(() => {
+    if (!isPlaying) return;
+    const iv = setInterval(() => {
+      setPlaybackHour(h => (h + Math.max(1, playbackSpeed/2)) % 24);
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [isPlaying, playbackSpeed]);
+
+  const playbackPositions = useMemo(() => {
+    const ts = startOfDay + Math.floor(playbackHour) * 60 * 60 * 1000;
+    const vehPts: [number, number][] = [];
+    Object.values(vehicleHistory).forEach(points => {
+      if (!points || points.length === 0) return;
+      // Find nearest by ts
+      let best = points[0];
+      for (const p of points) {
+        if (Math.abs(p.ts - ts) < Math.abs(best.ts - ts)) best = p;
+      }
+      vehPts.push([best.lat, best.lon]);
+    });
+    const empPts = empHistory.filter(e => Math.abs(e.ts - ts) <= 30*60*1000).map(e => [e.lat, e.lon]) as [number, number][];
+    return { vehPts, empPts };
+  }, [vehicleHistory, empHistory, playbackHour, startOfDay]);
+
   return (
     <div className="min-h-screen p-4" ref={containerRef}>
       {/* Top Bar */}
@@ -526,6 +590,22 @@ const UnifiedMap: React.FC = () => {
               }
             }}><Maximize2 className="w-4 h-4 mr-1" /> Fit to Data</Button>
           </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Timer className="w-4 h-4" />
+            <span>Playback</span>
+            <Button size="sm" variant="outline" onClick={() => setIsPlaying(p => !p)}>{isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</Button>
+            <Button size="sm" variant="outline" onClick={() => setPlaybackHour(h => Math.max(0, (h-1)))}><SkipBack className="w-4 h-4" /></Button>
+            <Button size="sm" variant="outline" onClick={() => setPlaybackHour(h => Math.min(24, (h+1)))}><SkipForward className="w-4 h-4" /></Button>
+            <div className="w-40">
+              <div className="text-[10px]">Hour: {Math.floor(playbackHour)}</div>
+              <Slider value={[playbackHour]} min={0} max={24} step={0.25} onValueChange={(v) => setPlaybackHour(v[0] as number)} />
+            </div>
+            <div className="w-32">
+              <div className="text-[10px]">Speed: {playbackSpeed}x</div>
+              <Slider value={[playbackSpeed]} min={1} max={16} step={1} onValueChange={(v) => setPlaybackSpeed(v[0] as number)} />
+            </div>
+            <Button size="sm" variant="outline" onClick={() => { setPlaybackHour(0); void refreshPlaybackData(); }}>Reload</Button>
+          </div>
         </div>
 
         {/* Map */}
@@ -598,6 +678,14 @@ const UnifiedMap: React.FC = () => {
             {/* Pins */}
             {pins.map(([la, lo], idx) => (
               <Marker key={`pin-${idx}`} position={[la, lo] as any} icon={DefaultIcon} />
+            ))}
+
+            {/* Playback ghost markers */}
+            {isPlaying && playbackPositions.vehPts.map((p, idx) => (
+              <Marker key={`play-veh-${idx}`} position={p as any} icon={DefaultIcon} />
+            ))}
+            {isPlaying && playbackPositions.empPts.map((p, idx) => (
+              <Marker key={`play-emp-${idx}`} position={p as any} icon={DefaultIcon} />
             ))}
 
             <Circle center={center} radius={circleMeters} pathOptions={{ color: '#22c55e', weight: 2, fillOpacity: 0.05 }} />
