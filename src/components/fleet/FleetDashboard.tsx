@@ -33,6 +33,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { vehiclesApi } from "@/services/api";
 import { z } from "zod";
+import VehicleInspectionDialog from './VehicleInspectionDialog';
+import VehicleMaintenanceDialog from './VehicleMaintenanceDialog';
+import VehicleDocumentsDialog from './VehicleDocumentsDialog';
 
 interface FleetDashboardProps {
   companyId?: string;
@@ -90,6 +93,10 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
     license_plate: "",
     fuel_capacity: 0,
   });
+
+  const [openInspectionVehicleId, setOpenInspectionVehicleId] = useState<string | null>(null);
+  const [openMaintenanceVehicleId, setOpenMaintenanceVehicleId] = useState<string | null>(null);
+  const [openDocumentsVehicleId, setOpenDocumentsVehicleId] = useState<string | null>(null);
 
   const handleCreateVehicle = async () => {
     try {
@@ -529,7 +536,7 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant="outline" className="flex-1">
                         <MapPin className="w-3 h-3 mr-1" />
                         Track
@@ -545,6 +552,18 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
                       >
                         <Wrench className="w-3 h-3 mr-1" />
                         Service
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={(e)=>{ e.stopPropagation(); setOpenInspectionVehicleId(vehicle.id); }}>
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Inspect
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={(e)=>{ e.stopPropagation(); setOpenMaintenanceVehicleId(vehicle.id); }}>
+                        <Wrench className="w-3 h-3 mr-1" />
+                        Maintenance
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={(e)=>{ e.stopPropagation(); setOpenDocumentsVehicleId(vehicle.id); }}>
+                        <Download className="w-3 h-3 mr-1" />
+                        Documents
                       </Button>
                     </div>
 
@@ -610,6 +629,23 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
           </div>
         )}
       </Card>
+      <VehicleInspectionDialog
+        vehicleId={openInspectionVehicleId || ''}
+        open={!!openInspectionVehicleId}
+        onOpenChange={(o)=>{ if(!o) setOpenInspectionVehicleId(null); }}
+        onSaved={loadFleetData}
+      />
+      <VehicleMaintenanceDialog
+        vehicleId={openMaintenanceVehicleId || ''}
+        open={!!openMaintenanceVehicleId}
+        onOpenChange={(o)=>{ if(!o) setOpenMaintenanceVehicleId(null); }}
+        onSaved={loadFleetData}
+      />
+      <VehicleDocumentsDialog
+        vehicleId={openDocumentsVehicleId || ''}
+        open={!!openDocumentsVehicleId}
+        onOpenChange={(o)=>{ if(!o) setOpenDocumentsVehicleId(null); }}
+      />
     </div>
   );
 };
