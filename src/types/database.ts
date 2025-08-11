@@ -219,6 +219,28 @@ export interface MaintenanceRecord {
   created_at: string;
 }
 
+export interface VehicleInspection {
+  id: string;
+  vehicle_id: string;
+  inspection_date: string;
+  inspector_name?: string;
+  checklist: Record<string, boolean | string | number>;
+  notes?: string;
+  attachment_urls?: string[];
+  created_at: string;
+}
+
+export interface VehicleDocument {
+  id: string;
+  vehicle_id: string;
+  document_type: 'manual' | 'repair_guide' | 'parts_list' | 'receipt' | 'other';
+  document_name: string;
+  file_url: string;
+  uploaded_by?: string;
+  uploaded_at: string;
+  notes?: string;
+}
+
 export interface Alert {
   id: string;
   alert_type: 'weather' | 'maintenance' | 'cost_overrun' | 'safety' | 'equipment';

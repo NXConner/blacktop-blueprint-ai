@@ -534,7 +534,7 @@ export const maintenanceApi = {
       if (error) throw error;
       return { data, success: true };
     } catch (error) {
-      return { data: null, success: false, message: error.message };
+      return { data: null, success: false, message: (error as Error).message };
     }
   },
 
@@ -549,7 +549,96 @@ export const maintenanceApi = {
       if (error) throw error;
       return { data: data || [], success: true };
     } catch (error) {
-      return { data: [], success: false, message: error.message };
+      return { data: [], success: false, message: (error as Error).message };
+    }
+  }
+};
+
+// Vehicle Inspections API
+export const inspectionsApi = {
+  async create(inspection: {
+    vehicle_id: string;
+    inspector_name?: string;
+    checklist: Record<string, unknown>;
+    notes?: string;
+    attachment_urls?: string[];
+  }): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_inspections')
+        .insert({ ...inspection })
+        .select()
+        .single();
+      if (error) throw error;
+      return { data, success: true };
+    } catch (error) {
+      return { data: null, success: false, message: (error as Error).message };
+    }
+  },
+  async list(vehicleId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_inspections')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('inspection_date', { ascending: false });
+      if (error) throw error;
+      return { data: data || [], success: true };
+    } catch (error) {
+      return { data: [], success: false, message: (error as Error).message };
+    }
+  }
+};
+
+// Vehicle Documents API
+export const vehicleDocumentsApi = {
+  async uploadFile(file: File, pathPrefix = 'vehicle-documents'): Promise<ApiResponse<string>> {
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${pathPrefix}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('public-files')
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('public-files')
+        .getPublicUrl(fileName);
+      return { data: publicUrl, success: true };
+    } catch (error) {
+      return { data: '', success: false, message: (error as Error).message };
+    }
+  },
+  async addRecord(doc: {
+    vehicle_id: string;
+    document_type: string;
+    document_name: string;
+    file_url: string;
+    notes?: string;
+    uploaded_by?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_documents')
+        .insert(doc)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data, success: true };
+    } catch (error) {
+      return { data: null, success: false, message: (error as Error).message };
+    }
+  },
+  async list(vehicleId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_documents')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('uploaded_at', { ascending: false });
+      if (error) throw error;
+      return { data: data || [], success: true };
+    } catch (error) {
+      return { data: [], success: false, message: (error as Error).message };
     }
   }
 };
@@ -747,5 +836,7 @@ export const api = {
   system: systemApi,
   materials: materialsApi,
   workSessions: workSessionsApi,
-  userActivity: userActivityApi
+  userActivity: userActivityApi,
+  inspections: inspectionsApi,
+  vehicleDocuments: vehicleDocumentsApi,
 };
