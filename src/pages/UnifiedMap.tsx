@@ -18,6 +18,7 @@ import { Card as UICard } from '@/components/ui/card';
 import { Mail, MessageSquare, Phone, Video } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useMapEvents } from 'react-leaflet';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -40,6 +41,13 @@ function MapEnhancements() {
       scale.remove();
     };
   }, [map]);
+  return null;
+}
+
+function MapClickCapture({ onClick }: { onClick: (lat: number, lon: number) => void }) {
+  useMapEvents({
+    click: (e) => onClick(e.latlng.lat, e.latlng.lng),
+  });
   return null;
 }
 
@@ -209,6 +217,63 @@ const UnifiedMap: React.FC = () => {
   const [autoAsphaltOverlay, setAutoAsphaltOverlay] = useState<boolean>(false);
   const [asphaltPolygon, setAsphaltPolygon] = useState<[number, number][]>([]);
   const [asphaltAreaSqFt, setAsphaltAreaSqFt] = useState<number>(0);
+  const [asphaltOutlineColor, setAsphaltOutlineColor] = useState<string>('#0ea5e9');
+  const [asphaltOutlineWeight, setAsphaltOutlineWeight] = useState<number>(3);
+
+  // Drawing & measuring
+  type DrawShape = { type: 'polyline'|'polygon'; points: [number, number][] };
+  const [drawMode, setDrawMode] = useState<'none'|'polyline'|'polygon'|'pin'>('none');
+  const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
+  const [shapes, setShapes] = useState<DrawShape[]>([]);
+  const [pins, setPins] = useState<[number, number][]>([]);
+
+  const finishDrawing = () => {
+    if (drawMode === 'none' || drawPoints.length < 2) return;
+    const shape: DrawShape = { type: drawMode === 'polyline' ? 'polyline' : 'polygon', points: drawPoints };
+    setShapes(prev => [...prev, shape]);
+    setDrawPoints([]);
+    setDrawMode('none');
+  };
+
+  const clearDrawing = () => {
+    setDrawPoints([]);
+    setShapes([]);
+  };
+
+  const handleMapClick = (lat: number, lon: number) => {
+    if (drawMode === 'polyline' || drawMode === 'polygon') {
+      setDrawPoints(prev => [...prev, [lat, lon]]);
+    } else if (drawMode === 'pin') {
+      setPins(prev => [[lat, lon], ...prev]);
+    }
+  };
+
+  const currentLineMiles = useMemo(() => {
+    if (drawMode === 'polyline' && drawPoints.length >= 2) {
+      const ls = turf.lineString(drawPoints.map(([la, lo]) => [lo, la]));
+      return turf.length(ls, { units: 'miles' });
+    }
+    return 0;
+  }, [drawMode, drawPoints]);
+
+  const currentPolyAreaSqFt = useMemo(() => {
+    if (drawMode === 'polygon' && drawPoints.length >= 3) {
+      const poly = turf.polygon([[...drawPoints, drawPoints[0]].map(([la, lo]) => [lo, la])]);
+      return turf.area(poly) * 10.7639;
+    }
+    return 0;
+  }, [drawMode, drawPoints]);
+
+  // Additional overlays
+  const [overlayTopo, setOverlayTopo] = useState(true);
+  const [overlayTopoOpacity, setOverlayTopoOpacity] = useState(0.5);
+  const [overlayTonerLines, setOverlayTonerLines] = useState(false);
+  const [overlayTonerOpacity, setOverlayTonerOpacity] = useState(0.6);
+
+  // Map ref for zoom controls
+  const mapRef = useRef<L.Map | null>(null);
+  const zoomIn = () => { mapRef.current?.zoomIn(); };
+  const zoomOut = () => { mapRef.current?.zoomOut(); };
 
   useEffect(() => {
     if (!autoAsphaltOverlay) { setAsphaltPolygon([]); setAsphaltAreaSqFt(0); return; }
@@ -395,6 +460,72 @@ const UnifiedMap: React.FC = () => {
               }
             }}><Maximize2 className="w-4 h-4 mr-1" /> Fit to Data</Button>
           </div>
+          <div className="flex items-center gap-2 text-sm">
+            <input id="overlayTopo" type="checkbox" checked={overlayTopo} onChange={(e) => setOverlayTopo(e.target.checked)} />
+            <label htmlFor="overlayTopo">Topo Overlay</label>
+            <div className="w-28">
+              <Slider value={[overlayTopoOpacity]} min={0} max={1} step={0.05} onValueChange={(v) => setOverlayTopoOpacity(v[0] as number)} />
+            </div>
+            <input id="overlayToner" className="ml-3" type="checkbox" checked={overlayTonerLines} onChange={(e) => setOverlayTonerLines(e.target.checked)} />
+            <label htmlFor="overlayToner">Road Lines</label>
+            <div className="w-28">
+              <Slider value={[overlayTonerOpacity]} min={0} max={1} step={0.05} onValueChange={(v) => setOverlayTonerOpacity(v[0] as number)} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Button size="sm" variant={drawMode==='polyline'?'default':'outline'} onClick={() => setDrawMode(m => m==='polyline'?'none':'polyline')}>Draw Measure (Line)</Button>
+            <Button size="sm" variant={drawMode==='polygon'?'default':'outline'} onClick={() => setDrawMode(m => m==='polygon'?'none':'polygon')}>Draw Area (Polygon)</Button>
+            <Button size="sm" variant={drawMode==='pin'?'default':'outline'} onClick={() => setDrawMode(m => m==='pin'?'none':'pin')}>Pin Tool</Button>
+            <Button size="sm" variant="outline" onClick={finishDrawing}>Finish</Button>
+            <Button size="sm" variant="outline" onClick={clearDrawing}>Clear</Button>
+            <Button size="sm" variant="outline" onClick={zoomOut}>-</Button>
+            <Button size="sm" variant="outline" onClick={zoomIn}>+</Button>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <label className="text-xs">Asphalt Outline</label>
+            <input type="color" value={asphaltOutlineColor} onChange={(e) => setAsphaltOutlineColor(e.target.value)} />
+            <div className="w-24">
+              <Slider value={[asphaltOutlineWeight]} min={1} max={8} step={1} onValueChange={(v) => setAsphaltOutlineWeight(v[0] as number)} />
+            </div>
+            {drawMode==='polyline' && drawPoints.length>=2 && (
+              <span className="text-xs text-muted-foreground">Length: {currentLineMiles.toFixed(2)} mi</span>
+            )}
+            {drawMode==='polygon' && drawPoints.length>=3 && (
+              <span className="text-xs text-muted-foreground">Area: {currentPolyAreaSqFt.toFixed(0)} sq ft</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <input id="asphaltToggle" className="ml-3" type="checkbox" checked={autoAsphaltOverlay} onChange={e => setAutoAsphaltOverlay(e.target.checked)} />
+            <label htmlFor="asphaltToggle">Auto Asphalt Detection</label>
+            {autoAsphaltOverlay && <span className="ml-2 text-xs text-muted-foreground">Area ≈ {asphaltAreaSqFt.toFixed(0)} sq ft</span>}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <input id="empAnalytics" type="checkbox" checked={employeeAnalyticsEnabled} onChange={(e) => setEmployeeAnalyticsEnabled(e.target.checked)} />
+            <label htmlFor="empAnalytics">Employee Analytics</label>
+            <input id="phoneUsage" className="ml-3" type="checkbox" checked={trackPhoneUsage} onChange={(e) => setTrackPhoneUsage(e.target.checked)} />
+            <label htmlFor="phoneUsage">Track App Usage</label>
+            {trackPhoneUsage && (
+              <span className="ml-2 text-xs text-muted-foreground">In-app: {(appUsageSeconds/60|0)}m {appUsageSeconds%60}s · Off-app: {(offAppSeconds/60|0)}m {offAppSeconds%60}s</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-56">
+              <div className="text-[10px] mb-1">Radius: {radiusMiles} mi</div>
+              <Slider value={[radiusMiles]} min={1} max={50} step={1} onValueChange={(v) => setRadiusMiles(v[0] as number)} />
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setRadiusMiles(15)}><RefreshCcw className="w-4 h-4 mr-1" /> Reset Radius</Button>
+            <Button size="sm" variant="outline" onClick={() => {
+              const b = computeBounds();
+              const mapEl = containerRef.current?.querySelector('.leaflet-container');
+              if (b && mapEl) {
+                // trigger fit via dispatching a custom event picked up by a hidden MapConsumer
+                const ev = new CustomEvent('fit-bounds', { detail: b });
+                mapEl.dispatchEvent(ev);
+              }
+            }}><Maximize2 className="w-4 h-4 mr-1" /> Fit to Data</Button>
+          </div>
         </div>
 
         {/* Map */}
@@ -407,9 +538,11 @@ const UnifiedMap: React.FC = () => {
             };
             container.addEventListener('fit-bounds', handler);
             (map as any)._fitHandler = handler;
+            mapRef.current = map;
           }}>
             <RecenterMap center={center} />
             <MapEnhancements />
+            <MapClickCapture onClick={handleMapClick} />
             {baseKey === 'osm' && (
               <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             )}
@@ -424,6 +557,13 @@ const UnifiedMap: React.FC = () => {
             )}
             {baseKey === 'thunderforest' && (
               <TileLayer attribution='&copy; Thunderforest' url="https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=YOUR_API_KEY" />
+            )}
+
+            {overlayTopo && (
+              <TileLayer attribution='&copy; OpenTopoMap' opacity={overlayTopoOpacity} url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" />
+            )}
+            {overlayTonerLines && (
+              <TileLayer attribution='&copy; Stamen' opacity={overlayTonerOpacity} url="https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}.png" />
             )}
 
             {radarEnabled && (
@@ -441,8 +581,24 @@ const UnifiedMap: React.FC = () => {
 
             {/* Auto Asphalt Detected Overlay */}
             {autoAsphaltOverlay && asphaltPolygon.length > 0 && (
-              <Polyline positions={asphaltPolygon} pathOptions={{ color: '#0ea5e9', weight: 3, fillOpacity: 0.1 }} />
+              <Polyline positions={asphaltPolygon} pathOptions={{ color: asphaltOutlineColor, weight: asphaltOutlineWeight, fillOpacity: 0.1 }} />
             )}
+
+            {/* Drawing overlays */}
+            {drawPoints.length > 0 && drawMode==='polyline' && (
+              <Polyline positions={drawPoints} pathOptions={{ color: '#22c55e', weight: 2 }} />
+            )}
+            {drawPoints.length > 0 && drawMode==='polygon' && (
+              <Polyline positions={[...drawPoints, drawPoints[0]]} pathOptions={{ color: '#eab308', weight: 2 }} />
+            )}
+            {shapes.map((s, idx) => (
+              <Polyline key={`shape-${idx}`} positions={s.type==='polygon'?[...s.points, s.points[0]]:s.points} pathOptions={{ color: s.type==='polygon'?'#e11d48':'#16a34a', weight: 3 }} />
+            ))}
+
+            {/* Pins */}
+            {pins.map(([la, lo], idx) => (
+              <Marker key={`pin-${idx}`} position={[la, lo] as any} icon={DefaultIcon} />
+            ))}
 
             <Circle center={center} radius={circleMeters} pathOptions={{ color: '#22c55e', weight: 2, fillOpacity: 0.05 }} />
 
