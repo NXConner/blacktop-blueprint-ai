@@ -120,12 +120,14 @@
   - [ ] DOT/compliance checklists and document storage
 - Weather/Map
   - [ ] Geofence push alerts and auto schedule adjustment hooks
-  - [ ] Saved basemap/overlays preferences and overlay management tool
+  - [x] Saved basemap preference in OverWatch map
+  - [ ] Saved overlays preferences and overlay management tool
 - Materials & Suppliers
   - [x] Receipt ingestion (CSV) to update material prices automatically
   - [ ] Inventory management and supplier POs/bills
 - Cost Tracking
   - [x] Cost entry creation modal in Cost Analyzer
+  - [x] Validation for cost entry modal (zod)
 - AI/Imaging/3D
   - [ ] Photo tagging and auto counting (CompanyCam-like)
   - [ ] 3D upload pipeline and viewer; integrations with SkyeBrowse/PropertyIntel

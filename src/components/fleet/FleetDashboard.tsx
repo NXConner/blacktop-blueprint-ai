@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { vehiclesApi } from "@/services/api";
+import { z } from "zod";
 
 interface FleetDashboardProps {
   companyId?: string;
@@ -92,17 +93,28 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
 
   const handleCreateVehicle = async () => {
     try {
-      const payload = { ...newVehicle, company_id: companyId || "" } as any;
+      const schema = z.object({
+        vehicle_number: z.string().min(1),
+        vehicle_type: z.string().min(1),
+        make: z.string().min(1),
+        model: z.string().min(1),
+        year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
+        license_plate: z.string().min(1),
+        fuel_capacity: z.number().nonnegative(),
+      });
+      const parsed = schema.parse(newVehicle);
+      const payload = { ...parsed, company_id: companyId || "" } as any;
       const result = await vehiclesApi.create(payload);
       if (result.success) {
-        toast({ title: "Vehicle added", description: newVehicle.vehicle_number });
+        toast({ title: "Vehicle added", description: parsed.vehicle_number });
         setIsAddVehicleOpen(false);
         await loadFleetData();
       } else {
         throw new Error(result.message || "Failed to add vehicle");
       }
     } catch (error) {
-      toast({ title: "Failed to add vehicle", description: (error as Error).message, variant: "destructive" });
+      const message = (error as any)?.issues?.[0]?.message || (error as Error).message;
+      toast({ title: "Failed to add vehicle", description: message, variant: "destructive" });
     }
   };
 

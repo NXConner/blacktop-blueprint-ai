@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { costApi } from "@/services/api";
+import { z } from "zod";
 
 interface CostAnalyzerProps {
   projectId?: string;
@@ -124,18 +125,29 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
 
   const handleAddCost = async () => {
     try {
-      const total_cost = newCost.quantity * newCost.unit_cost;
-      const payload: any = { ...newCost, total_cost };
+      const schema = z.object({
+        project_id: z.string().min(1, 'Project required'),
+        category: z.string().min(1),
+        description: z.string().min(1),
+        quantity: z.number().positive(),
+        unit_cost: z.number().positive(),
+        vendor: z.string().optional(),
+        entry_date: z.string().min(8),
+      });
+      const parsed = schema.parse(newCost);
+      const total_cost = parsed.quantity * parsed.unit_cost;
+      const payload: any = { ...parsed, total_cost };
       const result = await costApi.addEntry(payload);
       if (result.success && result.data) {
-        toast({ title: "Cost entry added", description: newCost.description || newCost.category });
+        toast({ title: "Cost entry added", description: parsed.description || parsed.category });
         setIsAddCostOpen(false);
         await loadCostData();
       } else {
         throw new Error(result.message || "Failed to add cost entry");
       }
     } catch (error) {
-      toast({ title: "Failed to add cost", description: (error as Error).message, variant: "destructive" });
+      const message = (error as any)?.issues?.[0]?.message || (error as Error).message;
+      toast({ title: "Failed to add cost", description: message, variant: "destructive" });
     }
   };
 

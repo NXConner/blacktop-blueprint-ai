@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateMaterialPrice, importReceiptCSV } from '@/services/materials-pricing';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
 
 const SupplierReceipts: React.FC = () => {
   const [csvName, setCsvName] = useState("");
   const [summary, setSummary] = useState<{ updated: number; skipped: number; errors: string[] } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleCSV = async (file: File) => {
     setIsUploading(true);
@@ -17,6 +19,7 @@ const SupplierReceipts: React.FC = () => {
       const result = await importReceiptCSV(text);
       setSummary(result);
       setCsvName(file.name);
+      toast({ title: 'Receipt CSV processed', description: `${result.updated} updated, ${result.skipped} skipped` });
     } finally {
       setIsUploading(false);
     }
@@ -43,8 +46,7 @@ const SupplierReceipts: React.FC = () => {
               const price = parseFloat((document.getElementById('mp') as HTMLInputElement).value || '0');
               if (!key || !price) return;
               await updateMaterialPrice(key, price);
-              // eslint-disable-next-line @typescript-eslint/no-floating-promises
-              import('@/components/ui/use-toast').then(({ useToast }) => useToast().toast({ title: 'Price updated', description: `${key} -> $${price.toFixed(2)}` }));
+              toast({ title: 'Price updated', description: `${key} -> $${price.toFixed(2)}` });
             }}>Update Price</Button>
           </div>
         </div>
