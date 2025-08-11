@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Activity, Crosshair, Layers, Map, Radar, Maximize2, CornerDownRight, Search, RefreshCcw, Pause, Play, SkipBack, SkipForward, Timer } from 'lucide-react';
+import { Activity, Crosshair, Layers, Map, Radar, Maximize2, CornerDownRight, Search, RefreshCcw, Pause, Play, SkipBack, SkipForward, Timer, Navigation2, MapPin } from 'lucide-react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Circle, useMap, Polyline } from 'react-leaflet';
 import L, { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -422,6 +422,97 @@ const UnifiedMap: React.FC = () => {
     return { vehPts, empPts };
   }, [vehicleHistory, empHistory, playbackHour, startOfDay]);
 
+  // Default region: Patrick County VA and nearby (approx center)
+  const REGION_CENTER: LatLngExpression = [36.68, -80.25];
+  const [hasAutoLocated, setHasAutoLocated] = useState(false);
+
+  useEffect(() => {
+    // Prefer current location at load
+    if (hasAutoLocated) return;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCenter([pos.coords.latitude, pos.coords.longitude]);
+          void offlineService.setPreference('map.unified.center', [pos.coords.latitude, pos.coords.longitude]);
+          setHasAutoLocated(true);
+        },
+        () => {
+          // Fallback to region center
+          setCenter(REGION_CENTER);
+          setHasAutoLocated(true);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      setCenter(REGION_CENTER);
+      setHasAutoLocated(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Travel time tracking (employees)
+  const [employeeTravelSeconds, setEmployeeTravelSeconds] = useState<Record<string, number>>({});
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setEmployeeTravelSeconds(prev => {
+        const next = { ...prev };
+        Object.entries(employeeStateMap).forEach(([id, st]) => {
+          if (st.state === 'driving' || st.mph > 5) {
+            next[id] = (next[id] || 0) + 1;
+          }
+        });
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [employeeStateMap]);
+
+  // Route planning via OSRM
+  type RouteInfo = { coords: [number, number][], distanceMiles: number, durationMins: number } | null;
+  const [routeInfo, setRouteInfo] = useState<RouteInfo>(null);
+  const [routeOrigin, setRouteOrigin] = useState<LatLngExpression | null>(null);
+  const [routeDest, setRouteDest] = useState<LatLngExpression | null>(null);
+  const [isRouting, setIsRouting] = useState(false);
+  const [routeMode, setRouteMode] = useState<'idle'|'set-origin'|'set-dest'>('idle');
+
+  const planRoute = async (origin: LatLngExpression, dest: LatLngExpression) => {
+    const [olat, olon] = origin as [number, number];
+    const [dlat, dlon] = dest as [number, number];
+    setIsRouting(true);
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${olon},${olat};${dlon},${dlat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const route = data?.routes?.[0];
+      if (route) {
+        const meters = route.distance as number;
+        const seconds = route.duration as number;
+        const coords = route.geometry.coordinates.map(([lon, lat]: [number, number]) => [lat, lon]) as [number, number][];
+        setRouteInfo({ coords, distanceMiles: meters / 1609.34, durationMins: seconds / 60 });
+      } else {
+        setRouteInfo(null);
+        toast({ title: 'Route not found', variant: 'destructive' });
+      }
+    } catch (e) {
+      setRouteInfo(null);
+      toast({ title: 'Routing error', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setIsRouting(false);
+    }
+  };
+
+  const handleRouteMapClick = (lat: number, lon: number) => {
+    if (routeMode === 'set-origin') {
+      setRouteOrigin([lat, lon]);
+      setRouteMode('idle');
+    } else if (routeMode === 'set-dest') {
+      setRouteDest([lat, lon]);
+      setRouteMode('idle');
+    } else {
+      handleMapClick(lat, lon);
+    }
+  };
+
   return (
     <div className="min-h-screen p-4" ref={containerRef}>
       {/* Top Bar */}
@@ -559,36 +650,14 @@ const UnifiedMap: React.FC = () => {
             )}
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <input id="asphaltToggle" className="ml-3" type="checkbox" checked={autoAsphaltOverlay} onChange={e => setAutoAsphaltOverlay(e.target.checked)} />
-            <label htmlFor="asphaltToggle">Auto Asphalt Detection</label>
-            {autoAsphaltOverlay && <span className="ml-2 text-xs text-muted-foreground">Area ≈ {asphaltAreaSqFt.toFixed(0)} sq ft</span>}
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <input id="empAnalytics" type="checkbox" checked={employeeAnalyticsEnabled} onChange={(e) => setEmployeeAnalyticsEnabled(e.target.checked)} />
-            <label htmlFor="empAnalytics">Employee Analytics</label>
-            <input id="phoneUsage" className="ml-3" type="checkbox" checked={trackPhoneUsage} onChange={(e) => setTrackPhoneUsage(e.target.checked)} />
-            <label htmlFor="phoneUsage">Track App Usage</label>
-            {trackPhoneUsage && (
-              <span className="ml-2 text-xs text-muted-foreground">In-app: {(appUsageSeconds/60|0)}m {appUsageSeconds%60}s · Off-app: {(offAppSeconds/60|0)}m {offAppSeconds%60}s</span>
+            <Navigation2 className="w-4 h-4" /> Route
+            <Button size="sm" variant={routeMode==='set-origin'?'default':'outline'} onClick={() => setRouteMode(m => m==='set-origin'?'idle':'set-origin')}>Set Origin</Button>
+            <Button size="sm" variant={routeMode==='set-dest'?'default':'outline'} onClick={() => setRouteMode(m => m==='set-dest'?'idle':'set-dest')}>Set Destination</Button>
+            <Button size="sm" variant="outline" disabled={!routeOrigin || !routeDest || isRouting} onClick={() => { if (routeOrigin && routeDest) void planRoute(routeOrigin, routeDest); }}>{isRouting?'Routing...':'Plan'}</Button>
+            <Button size="sm" variant="outline" onClick={() => setRouteInfo(null)}>Clear</Button>
+            {routeInfo && (
+              <span className="text-xs text-muted-foreground">{routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMins)} mins</span>
             )}
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <div className="w-56">
-              <div className="text-[10px] mb-1">Radius: {radiusMiles} mi</div>
-              <Slider value={[radiusMiles]} min={1} max={50} step={1} onValueChange={(v) => setRadiusMiles(v[0] as number)} />
-            </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => setRadiusMiles(15)}><RefreshCcw className="w-4 h-4 mr-1" /> Reset Radius</Button>
-            <Button size="sm" variant="outline" onClick={() => {
-              const b = computeBounds();
-              const mapEl = containerRef.current?.querySelector('.leaflet-container');
-              if (b && mapEl) {
-                // trigger fit via dispatching a custom event picked up by a hidden MapConsumer
-                const ev = new CustomEvent('fit-bounds', { detail: b });
-                mapEl.dispatchEvent(ev);
-              }
-            }}><Maximize2 className="w-4 h-4 mr-1" /> Fit to Data</Button>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Timer className="w-4 h-4" />
@@ -622,7 +691,7 @@ const UnifiedMap: React.FC = () => {
           }}>
             <RecenterMap center={center} />
             <MapEnhancements />
-            <MapClickCapture onClick={handleMapClick} />
+            <MapClickCapture onClick={handleRouteMapClick} />
             {baseKey === 'osm' && (
               <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             )}
@@ -674,6 +743,11 @@ const UnifiedMap: React.FC = () => {
             {shapes.map((s, idx) => (
               <Polyline key={`shape-${idx}`} positions={s.type==='polygon'?[...s.points, s.points[0]]:s.points} pathOptions={{ color: s.type==='polygon'?'#e11d48':'#16a34a', weight: 3 }} />
             ))}
+
+            {/* Route polyline */}
+            {routeInfo && (
+              <Polyline positions={routeInfo.coords} pathOptions={{ color: '#6366f1', weight: 4 }} />
+            )}
 
             {/* Pins */}
             {pins.map(([la, lo], idx) => (
@@ -741,7 +815,7 @@ const UnifiedMap: React.FC = () => {
                       <div className="grid grid-cols-3 gap-2 text-xs">
                         <div>State: {st?.state || 'n/a'}</div>
                         <div>Speed: {st ? `${st.mph.toFixed(1)} mph` : 'n/a'}</div>
-                        <div>Phone (in-app): {(appUsageSeconds/60|0)}m</div>
+                        <div>Travel: {Math.floor((employeeTravelSeconds[empId]||0)/60)}m</div>
                         <div>Tasks: {Math.round(Math.random()*5)}</div>
                         <div>Compliance: {90 + Math.round(Math.random()*10)}%</div>
                         <div>Productivity: {70 + Math.round(Math.random()*30)}%</div>
@@ -769,6 +843,9 @@ const UnifiedMap: React.FC = () => {
             ))}
 
           </MapContainer>
+          <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-2">
+            <Button size="icon" className="glass-card" onClick={locate} title="Recenter to my location"><MapPin className="w-4 h-4" /></Button>
+          </div>
         </div>
       </Card>
     </div>
