@@ -213,7 +213,8 @@ const PavementScanInterface: React.FC<ScanInterfaceProps> = ({
   };
 
   const performAIAnalysis = async (images: string[]): Promise<PavementAnalysisResults> => {
-    const aiApiKey = process.env.VITE_AI_ANALYSIS_API_KEY;
+    const { getEnv } = await import("@/lib/env");
+    const aiApiKey = getEnv("VITE_AI_ANALYSIS_API_KEY");
     if (!aiApiKey) {
       throw new Error('AI Analysis API key not configured');
     }

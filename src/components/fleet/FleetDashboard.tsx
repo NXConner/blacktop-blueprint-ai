@@ -27,6 +27,12 @@ import {
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Vehicle, MaintenanceRecord, GPSTracking } from '@/types/database';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { vehiclesApi } from "@/services/api";
+import { z } from "zod";
 
 interface FleetDashboardProps {
   companyId?: string;
@@ -72,6 +78,45 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+
+  const { toast } = useToast();
+  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({
+    vehicle_number: "",
+    vehicle_type: "truck",
+    make: "",
+    model: "",
+    year: new Date().getFullYear(),
+    license_plate: "",
+    fuel_capacity: 0,
+  });
+
+  const handleCreateVehicle = async () => {
+    try {
+      const schema = z.object({
+        vehicle_number: z.string().min(1),
+        vehicle_type: z.string().min(1),
+        make: z.string().min(1),
+        model: z.string().min(1),
+        year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
+        license_plate: z.string().min(1),
+        fuel_capacity: z.number().nonnegative(),
+      });
+      const parsed = schema.parse(newVehicle);
+      const payload = { ...parsed, company_id: companyId || "" } as any;
+      const result = await vehiclesApi.create(payload);
+      if (result.success) {
+        toast({ title: "Vehicle added", description: parsed.vehicle_number });
+        setIsAddVehicleOpen(false);
+        await loadFleetData();
+      } else {
+        throw new Error(result.message || "Failed to add vehicle");
+      }
+    } catch (error) {
+      const message = (error as any)?.issues?.[0]?.message || (error as Error).message;
+      toast({ title: "Failed to add vehicle", description: message, variant: "destructive" });
+    }
+  };
 
   const loadFleetData = useCallback(async () => {
     try {
@@ -301,12 +346,54 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
-            <Button className="glow-primary" onClick={() => console.log('Add Vehicle clicked - TODO: Implement vehicle creation modal')}>
+            <Button className="glow-primary" onClick={() => setIsAddVehicleOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Add Vehicle
             </Button>
           </div>
         </div>
+
+        <Dialog open={isAddVehicleOpen} onOpenChange={setIsAddVehicleOpen}>
+          <DialogContent className="glass-elevated">
+            <DialogHeader>
+              <DialogTitle>Add Vehicle</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+              <div>
+                <Label>Vehicle Number</Label>
+                <Input value={newVehicle.vehicle_number} onChange={(e) => setNewVehicle({ ...newVehicle, vehicle_number: e.target.value })} />
+              </div>
+              <div>
+                <Label>Vehicle Type</Label>
+                <Input value={newVehicle.vehicle_type} onChange={(e) => setNewVehicle({ ...newVehicle, vehicle_type: e.target.value })} />
+              </div>
+              <div>
+                <Label>Make</Label>
+                <Input value={newVehicle.make} onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })} />
+              </div>
+              <div>
+                <Label>Model</Label>
+                <Input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} />
+              </div>
+              <div>
+                <Label>Year</Label>
+                <Input type="number" value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: Number(e.target.value) })} />
+              </div>
+              <div>
+                <Label>License Plate</Label>
+                <Input value={newVehicle.license_plate} onChange={(e) => setNewVehicle({ ...newVehicle, license_plate: e.target.value })} />
+              </div>
+              <div>
+                <Label>Fuel Capacity (gal)</Label>
+                <Input type="number" value={newVehicle.fuel_capacity} onChange={(e) => setNewVehicle({ ...newVehicle, fuel_capacity: Number(e.target.value) })} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddVehicleOpen(false)}>Cancel</Button>
+              <Button className="glow-primary" onClick={handleCreateVehicle}>Save</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4 mb-6">

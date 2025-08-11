@@ -10,6 +10,7 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { api } from '@/services/api';
 import { offlineService } from '@/services/offline';
+import { Slider } from '@/components/ui/slider';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -24,11 +25,28 @@ const OverWatchLeafletMap: React.FC<{ height?: string }> = ({ height = '600px' }
   const [crews, setCrews] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [status, setStatus] = useState<'connected'|'connecting'|'disconnected'>('connecting');
+  const [radarEnabled, setRadarEnabled] = useState<boolean>(true);
+  const [radarOpacity, setRadarOpacity] = useState<number>(0.5);
 
   useEffect(() => {
     offlineService.getPreference<number>('map.radiusMiles').then(v => { if (typeof v === 'number') setRadiusMiles(v); });
     offlineService.getPreference<[number, number]>('map.center').then(v => { if (Array.isArray(v) && v.length===2) setCenter([v[0], v[1]]); });
+    offlineService.getPreference<'osm'|'esri'|'stamen'>('map.basemap').then(v => { if (v) setBasemap(v); });
+    offlineService.getPreference<boolean>('map.radarEnabled').then(v => { if (typeof v === 'boolean') setRadarEnabled(v); });
+    offlineService.getPreference<number>('map.radarOpacity').then(v => { if (typeof v === 'number') setRadarOpacity(Math.min(1, Math.max(0, v))); });
   }, []);
+
+  useEffect(() => {
+    offlineService.setPreference('map.basemap', basemap);
+  }, [basemap]);
+
+  useEffect(() => {
+    offlineService.setPreference('map.radarEnabled', radarEnabled);
+  }, [radarEnabled]);
+
+  useEffect(() => {
+    offlineService.setPreference('map.radarOpacity', radarOpacity);
+  }, [radarOpacity]);
 
   useEffect(() => {
     const load = async () => {
@@ -65,12 +83,22 @@ const OverWatchLeafletMap: React.FC<{ height?: string }> = ({ height = '600px' }
         </div>
       </div>
       <div style={{ height }}>
-        <div className="absolute z-[1000] m-2 p-1 bg-background/80 rounded border border-glass-border">
-          <select className="text-xs bg-transparent" value={basemap} onChange={e => setBasemap(e.target.value as any)}>
-            <option value="osm">OSM</option>
-            <option value="esri">ESRI Imagery</option>
-            <option value="stamen">Stamen Terrain</option>
-          </select>
+        <div className="absolute z-[1000] m-2 p-2 bg-background/80 rounded border border-glass-border space-y-2">
+          <div>
+            <select className="text-xs bg-transparent" value={basemap} onChange={e => setBasemap(e.target.value as any)}>
+              <option value="osm">OSM</option>
+              <option value="esri">ESRI Imagery</option>
+              <option value="stamen">Stamen Terrain</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input id="radarToggle" type="checkbox" checked={radarEnabled} onChange={e => setRadarEnabled(e.target.checked)} />
+            <label htmlFor="radarToggle" className="text-xs">Radar</label>
+          </div>
+          <div className="w-40">
+            <div className="text-[10px] mb-1">Radar Opacity</div>
+            <Slider value={[radarOpacity]} min={0} max={1} step={0.05} onValueChange={(v) => setRadarOpacity(v[0] as number)} />
+          </div>
         </div>
         <MapContainer center={center} zoom={10} style={{ height: '100%', width: '100%' }}>
           {basemap === 'osm' && (
@@ -82,7 +110,9 @@ const OverWatchLeafletMap: React.FC<{ height?: string }> = ({ height = '600px' }
           {basemap === 'stamen' && (
             <TileLayer attribution='&copy; Stamen' url="https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png" />
           )}
-          <WMSTileLayer url="https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi" params={{ layers: 'nexrad-n0r-900913', transparent: true, format: 'image/png' }} opacity={0.5} />
+          {radarEnabled && (
+            <WMSTileLayer url="https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi" params={{ layers: 'nexrad-n0r-900913', transparent: true, format: 'image/png' }} opacity={radarOpacity} />
+          )}
           <Circle center={center} radius={circleMeters} pathOptions={{ color: '#22c55e', weight: 2, fillOpacity: 0.05 }} />
           {vehicles.map(v => (
             <Marker key={v.vehicle_id} position={[v.location.coordinates[1], v.location.coordinates[0]] as any} icon={DefaultIcon} />

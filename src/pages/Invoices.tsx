@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Download } from 'lucide-react';
-import { getARAging } from '@/services/payments';
+import { getARAging, recordPayment } from '@/services/payments';
+import { useToast } from '@/components/ui/use-toast';
 
 interface InvoiceRow { id: string; payload: any; created_at: string }
 
@@ -11,6 +12,7 @@ const Invoices: React.FC = () => {
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [selected, setSelected] = useState<InvoiceRow | null>(null);
   const [aging, setAging] = useState<{ current: number; thirty: number; sixty: number; ninety: number }>({ current: 0, thirty: 0, sixty: 0, ninety: 0 });
+  const { toast } = useToast();
 
   useEffect(() => {
     (async () => {
@@ -19,6 +21,12 @@ const Invoices: React.FC = () => {
       setAging(await getARAging());
     })();
   }, []);
+
+  const refreshSelected = async (id: string) => {
+    const { data } = await supabase.from('invoices').select('*').eq('id', id).maybeSingle();
+    setSelected(data as any);
+    setAging(await getARAging());
+  };
 
   return (
     <div className="min-h-screen p-6">
@@ -48,13 +56,15 @@ const Invoices: React.FC = () => {
             <div className="text-muted-foreground">Select an invoice</div>
           ) : (
             <div>
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-wrap gap-2 justify-between items-center mb-6">
                 <div>
                   <div className="text-2xl font-bold">Invoice</div>
                   <div className="text-sm text-muted-foreground">ID: {selected.id}</div>
                 </div>
-                <Button variant="outline" onClick={() => window.print()}><Download className="w-4 h-4 mr-2" />Print/PDF</Button>
-                <Button variant="outline" onClick={() => alert('Email sent (stub).')}>Email</Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => window.print()}><Download className="w-4 h-4 mr-2" />Print/PDF</Button>
+                  <Button variant="outline" onClick={() => toast({ title: 'Email sent', description: 'Email delivery is stubbed.' })}>Email</Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
@@ -69,16 +79,22 @@ const Invoices: React.FC = () => {
                   <div className="text-sm">Status: {selected.payload?.status || 'unpaid'}</div>
                 </div>
               </div>
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 items-center mb-4">
                 <input className="border rounded px-2 py-1 text-sm" placeholder="Payment amount" id="payamt" />
                 <Button variant="outline" onClick={async () => {
                   const amt = parseFloat((document.getElementById('payamt') as HTMLInputElement).value || '0');
-                  if (!amt || amt <= 0) return;
-                  const mod = await import('@/services/payments');
-                  await mod.recordPayment(selected.id, amt);
-                  const { data } = await supabase.from('invoices').select('*').eq('id', selected.id).maybeSingle();
-                  setSelected(data as any);
+                  if (!amt || amt <= 0) { toast({ title: 'Invalid amount', variant: 'destructive' }); return; }
+                  await recordPayment(selected.id, amt);
+                  await refreshSelected(selected.id);
+                  toast({ title: 'Payment recorded', description: `$${amt.toFixed(2)} applied` });
                 }}>Record Payment</Button>
+                {selected.payload?.status !== 'paid' && (
+                  <Button variant="outline" onClick={async () => {
+                    await recordPayment(selected.id, Math.max(0, (selected.payload?.total || 0) - (selected.payload?.amountPaid || 0)));
+                    await refreshSelected(selected.id);
+                    toast({ title: 'Invoice marked paid' });
+                  }}>Mark Paid</Button>
+                )}
               </div>
               <table className="w-full text-sm">
                 <thead>

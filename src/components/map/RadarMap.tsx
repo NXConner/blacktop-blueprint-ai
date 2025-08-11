@@ -39,6 +39,8 @@ const RadarMap: React.FC<RadarMapProps> = ({ className = '', height = '520px' })
   const [center, setCenter] = useState<LatLngExpression>(BUSINESS_COORDS);
   const [radiusMiles, setRadiusMiles] = useState<number>(15);
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'located' | 'error'>('idle');
+  const [radarEnabled, setRadarEnabled] = useState<boolean>(true);
+  const [radarOpacity, setRadarOpacity] = useState<number>(0.6);
 
   useEffect(() => {
     // Load saved preference
@@ -48,12 +50,22 @@ const RadarMap: React.FC<RadarMapProps> = ({ className = '', height = '520px' })
     offlineService.getPreference<[number, number]>('map.center').then((saved) => {
       if (Array.isArray(saved) && saved.length === 2) setCenter([saved[0], saved[1]]);
     });
+    offlineService.getPreference<boolean>('map.radarEnabled').then((v) => { if (typeof v === 'boolean') setRadarEnabled(v); });
+    offlineService.getPreference<number>('map.radarOpacity').then((v) => { if (typeof v === 'number') setRadarOpacity(Math.min(1, Math.max(0, v))); });
   }, []);
 
   useEffect(() => {
     // Persist preference
     void offlineService.setPreference('map.radiusMiles', radiusMiles);
   }, [radiusMiles]);
+
+  useEffect(() => {
+    void offlineService.setPreference('map.radarEnabled', radarEnabled);
+  }, [radarEnabled]);
+
+  useEffect(() => {
+    void offlineService.setPreference('map.radarOpacity', radarOpacity);
+  }, [radarOpacity]);
 
   const locate = () => {
     if (!navigator.geolocation) return;
@@ -103,6 +115,16 @@ const RadarMap: React.FC<RadarMapProps> = ({ className = '', height = '520px' })
       </div>
 
       <div style={{ height }} className="relative">
+        <div className="absolute z-[1000] m-2 p-2 bg-background/80 rounded border border-glass-border space-y-2">
+          <div className="flex items-center gap-2">
+            <input id="radarToggle" type="checkbox" checked={radarEnabled} onChange={(e) => setRadarEnabled(e.target.checked)} />
+            <label htmlFor="radarToggle" className="text-xs">Radar</label>
+          </div>
+          <div className="w-40">
+            <div className="text-[10px] mb-1">Radar Opacity</div>
+            <Slider value={[radarOpacity]} min={0} max={1} step={0.05} onValueChange={(v) => setRadarOpacity(v[0] as number)} />
+          </div>
+        </div>
         <MapContainer center={center as [number, number]} zoom={10} zoomControl className="rounded-b-lg" style={{ height: '100%', width: '100%' }}>
           <RecenterMap center={center} />
           <TileLayer
@@ -110,15 +132,17 @@ const RadarMap: React.FC<RadarMapProps> = ({ className = '', height = '520px' })
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {/* NOAA NEXRAD WMS */}
-          <WMSTileLayer
-            url="https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi"
-            params={{
-              layers: 'nexrad-n0r-900913',
-              transparent: true,
-              format: 'image/png'
-            }}
-            opacity={0.6}
-          />
+          {radarEnabled && (
+            <WMSTileLayer
+              url="https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi"
+              params={{
+                layers: 'nexrad-n0r-900913',
+                transparent: true,
+                format: 'image/png'
+              }}
+              opacity={radarOpacity}
+            />
+          )}
 
           <Marker position={center} icon={DefaultIcon} />
           <Circle center={center} radius={circleMeters} pathOptions={{ color: '#3b82f6', weight: 2, fillOpacity: 0.08 }} />

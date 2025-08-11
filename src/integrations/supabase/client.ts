@@ -13,7 +13,6 @@ const SUPABASE_URL = ENV_SUPABASE_URL ?? FALLBACK_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = ENV_SUPABASE_ANON_KEY ?? FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
 if (!ENV_SUPABASE_URL || !ENV_SUPABASE_ANON_KEY) {
-  // eslint-disable-next-line no-console
   console.warn(
     "[Supabase] Using fallback URL/key. Define VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment for production."
   );
