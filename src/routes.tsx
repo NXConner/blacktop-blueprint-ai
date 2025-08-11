@@ -29,6 +29,7 @@ const Estimates = lazy(() => import('./pages/Estimates'));
 const Invoices = lazy(() => import('./pages/Invoices'));
 const FleetFuel = lazy(() => import('./pages/FleetFuel'));
 const SupplierReceipts = lazy(() => import('./pages/SupplierReceipts'));
+const UnifiedMap = lazy(() => import('./pages/UnifiedMap'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -51,6 +52,7 @@ export const routes: AppRoute[] = [
   { path: '/invoices', element: Invoices },
   { path: '/fleet-fuel', element: FleetFuel },
   { path: '/supplier-receipts', element: SupplierReceipts },
+  { path: '/unified-map', element: UnifiedMap },
   { path: '/downloads', element: Downloads },
   { path: '/settings', element: Settings, requiresAuth: true },
   { path: '*', element: NotFound },
@@ -78,6 +80,7 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/invoices': () => import('./pages/Invoices'),
   '/fleet-fuel': () => import('./pages/FleetFuel'),
   '/supplier-receipts': () => import('./pages/SupplierReceipts'),
+  '/unified-map': () => import('./pages/UnifiedMap'),
   '/downloads': () => import('./pages/Downloads'),
   '/settings': () => import('./pages/Settings'),
 };
