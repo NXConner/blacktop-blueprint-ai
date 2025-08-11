@@ -159,3 +159,8 @@
   - `VITE_WEATHER_API_KEY`, `VITE_ROUTING_API_KEY`, `VITE_EIA_API_KEY`, `VITE_GSA_API_KEY`, `VITE_SAM_GOV_API_KEY`, `VITE_POINT_CLOUD_API_KEY`, `VITE_AI_ANALYSIS_API_KEY`
   - QuickBooks (server-side contexts): `QUICKBOOKS_CLIENT_ID`, `QUICKBOOKS_CLIENT_SECRET`, `QUICKBOOKS_ENVIRONMENT`, `QUICKBOOKS_REDIRECT_URI`
 - Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
+### AI integration additions
+- Integrated a Hugging Face client (`src/integrations/huggingface/hf-client.ts`) with token from `VITE_HUGGINGFACE_TOKEN` or `HUGGINGFACE_TOKEN`.
+- Added an optional image segmentation demo on `UnifiedMap` to process uploaded images and receive a mask; next step is to convert mask to vector polygons and snap them to parcel edges.
+- Recommendation: move token into env and never hard-code; add rate limiting and retries for inference calls.

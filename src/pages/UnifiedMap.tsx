@@ -19,6 +19,7 @@ import { Mail, MessageSquare, Phone, Video } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMapEvents } from 'react-leaflet';
+import { segmentImage, generateText } from '@/integrations/huggingface/hf-client';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -513,6 +514,21 @@ const UnifiedMap: React.FC = () => {
     }
   };
 
+  // HF assisted asphalt (optional demo)
+  const [hfBusy, setHfBusy] = useState(false);
+  const runHFAsphaltDemo = async (file: File) => {
+    try {
+      setHfBusy(true);
+      const mask = await segmentImage(file);
+      // In a real pipeline: convert mask to vector polygon. For demo, keep showing computed turf circle overlay already in place.
+      toast({ title: 'AI segmentation processed', description: 'Mask received from Hugging Face' });
+    } catch (e) {
+      toast({ title: 'HF error', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setHfBusy(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-4" ref={containerRef}>
       {/* Top Bar */}
@@ -648,6 +664,8 @@ const UnifiedMap: React.FC = () => {
             {drawMode==='polygon' && drawPoints.length>=3 && (
               <span className="text-xs text-muted-foreground">Area: {currentPolyAreaSqFt.toFixed(0)} sq ft</span>
             )}
+            <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void runHFAsphaltDemo(f); }} />
+            {hfBusy && <span className="text-xs">AI…</span>}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Navigation2 className="w-4 h-4" /> Route
