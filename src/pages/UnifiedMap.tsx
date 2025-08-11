@@ -12,6 +12,10 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { offlineService } from '@/services/offline';
 import { api } from '@/services/api';
+import * as turf from '@turf/turf';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Card as UICard } from '@/components/ui/card';
+import { Mail, MessageSquare, Phone, Video } from 'lucide-react';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -178,8 +182,58 @@ const UnifiedMap: React.FC = () => {
     </Marker>
   )) : null, [showAlerts, alerts]);
 
+  // Geofences (simple polygon demo around center)
+  const [geofences, setGeofences] = useState<Array<[number, number][]>>([]);
+  const [geofenceEnabled, setGeofenceEnabled] = useState(true);
+
+  useEffect(() => {
+    // Initialize with a demo geofence polygon (square around center)
+    const c = Array.isArray(center) ? [center[0] as number, center[1] as number] : [36.6418, -80.2667];
+    const d = 0.01; // ~1km
+    setGeofences([
+      [ [c[0]-d, c[1]-d], [c[0]-d, c[1]+d], [c[0]+d, c[1]+d], [c[0]+d, c[1]-d] ] as any
+    ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isInsideGeofence = (lat: number, lon: number): boolean => {
+    if (!geofenceEnabled || geofences.length === 0) return false;
+    const pt = turf.point([lon, lat]);
+    return geofences.some(poly => turf.booleanPointInPolygon(pt, turf.polygon([[...poly, poly[0]].map(([la, lo]) => [lo, la])])));
+  };
+
+  // Auto measurement of driveway/parking lot (placeholder drawing using Turf buffer of center)
+  const [autoAsphaltOverlay, setAutoAsphaltOverlay] = useState<boolean>(false);
+  const [asphaltPolygon, setAsphaltPolygon] = useState<[number, number][]>([]);
+  const [asphaltAreaSqFt, setAsphaltAreaSqFt] = useState<number>(0);
+
+  useEffect(() => {
+    if (!autoAsphaltOverlay) { setAsphaltPolygon([]); setAsphaltAreaSqFt(0); return; }
+    const c = Array.isArray(center) ? [center[1] as number, center[0] as number] : [-80.2667, 36.6418];
+    // Create a demo circle polygon as "detected" asphalt region
+    const circle = turf.circle(c, 0.05, { steps: 64, units: 'kilometers' });
+    const coords = circle.geometry.coordinates[0].map(([lon, lat]) => [lat, lon]) as [number, number][];
+    setAsphaltPolygon(coords);
+    const areaSqMeters = turf.area(circle);
+    setAsphaltAreaSqFt(areaSqMeters * 10.7639);
+  }, [autoAsphaltOverlay, center]);
+
+  // Clock-in/out stubs
+  const clockIn = async (employeeId: string) => {
+    // Persist as needed; stub UI feedback only
+    console.info('Clock-in:', employeeId);
+  };
+  const clockOut = async (employeeId: string) => {
+    console.info('Clock-out:', employeeId);
+  };
+
+  // Extended basemaps
+  type BaseMapKey = 'osm'|'esri'|'stamen'|'carto'|'thunderforest';
+  const [baseKey, setBaseKey] = useState<BaseMapKey>('osm');
+
   return (
     <div className="min-h-screen p-4" ref={containerRef}>
+      {/* Top Bar */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-primary" />
@@ -218,13 +272,16 @@ const UnifiedMap: React.FC = () => {
       </div>
 
       <Card className="glass-elevated">
+        {/* Controls */}
         <div className="flex flex-wrap items-center gap-3 p-3 border-b border-glass-border">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4" />
-            <select className="text-sm bg-transparent" value={basemap} onChange={e => setBasemap(e.target.value as any)}>
+            <select className="text-sm bg-transparent" value={baseKey} onChange={e => setBaseKey(e.target.value as BaseMapKey)}>
               <option value="osm">OSM</option>
               <option value="esri">ESRI Imagery</option>
               <option value="stamen">Stamen Terrain</option>
+              <option value="carto">Carto Light</option>
+              <option value="thunderforest">Thunderforest Outdoors</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
@@ -241,6 +298,13 @@ const UnifiedMap: React.FC = () => {
             <label htmlFor="crewToggle">Crews ({crews.length})</label>
             <input id="alertToggle" type="checkbox" className="ml-3" checked={showAlerts} onChange={e => setShowAlerts(e.target.checked)} />
             <label htmlFor="alertToggle">Alerts ({alerts.length})</label>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <input id="geoToggle" type="checkbox" checked={geofenceEnabled} onChange={e => setGeofenceEnabled(e.target.checked)} />
+            <label htmlFor="geoToggle">Geofencing</label>
+            <input id="asphaltToggle" className="ml-3" type="checkbox" checked={autoAsphaltOverlay} onChange={e => setAutoAsphaltOverlay(e.target.checked)} />
+            <label htmlFor="asphaltToggle">Auto Asphalt Detection</label>
+            {autoAsphaltOverlay && <span className="ml-2 text-xs text-muted-foreground">Area ≈ {asphaltAreaSqFt.toFixed(0)} sq ft</span>}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <div className="w-56">
@@ -262,9 +326,9 @@ const UnifiedMap: React.FC = () => {
           </div>
         </div>
 
+        {/* Map */}
         <div style={{ height: '70vh' }}>
           <MapContainer center={center as [number, number]} zoom={10} preferCanvas style={{ height: '100%', width: '100%' }} whenCreated={(map) => {
-            // Custom event listener to call fitBounds from above button
             const container = (map as any)._container as HTMLElement;
             const handler = (e: Event) => {
               const detail = (e as CustomEvent).detail as LatLngBoundsExpression;
@@ -275,14 +339,20 @@ const UnifiedMap: React.FC = () => {
           }}>
             <RecenterMap center={center} />
             <MapEnhancements />
-            {basemap === 'osm' && (
+            {baseKey === 'osm' && (
               <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             )}
-            {basemap === 'esri' && (
+            {baseKey === 'esri' && (
               <TileLayer attribution='&copy; ESRI' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
             )}
-            {basemap === 'stamen' && (
+            {baseKey === 'stamen' && (
               <TileLayer attribution='&copy; Stamen' url="https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png" />
+            )}
+            {baseKey === 'carto' && (
+              <TileLayer attribution='&copy; Carto' url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png" />
+            )}
+            {baseKey === 'thunderforest' && (
+              <TileLayer attribution='&copy; Thunderforest' url="https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=YOUR_API_KEY" />
             )}
 
             {radarEnabled && (
@@ -293,11 +363,92 @@ const UnifiedMap: React.FC = () => {
               />
             )}
 
+            {/* Geofences */}
+            {geofenceEnabled && geofences.map((poly, idx) => (
+              <Polyline key={`geo-${idx}`} positions={poly} pathOptions={{ color: '#f59e0b', weight: 2, dashArray: '4 4' }} />
+            ))}
+
+            {/* Auto Asphalt Detected Overlay */}
+            {autoAsphaltOverlay && asphaltPolygon.length > 0 && (
+              <Polyline positions={asphaltPolygon} pathOptions={{ color: '#0ea5e9', weight: 3, fillOpacity: 0.1 }} />
+            )}
+
             <Circle center={center} radius={circleMeters} pathOptions={{ color: '#22c55e', weight: 2, fillOpacity: 0.05 }} />
 
-            {vehicleMarkers}
-            {crewMarkers}
-            {alertMarkers}
+            {/* Vehicles */}
+            {showVehicles && vehicles.map(v => {
+              const lat = v.location.coordinates[1];
+              const lon = v.location.coordinates[0];
+              const inside = isInsideGeofence(lat, lon);
+              return (
+                <Popover key={`veh-${v.vehicle_id}`}>
+                  <PopoverTrigger asChild>
+                    <Marker position={[lat, lon] as any} icon={DefaultIcon} />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <UICard className="p-3 space-y-2">
+                      <div className="font-semibold">Vehicle {v.vehicle_id}</div>
+                      <div className="text-xs text-muted-foreground">{inside ? 'Inside' : 'Outside'} geofence</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>Miles: {Math.round(Math.random()*120)}</div>
+                        <div>Fuel: {Math.round(Math.random()*100)}%</div>
+                        <div>Status: {['idle','enroute','onsite'][Math.floor(Math.random()*3)]}</div>
+                        <div>Speed: {Math.round(Math.random()*55)} mph</div>
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <Button size="sm" variant="outline"><MessageSquare className="w-3 h-3 mr-1" /> Message</Button>
+                        <Button size="sm" variant="outline"><Phone className="w-3 h-3 mr-1" /> Call</Button>
+                      </div>
+                    </UICard>
+                  </PopoverContent>
+                </Popover>
+              );
+            })}
+
+            {/* Employees (reuse crews as employees demo) */}
+            {showCrews && crews.map((c, i) => {
+              const lat = 36.64 + Math.random()*0.1;
+              const lon = -80.26 + Math.random()*0.1;
+              const inside = isInsideGeofence(lat, lon);
+              const empId = c.supervisor_id || `emp-${i}`;
+              return (
+                <Popover key={`emp-${empId}`}>
+                  <PopoverTrigger asChild>
+                    <Marker position={[lat, lon] as any} icon={DefaultIcon} />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-96">
+                    <UICard className="p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold">Employee {empId}</div>
+                        <div className={`text-xs ${inside?'text-success':'text-muted-foreground'}`}>{inside ? 'In Zone' : 'Out of Zone'}</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>Hours: {Math.round(Math.random()*8)}</div>
+                        <div>Tasks: {Math.round(Math.random()*5)}</div>
+                        <div>Compliance: {90 + Math.round(Math.random()*10)}%</div>
+                        <div>Productivity: {70 + Math.round(Math.random()*30)}%</div>
+                        <div>Breaks: {Math.round(Math.random()*2)}</div>
+                        <div>Alerts: {Math.round(Math.random()*1)}</div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <Button size="sm" onClick={() => clockIn(empId)} variant="outline">Clock In</Button>
+                        <Button size="sm" onClick={() => clockOut(empId)} variant="outline">Clock Out</Button>
+                        <Button size="sm" variant="outline"><Mail className="w-3 h-3 mr-1" /> Email</Button>
+                        <Button size="sm" variant="outline"><MessageSquare className="w-3 h-3 mr-1" /> Message</Button>
+                        <Button size="sm" variant="outline"><Phone className="w-3 h-3 mr-1" /> Call</Button>
+                        <Button size="sm" variant="outline"><Video className="w-3 h-3 mr-1" /> FaceTime</Button>
+                      </div>
+                    </UICard>
+                  </PopoverContent>
+                </Popover>
+              );
+            })}
+
+            {/* Alerts */}
+            {showAlerts && alerts.map((a, i) => (
+              <Marker key={`alert-${a.id || i}`} position={[36.61 + Math.random()*0.15, -80.24 + Math.random()*0.15] as any} icon={DefaultIcon} />
+            ))}
+
           </MapContainer>
         </div>
       </Card>
