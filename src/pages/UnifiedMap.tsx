@@ -16,6 +16,8 @@ import * as turf from '@turf/turf';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card as UICard } from '@/components/ui/card';
 import { Mail, MessageSquare, Phone, Video } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -43,6 +45,7 @@ function MapEnhancements() {
 
 const UnifiedMap: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Core state
   const [center, setCenter] = useState<LatLngExpression>(BUSINESS_COORDS);
@@ -231,6 +234,65 @@ const UnifiedMap: React.FC = () => {
   type BaseMapKey = 'osm'|'esri'|'stamen'|'carto'|'thunderforest';
   const [baseKey, setBaseKey] = useState<BaseMapKey>('osm');
 
+  // Employee analytics toggles and app usage tracking (approximate)
+  const [employeeAnalyticsEnabled, setEmployeeAnalyticsEnabled] = useState(true);
+  const [trackPhoneUsage, setTrackPhoneUsage] = useState(true);
+  const [appUsageSeconds, setAppUsageSeconds] = useState(0);
+  const [offAppSeconds, setOffAppSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!trackPhoneUsage) return;
+    const iv = setInterval(() => {
+      if (document.visibilityState === 'visible') setAppUsageSeconds((s) => s + 1);
+      else setOffAppSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [trackPhoneUsage]);
+
+  // Employee movement state cache
+  type EmpState = { lastLat: number; lastLon: number; lastTs: number; mph: number; state: 'moving'|'stationary'|'sitting'|'standing'|'driving'|'passenger' };
+  const [employeeStateMap, setEmployeeStateMap] = useState<Record<string, EmpState>>({});
+
+  const updateEmployeeState = (empId: string, lat: number, lon: number): EmpState => {
+    const now = Date.now();
+    const prev = employeeStateMap[empId];
+    let mph = 0;
+    if (prev) {
+      const km = turf.distance(turf.point([prev.lastLon, prev.lastLat]), turf.point([lon, lat]));
+      const miles = km * 0.621371;
+      const hours = (now - prev.lastTs) / (1000 * 60 * 60);
+      mph = hours > 0 ? miles / hours : 0;
+    }
+    // Determine state
+    let state: EmpState['state'] = 'stationary';
+    if (mph > 0.5 && mph <= 4) state = 'moving';
+    if (mph > 4 && mph <= 12) state = 'moving'; // jogging/bike
+    if (mph > 12) state = 'driving';
+    if (mph <= 0.5) state = Math.random() > 0.5 ? 'sitting' : 'standing';
+    // Passenger check: near a vehicle
+    if (mph > 5 && vehicles.some(v => turf.distance(turf.point([v.location.coordinates[0], v.location.coordinates[1]]), turf.point([lon, lat])) < 0.02)) {
+      state = 'passenger';
+    }
+    const next: EmpState = { lastLat: lat, lastLon: lon, lastTs: now, mph, state };
+    setEmployeeStateMap((m) => ({ ...m, [empId]: next }));
+    return next;
+  };
+
+  const notifyAdminOutOfBounds = async (empId: string, lat: number, lon: number) => {
+    const payload = { employee_id: empId, type: 'out_of_bounds', lat, lon, created_at: new Date().toISOString(), message: `Employee ${empId} is out of geofence` };
+    try {
+      await supabase.from('admin_messages').insert(payload);
+      toast({ title: 'Admin notified', description: `Alert sent for ${empId}` });
+    } catch {
+      try {
+        await offlineService.queueAction('INSERT', 'admin_messages', payload);
+        toast({ title: 'Queued alert (offline)', description: `Will sync for ${empId}` });
+      } catch {
+        toast({ title: 'Failed to send alert', variant: 'destructive' });
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen p-4" ref={containerRef}>
       {/* Top Bar */}
@@ -305,6 +367,15 @@ const UnifiedMap: React.FC = () => {
             <input id="asphaltToggle" className="ml-3" type="checkbox" checked={autoAsphaltOverlay} onChange={e => setAutoAsphaltOverlay(e.target.checked)} />
             <label htmlFor="asphaltToggle">Auto Asphalt Detection</label>
             {autoAsphaltOverlay && <span className="ml-2 text-xs text-muted-foreground">Area ≈ {asphaltAreaSqFt.toFixed(0)} sq ft</span>}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <input id="empAnalytics" type="checkbox" checked={employeeAnalyticsEnabled} onChange={(e) => setEmployeeAnalyticsEnabled(e.target.checked)} />
+            <label htmlFor="empAnalytics">Employee Analytics</label>
+            <input id="phoneUsage" className="ml-3" type="checkbox" checked={trackPhoneUsage} onChange={(e) => setTrackPhoneUsage(e.target.checked)} />
+            <label htmlFor="phoneUsage">Track App Usage</label>
+            {trackPhoneUsage && (
+              <span className="ml-2 text-xs text-muted-foreground">In-app: {(appUsageSeconds/60|0)}m {appUsageSeconds%60}s · Off-app: {(offAppSeconds/60|0)}m {offAppSeconds%60}s</span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <div className="w-56">
@@ -411,6 +482,7 @@ const UnifiedMap: React.FC = () => {
               const lon = -80.26 + Math.random()*0.1;
               const inside = isInsideGeofence(lat, lon);
               const empId = c.supervisor_id || `emp-${i}`;
+              const st = employeeAnalyticsEnabled ? updateEmployeeState(empId, lat, lon) : undefined;
               return (
                 <Popover key={`emp-${empId}`}>
                   <PopoverTrigger asChild>
@@ -420,19 +492,22 @@ const UnifiedMap: React.FC = () => {
                     <UICard className="p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="font-semibold">Employee {empId}</div>
-                        <div className={`text-xs ${inside?'text-success':'text-muted-foreground'}`}>{inside ? 'In Zone' : 'Out of Zone'}</div>
+                        <div className={`text-xs ${inside?'text-success':'text-destructive'}`}>{inside ? 'In Zone' : 'Out of Zone'}</div>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>Hours: {Math.round(Math.random()*8)}</div>
+                        <div>State: {st?.state || 'n/a'}</div>
+                        <div>Speed: {st ? `${st.mph.toFixed(1)} mph` : 'n/a'}</div>
+                        <div>Phone (in-app): {(appUsageSeconds/60|0)}m</div>
                         <div>Tasks: {Math.round(Math.random()*5)}</div>
                         <div>Compliance: {90 + Math.round(Math.random()*10)}%</div>
                         <div>Productivity: {70 + Math.round(Math.random()*30)}%</div>
-                        <div>Breaks: {Math.round(Math.random()*2)}</div>
-                        <div>Alerts: {Math.round(Math.random()*1)}</div>
                       </div>
                       <div className="flex flex-wrap gap-2 pt-2">
                         <Button size="sm" onClick={() => clockIn(empId)} variant="outline">Clock In</Button>
                         <Button size="sm" onClick={() => clockOut(empId)} variant="outline">Clock Out</Button>
+                        {!inside && (
+                          <Button size="sm" onClick={() => notifyAdminOutOfBounds(empId, lat, lon)} variant="destructive">Notify Admin</Button>
+                        )}
                         <Button size="sm" variant="outline"><Mail className="w-3 h-3 mr-1" /> Email</Button>
                         <Button size="sm" variant="outline"><MessageSquare className="w-3 h-3 mr-1" /> Message</Button>
                         <Button size="sm" variant="outline"><Phone className="w-3 h-3 mr-1" /> Call</Button>
