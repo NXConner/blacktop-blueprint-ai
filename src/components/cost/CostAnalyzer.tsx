@@ -130,6 +130,7 @@ const CostAnalyzer: React.FC<CostAnalyzerProps> = ({
       if (result.success && result.data) {
         toast({ title: "Cost entry added", description: newCost.description || newCost.category });
         setIsAddCostOpen(false);
+        await loadCostData();
       } else {
         throw new Error(result.message || "Failed to add cost entry");
       }

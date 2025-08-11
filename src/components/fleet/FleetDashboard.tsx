@@ -97,6 +97,7 @@ const FleetDashboard: React.FC<FleetDashboardProps> = ({
       if (result.success) {
         toast({ title: "Vehicle added", description: newVehicle.vehicle_number });
         setIsAddVehicleOpen(false);
+        await loadFleetData();
       } else {
         throw new Error(result.message || "Failed to add vehicle");
       }
