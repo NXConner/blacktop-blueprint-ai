@@ -10,12 +10,14 @@ import { asphaltEstimator } from '@/services/estimators/asphalt-estimator';
 import { businessConfigService } from '@/services/business-config';
 import { fuelPriceService } from '@/services/fuel-price';
 import { MapPin, Calculator, Fuel } from 'lucide-react';
-import { geocodeAddress, haversineMiles, detectRegionFromAddress } from '@/services/geocoding';
+import { geocodeAddress, haversineMiles, detectRegionFromAddress, autocompleteAddress } from '@/services/geocoding';
 import { Slider } from '@/components/ui/slider';
 import { invoicingService } from '@/services/invoicing';
 import { postInvoiceToGL } from '@/services/accounting/invoice-posting';
 import { C30_1978, computeSk550Load, checkVehicleLoad } from '@/services/transport';
 import { Checkbox } from '@/components/ui/checkbox';
+import { MapContainer, TileLayer, Polyline, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
@@ -23,6 +25,9 @@ const Estimator: React.FC = () => {
   const [overhead, setOverhead] = useState(10);
   const [profit, setProfit] = useState(20);
   const [applySalesTax, setApplySalesTax] = useState(true);
+  const [addrQuery, setAddrQuery] = useState('');
+  const [addrSuggestions, setAddrSuggestions] = useState<Array<{ label: string; lat: number; lon: number }>>([]);
+  const [routePreview, setRoutePreview] = useState<{ points: [number, number][], miles: number } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +60,7 @@ const Estimator: React.FC = () => {
         const leg3 = haversineMiles(biz, job);
         const leg4 = haversineMiles(job, biz);
         milesRT = Math.round(leg1 + leg2 + leg3 + leg4);
+        setRoutePreview({ points: [[biz.lat, biz.lon], [sup.lat, sup.lon], [job.lat, job.lon]], miles: Math.round((leg1+leg2+leg3+leg4)*10)/10 });
       }
       const regionDetected = detectRegionFromAddress(address);
       if (regionDetected !== 'OTHER') region = regionDetected;
@@ -104,6 +110,7 @@ const Estimator: React.FC = () => {
         const leg3 = haversineMiles(biz, job);
         const leg4 = haversineMiles(job, biz);
         milesRT = Math.round(leg1 + leg2 + leg3 + leg4);
+        setRoutePreview({ points: [[biz.lat, biz.lon], [sup.lat, sup.lon], [job.lat, job.lon]], miles: Math.round((leg1+leg2+leg3+leg4)*10)/10 });
       }
       const regionDetected = detectRegionFromAddress(address);
       if (regionDetected !== 'OTHER') region = regionDetected;
@@ -169,7 +176,21 @@ const Estimator: React.FC = () => {
                 </div>
                 <div className="col-span-2">
                   <Label htmlFor="addr">Job Address (optional)</Label>
-                  <Input id="addr" name="address" placeholder="Street, City, ST ZIP" />
+                  <Input id="addr" name="address" placeholder="Street, City, ST ZIP" value={addrQuery} onChange={async (e) => {
+                    setAddrQuery(e.target.value);
+                    const results = await autocompleteAddress(e.target.value);
+                    setAddrSuggestions(results);
+                  }} />
+                  {addrSuggestions.length > 0 && (
+                    <div className="mt-1 border rounded bg-background text-sm max-h-40 overflow-auto">
+                      {addrSuggestions.map((s, idx) => (
+                        <div key={idx} className="px-2 py-1 hover:bg-muted cursor-pointer" onClick={() => {
+                          setAddrQuery(s.label);
+                          setAddrSuggestions([]);
+                        }}>{s.label}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -188,6 +209,18 @@ const Estimator: React.FC = () => {
                 <Checkbox id="applyTax" checked={applySalesTax} onCheckedChange={(v) => setApplySalesTax(!!v)} />
                 <Label htmlFor="applyTax">Apply sales tax</Label>
               </div>
+              {routePreview && (
+                <div className="mt-4">
+                  <div className="text-sm mb-1">Route preview (RT miles ≈ {routePreview.miles})</div>
+                  <div className="h-48 rounded overflow-hidden border border-glass-border">
+                    <MapContainer center={routePreview.points[0] as any} zoom={8} style={{ height: '100%', width: '100%' }}>
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <Polyline positions={routePreview.points as any} color="blue" />
+                      {routePreview.points.map((p, i) => (<Marker key={i} position={p as any} />))}
+                    </MapContainer>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4 flex gap-3">
                 <Button type="submit" disabled={loading}>
@@ -243,7 +276,21 @@ const Estimator: React.FC = () => {
                 </div>
                 <div className="col-span-2">
                   <Label htmlFor="addr_pl">Job Address (optional)</Label>
-                  <Input id="addr_pl" name="address" placeholder="Street, City, ST ZIP" />
+                  <Input id="addr_pl" name="address" placeholder="Street, City, ST ZIP" value={addrQuery} onChange={async (e) => {
+                    setAddrQuery(e.target.value);
+                    const results = await autocompleteAddress(e.target.value);
+                    setAddrSuggestions(results);
+                  }} />
+                  {addrSuggestions.length > 0 && (
+                    <div className="mt-1 border rounded bg-background text-sm max-h-40 overflow-auto">
+                      {addrSuggestions.map((s, idx) => (
+                        <div key={idx} className="px-2 py-1 hover:bg-muted cursor-pointer" onClick={() => {
+                          setAddrQuery(s.label);
+                          setAddrSuggestions([]);
+                        }}>{s.label}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -262,6 +309,18 @@ const Estimator: React.FC = () => {
                 <Checkbox id="applyTax_pl" checked={applySalesTax} onCheckedChange={(v) => setApplySalesTax(!!v)} />
                 <Label htmlFor="applyTax_pl">Apply sales tax</Label>
               </div>
+              {routePreview && (
+                <div className="mt-4">
+                  <div className="text-sm mb-1">Route preview (RT miles ≈ {routePreview.miles})</div>
+                  <div className="h-48 rounded overflow-hidden border border-glass-border">
+                    <MapContainer center={routePreview.points[0] as any} zoom={8} style={{ height: '100%', width: '100%' }}>
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <Polyline positions={routePreview.points as any} color="blue" />
+                      {routePreview.points.map((p, i) => (<Marker key={i} position={p as any} />))}
+                    </MapContainer>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4 flex gap-3">
                 <Button type="submit" disabled={loading}>
