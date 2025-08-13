@@ -1,6 +1,7 @@
 import { businessConfigService } from '@/services/business-config';
 import { fuelPriceService, Region } from '@/services/fuel-price';
 import { supabase } from '@/integrations/supabase/client';
+import { computeSalesTax } from '@/services/tax';
 
 export type Porosity = 'normal' | 'older';
 export type ServiceType = 'driveway' | 'parking_lot';
@@ -51,6 +52,7 @@ export interface EstimateInputs {
   travel: TravelInfo;
   profitMarginPct?: number; // default 20
   overheadPct?: number; // default 10
+  applySalesTax?: boolean; // if true, apply sales tax to total using travel.region
 }
 
 export interface EstimateBreakdown {
@@ -63,7 +65,9 @@ export interface EstimateBreakdown {
   subtotal: number;
   overhead: number;
   profit: number;
-  total: number;
+  total: number; // For backward compatibility: pre-tax total unless applySalesTax was provided, then equals totalWithTax
+  salesTax?: number; // newly added: computed sales tax when applySalesTax is true
+  totalWithTax?: number; // newly added: grand total including tax
 }
 
 const sqFtPerGallonMixed = (porosity: Porosity) => (porosity === 'older' ? 70 : 82);
@@ -183,7 +187,15 @@ export class AsphaltEstimatorService {
     const subtotal = materialsCost + laborCost + equipmentFuelCost + travelFuelCost + mobilizationFee;
     const overhead = subtotal * ((inputs.overheadPct ?? 10) / 100);
     const profit = (subtotal + overhead) * ((inputs.profitMarginPct ?? 20) / 100);
-    const total = subtotal + overhead + profit;
+    const preTaxTotal = subtotal + overhead + profit;
+
+    let salesTax: number | undefined;
+    let totalWithTax: number | undefined;
+    if (inputs.applySalesTax) {
+      const region = inputs.travel.region as Region;
+      salesTax = await computeSalesTax(region, preTaxTotal);
+      totalWithTax = preTaxTotal + salesTax;
+    }
 
     const breakdown: EstimateBreakdown = {
       materials,
@@ -195,7 +207,9 @@ export class AsphaltEstimatorService {
       subtotal,
       overhead,
       profit,
-      total,
+      total: inputs.applySalesTax && totalWithTax !== undefined ? totalWithTax : preTaxTotal,
+      salesTax,
+      totalWithTax,
     };
 
     if (persist) {

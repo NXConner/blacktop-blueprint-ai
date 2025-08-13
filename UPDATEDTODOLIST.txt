@@ -194,12 +194,12 @@ leave other maps pages ect currently implemented untouched
 
 ### To-Do 
 - Employee tracking and shifts
-  - Replace simulated employee paths with real `employee_tracking` pings
-  - Create `shifts` table and clock-in/out flows; compute true workday window (first in → last out)
+  - Replace simulated employee paths with real `employee_tracking` pings (table added)
+  - Create `shifts` table and clock-in/out flows; compute true workday window (first in → last out) (table added)
   - Accrue travel time from DB events; expose summarized endpoints
 - Geofence management and events
-  - CRUD for named geofences; per-zone rules; enter/exit/breach events to `geofence_events`
-  - Real-time and batch notifications; admin inbox with RLS
+  - CRUD for named geofences; per-zone rules; enter/exit/breach events to `geofence_events` (tables added)
+  - Real-time and batch notifications; admin inbox with RLS (tables/policies added)
 - Playback from DB
   - Join employee + vehicle history by date range; render trails; add heatmap/clustering for large sets
 - AI asphalt vectorization
@@ -235,11 +235,11 @@ leave other maps pages ect currently implemented untouched
 ---
 
 ### need to add:
-- employee compliance system
-- achievments to unlock, friendly employee competitions
-- page for osha federal state ( Virginia and North Carolina ) coplinance system with rules regulations policies best practices and standards for industry
-- add page dedicated to All Materials and industry specifics policies rules regulations guidlines, instructions specifications standards and best practices for driveway and parkinglots : asphalt crack repair, patching, other maintinence, Sealcoating and line stripping. 
-- Veteran dashboard and special features 
+- [x] employee compliance system (page stub)
+- [x] achievements to unlock, friendly employee competitions (page stub)
+- [x] page for osha federal state ( Virginia and North Carolina ) compliance with rules, regulations, policies, best practices (page stub)
+- [x] page dedicated to All Materials and industry specifics: asphalt crack repair, patching, sealcoating, line striping (page stub)
+- [x] Veteran dashboard and special features (page stub)
  
 ### Environment and keys needed
 - Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
@@ -326,8 +326,8 @@ leave other maps pages ect currently implemented untouched
 
 ## To‑Do (actionable)
 - Totals & tax
-  - [ ] Add per‑job `applySalesTax` flag; compute and include tax in `total`
-  - [ ] Persist tax flag in job params; surface in UI and invoice text
+  - [x] Add per‑job `applySalesTax` flag; compute and include tax in `total`
+  - [x] Persist tax flag in job params; surface in UI and invoice text
 - Estimator inputs
   - [ ] Add structured address inputs + geocode autocomplete
   - [ ] Add route map preview (supplier→job→return)

@@ -15,12 +15,14 @@ import { Slider } from '@/components/ui/slider';
 import { invoicingService } from '@/services/invoicing';
 import { postInvoiceToGL } from '@/services/accounting/invoice-posting';
 import { C30_1978, computeSk550Load, checkVehicleLoad } from '@/services/transport';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const Estimator: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [overhead, setOverhead] = useState(10);
   const [profit, setProfit] = useState(20);
+  const [applySalesTax, setApplySalesTax] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -66,12 +68,13 @@ const Estimator: React.FC = () => {
       travel: { region, milesRoundTrip: milesRT },
       overheadPct: overhead,
       profitMarginPct: profit,
+      applySalesTax,
     } as const;
     const estimate = await asphaltEstimator.estimate(inputPayload, true);
 
     const load = computeSk550Load(Math.min(550, Math.max(0, area / 100))); // rough gallons heuristic
     const gvwr = checkVehicleLoad(C30_1978, [load]);
-    setResult({ estimate, profile, fuel, transport: gvwr });
+    setResult({ estimate, profile, fuel, transport: gvwr, inputs: inputPayload });
     setLoading(false);
   };
 
@@ -114,12 +117,13 @@ const Estimator: React.FC = () => {
       travel: { region, milesRoundTrip: milesRT },
       overheadPct: overhead,
       profitMarginPct: profit,
+      applySalesTax,
     } as const;
     const estimate = await asphaltEstimator.estimate(inputPayload, true);
 
     const load = computeSk550Load(Math.min(550, Math.max(0, area / 100)));
     const gvwr = checkVehicleLoad(C30_1978, [load]);
-    setResult({ estimate, transport: gvwr });
+    setResult({ estimate, transport: gvwr, inputs: inputPayload });
     setLoading(false);
   };
 
@@ -179,6 +183,10 @@ const Estimator: React.FC = () => {
                   <div className="mb-2 text-sm">Profit: {profit}%</div>
                   <Slider value={[profit]} min={0} max={40} step={1} onValueChange={v => setProfit(v[0])} />
                 </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Checkbox id="applyTax" checked={applySalesTax} onCheckedChange={(v) => setApplySalesTax(!!v)} />
+                <Label htmlFor="applyTax">Apply sales tax</Label>
               </div>
 
               <div className="mt-4 flex gap-3">
@@ -249,6 +257,10 @@ const Estimator: React.FC = () => {
                   <div className="mb-2 text-sm">Profit: {profit}%</div>
                   <Slider value={[profit]} min={0} max={40} step={1} onValueChange={v => setProfit(v[0])} />
                 </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Checkbox id="applyTax_pl" checked={applySalesTax} onCheckedChange={(v) => setApplySalesTax(!!v)} />
+                <Label htmlFor="applyTax_pl">Apply sales tax</Label>
               </div>
 
               <div className="mt-4 flex gap-3">

@@ -175,6 +175,24 @@ const navigationItems: NavigationItem[] = [
     description: 'Update materials prices'
   },
   { 
+    name: 'Employee Compliance', 
+    href: '/employee-compliance', 
+    icon: Shield,
+    description: 'Compliance, checklists, achievements'
+  },
+  { 
+    name: 'Veterans', 
+    href: '/veterans', 
+    icon: User,
+    description: 'Veteran services dashboard'
+  },
+  { 
+    name: 'Standards', 
+    href: '/standards', 
+    icon: Package,
+    description: 'OSHA and materials standards'
+  },
+  { 
     name: 'Downloads', 
     href: '/downloads', 
     icon: Download,
