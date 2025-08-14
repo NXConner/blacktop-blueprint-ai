@@ -30,7 +30,8 @@ class InvoicingService {
 
     const preTax = breakdown.subtotal + breakdown.overhead + breakdown.profit;
     const region = (inputs.travel.region === 'VA' || inputs.travel.region === 'NC') ? inputs.travel.region : 'VA';
-    const tax = await computeSalesTax(region, preTax);
+    const shouldApplyTax = inputs.applySalesTax ?? true;
+    const tax = shouldApplyTax ? await computeSalesTax(region, preTax) : 0;
 
     const payload: InvoicePayload = {
       id: crypto.randomUUID(),
@@ -39,7 +40,7 @@ class InvoicingService {
       projectName,
       items,
       subtotal: preTax,
-      tax,
+      tax: shouldApplyTax ? tax : undefined,
       total: preTax + tax,
       createdAt: new Date().toISOString(),
       status: 'unpaid',

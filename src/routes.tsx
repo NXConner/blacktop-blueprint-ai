@@ -30,6 +30,9 @@ const Invoices = lazy(() => import('./pages/Invoices'));
 const FleetFuel = lazy(() => import('./pages/FleetFuel'));
 const SupplierReceipts = lazy(() => import('./pages/SupplierReceipts'));
 const UnifiedMap = lazy(() => import('./pages/UnifiedMap'));
+const EmployeeCompliance = lazy(() => import('./pages/EmployeeCompliance'));
+const VeteransDashboard = lazy(() => import('./pages/VeteransDashboard'));
+const IndustryStandards = lazy(() => import('./pages/IndustryStandards'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -55,6 +58,9 @@ export const routes: AppRoute[] = [
   { path: '/unified-map', element: UnifiedMap },
   { path: '/downloads', element: Downloads },
   { path: '/settings', element: Settings, requiresAuth: true },
+  { path: '/employee-compliance', element: EmployeeCompliance, requiresAuth: true },
+  { path: '/veterans', element: VeteransDashboard },
+  { path: '/standards', element: IndustryStandards },
   { path: '*', element: NotFound },
 ];
 
@@ -83,6 +89,9 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/unified-map': () => import('./pages/UnifiedMap'),
   '/downloads': () => import('./pages/Downloads'),
   '/settings': () => import('./pages/Settings'),
+  '/employee-compliance': () => import('./pages/EmployeeCompliance'),
+  '/veterans': () => import('./pages/VeteransDashboard'),
+  '/standards': () => import('./pages/IndustryStandards'),
 };
 
 export function prefetchRoute(path: string): Promise<void> {

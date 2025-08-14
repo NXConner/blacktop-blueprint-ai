@@ -13,6 +13,20 @@ export async function geocodeAddress(address: string): Promise<GeoPoint | null> 
   }
 }
 
+export async function autocompleteAddress(query: string): Promise<Array<{ label: string; lat: number; lon: number }>> {
+  if (!query || query.trim().length < 3) return [];
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en-US' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data.map((d: any) => ({ label: d.display_name as string, lat: parseFloat(d.lat), lon: parseFloat(d.lon) }));
+  } catch {
+    return [];
+  }
+}
+
 export function haversineMiles(a: GeoPoint, b: GeoPoint): number {
   const R = 3958.8; // miles
   const toRad = (deg: number) => (deg * Math.PI) / 180;
