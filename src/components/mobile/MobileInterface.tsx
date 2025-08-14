@@ -204,6 +204,30 @@ const MobileInterface: React.FC<MobileInterfaceProps> = ({
     }
   };
 
+  // Background watch to send tracking pings
+  React.useEffect(() => {
+    if (!('geolocation' in navigator)) return;
+    let watchId: number | undefined;
+    try {
+      watchId = navigator.geolocation.watchPosition(async (pos) => {
+        try {
+          // Use the logged-in user id if available
+          const empId = userId || 'unknown-employee';
+          await api.employeeTracking.ping({
+            employee_id: empId,
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            speed: typeof pos.coords.speed === 'number' ? pos.coords.speed * 2.23694 : undefined, // m/s -> mph
+            heading: typeof pos.coords.heading === 'number' ? pos.coords.heading : undefined,
+            accuracy: pos.coords.accuracy,
+          });
+          setCurrentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        } catch { /* ignore ping errors */ }
+      }, () => {}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
+    } catch { /* ignore */ }
+    return () => { if (watchId !== undefined) navigator.geolocation.clearWatch(watchId); };
+  }, [userId]);
+
   const checkDeviceCapabilities = () => {
     // Check for camera access
     if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import MobileInterface from '@/components/mobile/MobileInterface';
 import AINotes from '@/components/ai/AINotes';
+import { useAuth } from '@/contexts/AuthContext';
 
 import ResponsiveContainer from '@/components/ui/responsive-container';
 
@@ -247,7 +248,7 @@ const MobileApp: React.FC = () => {
                     {/* Phone Frame */}
                     <div className="w-80 h-[600px] bg-black rounded-[2rem] p-2 shadow-2xl">
                       <div className="w-full h-full bg-background rounded-[1.5rem] overflow-hidden">
-                        <MobileInterface userId="demo-user" />
+                        <MobileInterface userId={useAuth().user?.id} />
                       </div>
                     </div>
                     

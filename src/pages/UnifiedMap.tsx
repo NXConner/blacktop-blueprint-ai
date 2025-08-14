@@ -107,15 +107,31 @@ const UnifiedMap: React.FC = () => {
     const load = async () => {
       try {
         setStatus('connecting');
-        const [v, c, a] = await Promise.all([
+        const [v, c, a, fences, emp] = await Promise.all([
           api.gps.getCurrentLocations(),
           api.crews.getAll(),
           api.alerts.getActive(),
+          api.geofences.list(),
+          api.employeeTracking.getLatest(),
         ]);
         if (!abort) {
           if (v.success) setVehicles(v.data || []);
           if (c.success) setCrews(c.data || []);
           if (a.success) setAlerts(a.data || []);
+          if (fences.success) {
+            // Convert circular geofences to simple square polygon approximations for now
+            const polys: Array<[number, number][]> = (fences.data || []).map((f: any) => {
+              const lat = f.center_latitude as number;
+              const lon = f.center_longitude as number;
+              const d = (f.radius as number) / 111000; // deg approx
+              return [ [lat-d, lon-d], [lat-d, lon+d], [lat+d, lon+d], [lat+d, lon-d] ] as any;
+            });
+            setGeofences(polys);
+          }
+          if (emp.success) {
+            // Keep a light map of employee latest positions for popovers if needed
+            setEmpLatest(emp.data || []);
+          }
           setStatus('connected');
         }
       } catch {
@@ -184,15 +200,31 @@ const UnifiedMap: React.FC = () => {
     </Marker>
   )) : null, [showVehicles, vehicles]);
 
-  const crewMarkers = useMemo(() => showCrews ? crews.map((c, i) => (
-    <Marker key={`crew-${c.crew_id || i}`} position={[36.64 + Math.random()*0.1, -80.26 + Math.random()*0.1] as any} icon={DefaultIcon}>
-    </Marker>
-  )) : null, [showCrews, crews]);
+  // Employee latest positions
+  const [empLatest, setEmpLatest] = useState<Array<{ employee_id: string; latitude: number; longitude: number; speed?: number; heading?: number; recorded_at: string }>>([]);
 
-  const alertMarkers = useMemo(() => showAlerts ? alerts.map((a, i) => (
-    <Marker key={`alert-${a.id || i}`} position={[36.61 + Math.random()*0.15, -80.24 + Math.random()*0.15] as any} icon={DefaultIcon}>
-    </Marker>
-  )) : null, [showAlerts, alerts]);
+  // Crew markers -> center on crew supervisor latest position if available, else skip
+  const crewMarkers = useMemo(() => showCrews ? crews.map((c, i) => {
+    const id = c.supervisor_id || c.id || `emp-${i}`;
+    const pos = empLatest.find(e => e.employee_id === id);
+    if (!pos) return null;
+    return (
+      <Marker key={`crew-${id}`} position={[pos.latitude, pos.longitude] as any} icon={DefaultIcon} />
+    );
+  }).filter(Boolean) : null, [showCrews, crews, empLatest]);
+
+  // Alert markers -> use related entity locations if present via vehicles
+  const alertMarkers = useMemo(() => showAlerts ? alerts.map((a, i) => {
+    // If alert relates to a vehicle, try to find latest location
+    let latlon: [number, number] | null = null;
+    if (a.related_entity_type === 'vehicle' && a.related_entity_id) {
+      const v = vehicles.find(vv => vv.vehicle_id === a.related_entity_id || vv.vehicle_id === a.related_entity_id);
+      if (v?.location_coordinates) latlon = [v.location_coordinates.coordinates[1], v.location_coordinates.coordinates[0]];
+    }
+    return latlon ? (
+      <Marker key={`alert-${a.id || i}`} position={latlon as any} icon={DefaultIcon} />
+    ) : null;
+  }).filter(Boolean) : null, [showAlerts, alerts, vehicles]);
 
   // Geofences (simple polygon demo around center)
   const [geofences, setGeofences] = useState<Array<[number, number][]>>([]);
@@ -275,24 +307,25 @@ const UnifiedMap: React.FC = () => {
   const zoomIn = () => { mapRef.current?.zoomIn(); };
   const zoomOut = () => { mapRef.current?.zoomOut(); };
 
+  // Replace demo asphalt overlay generation with persisted outlines on toggle
   useEffect(() => {
     if (!autoAsphaltOverlay) { setAsphaltPolygon([]); setAsphaltAreaSqFt(0); return; }
-    const c = Array.isArray(center) ? [center[1] as number, center[0] as number] : [-80.2667, 36.6418];
-    // Create a demo circle polygon as "detected" asphalt region
-    const circle = turf.circle(c, 0.05, { steps: 64, units: 'kilometers' });
-    const coords = circle.geometry.coordinates[0].map(([lon, lat]) => [lat, lon]) as [number, number][];
-    setAsphaltPolygon(coords);
-    const areaSqMeters = turf.area(circle);
-    setAsphaltAreaSqFt(areaSqMeters * 10.7639);
-  }, [autoAsphaltOverlay, center]);
+    // When enabled and a route/project is active, we might fetch outlines; for now compute area of current polygon if any
+    if (asphaltPolygon.length > 2) {
+      const ring = asphaltPolygon.map(([lat, lon]) => [lon, lat]);
+      const poly = turf.polygon([ [...ring, ring[0]] ]);
+      setAsphaltAreaSqFt(turf.area(poly) * 10.7639);
+    }
+  }, [autoAsphaltOverlay, asphaltPolygon]);
 
-  // Clock-in/out stubs
+  // Clock-in/out -> write to shifts table
   const clockIn = async (employeeId: string) => {
-    // Persist as needed; stub UI feedback only
-    console.info('Clock-in:', employeeId);
+    await supabase.from('shifts').insert({ employee_id: employeeId });
+    toast({ title: 'Clocked in', description: employeeId });
   };
   const clockOut = async (employeeId: string) => {
-    console.info('Clock-out:', employeeId);
+    await supabase.from('shifts').update({ clock_out: new Date().toISOString() }).eq('employee_id', employeeId).is('clock_out', null);
+    toast({ title: 'Clocked out', description: employeeId });
   };
 
   // Extended basemaps
@@ -369,9 +402,9 @@ const UnifiedMap: React.FC = () => {
     const d = new Date(); d.setHours(0,0,0,0); return d.getTime();
   }, []);
 
+  // Refresh playback: use real employee_tracking history
   const refreshPlaybackData = async () => {
-    // Fetch vehicle history for last 24h for vehicles present
-    const ids = vehicles.map(v => v.vehicle_id).slice(0, 5); // limit to 5 for demo
+    const ids = vehicles.map(v => v.vehicle_id);
     const history: Record<string, { ts: number; lat: number; lon: number }[]> = {};
     for (const id of ids) {
       try {
@@ -383,16 +416,18 @@ const UnifiedMap: React.FC = () => {
     }
     setVehicleHistory(history);
 
-    // Simulate employee history based on crew count
-    const emps: Array<{ id: string; ts: number; lat: number; lon: number }> = [];
-    for (let i=0; i<Math.min(5, crews.length); i++) {
-      const id = crews[i].supervisor_id || `emp-${i}`;
-      for (let h=0; h<=24; h+=1) {
-        const ts = startOfDay + h*60*60*1000;
-        emps.push({ id, ts, lat: 36.64 + Math.sin((i+1)*h/5)*0.05, lon: -80.26 + Math.cos((i+1)*h/5)*0.05 });
+    // Employee history from employee_tracking for the last day
+    try {
+      const sinceIso = new Date(Date.now() - 24*3600*1000).toISOString();
+      const { data, error } = await supabase.from('employee_tracking').select('*').gte('recorded_at', sinceIso).order('recorded_at');
+      if (!error && data) {
+        const emps: Array<{ id: string; ts: number; lat: number; lon: number }> = [] as any;
+        data.forEach((row: any) => {
+          emps.push({ id: row.employee_id, ts: new Date(row.recorded_at).getTime(), lat: row.latitude, lon: row.longitude });
+        });
+        setEmpHistory(emps);
       }
-    }
-    setEmpHistory(emps);
+    } catch { /* ignore */ }
   };
 
   useEffect(() => { void refreshPlaybackData(); }, [vehicles.length, crews.length]);
@@ -512,20 +547,46 @@ const UnifiedMap: React.FC = () => {
     }
   };
 
-  // HF assisted asphalt (optional demo)
-  const [hfBusy, setHfBusy] = useState(false);
+  // HF assisted asphalt: persist outline as site_outlines
   const runHFAsphaltDemo = async (file: File) => {
     try {
       setHfBusy(true);
       const mask = await segmentImage(file);
-      // In a real pipeline: convert mask to vector polygon. For demo, keep showing computed turf circle overlay already in place.
-      toast({ title: 'AI segmentation processed', description: 'Mask received from Hugging Face' });
+      // TODO: convert mask to polygon. For now, use current drawn polygon if any and persist
+      if (asphaltPolygon.length >= 3) {
+        await api.siteOutlines.create({ project_id: null, outline: asphaltPolygon });
+        toast({ title: 'Outline saved', description: 'Persisted to site_outlines' });
+      } else {
+        toast({ title: 'Mask received', description: 'Draw a polygon to save outline' });
+      }
     } catch (e) {
-      toast({ title: 'HF error', description: (e as Error).message, variant: 'destructive' });
+      toast({ title: 'AI error', description: (e as Error).message, variant: 'destructive' });
     } finally {
       setHfBusy(false);
     }
   };
+
+  // Vehicle popover metrics: replace randoms with data if available
+  const vehicleInfoGrid = (v: any, inside: boolean) => (
+    <div className="grid grid-cols-2 gap-2 text-xs">
+      <div>Miles: {Math.round((vehicleHistory[v.vehicle_id]?.length || 0) / 10)}</div>
+      <div>Fuel: {typeof v.fuel_level === 'number' ? `${Math.round(v.fuel_level)}%` : 'n/a'}</div>
+      <div>Status: {v.status || 'n/a'}</div>
+      <div>Speed: {typeof v.speed === 'number' ? Math.round(v.speed) + ' mph' : 'n/a'}</div>
+    </div>
+  );
+
+  const mapBounds = useMemo<LatLngBoundsExpression | null>(() => {
+    const points: [number, number][] = [];
+    if (Array.isArray(center)) points.push([center[0] as number, center[1] as number]);
+    vehicles.forEach(v => {
+      const loc = v.location_coordinates || v.location;
+      if (loc?.coordinates) points.push([loc.coordinates[1], loc.coordinates[0]]);
+    });
+    empLatest.forEach(e => points.push([e.latitude, e.longitude]));
+    if (points.length < 2) return null;
+    return L.latLngBounds(points as any);
+  }, [center, vehicles, empLatest]);
 
   return (
     <div className="min-h-screen p-4" ref={containerRef}>
@@ -795,10 +856,10 @@ const UnifiedMap: React.FC = () => {
                       <div className="font-semibold">Vehicle {v.vehicle_id}</div>
                       <div className="text-xs text-muted-foreground">{inside ? 'Inside' : 'Outside'} geofence</div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>Miles: {Math.round(Math.random()*120)}</div>
-                        <div>Fuel: {Math.round(Math.random()*100)}%</div>
-                        <div>Status: {['idle','enroute','onsite'][Math.floor(Math.random()*3)]}</div>
-                        <div>Speed: {Math.round(Math.random()*55)} mph</div>
+                        <div>Miles: {Math.round((vehicleHistory[v.vehicle_id]?.length || 0) / 10)}</div>
+                        <div>Fuel: {typeof v.fuel_level === 'number' ? `${Math.round(v.fuel_level)}%` : 'n/a'}</div>
+                        <div>Status: {v.status || 'n/a'}</div>
+                        <div>Speed: {typeof v.speed === 'number' ? Math.round(v.speed) + ' mph' : 'n/a'}</div>
                       </div>
                       <div className="flex gap-2 pt-1">
                         <Button size="sm" variant="outline"><MessageSquare className="w-3 h-3 mr-1" /> Message</Button>
@@ -810,17 +871,18 @@ const UnifiedMap: React.FC = () => {
               );
             })}
 
-            {/* Employees (reuse crews as employees demo) */}
+            {/* Employees */}
             {showCrews && crews.map((c, i) => {
-              const lat = 36.64 + Math.random()*0.1;
-              const lon = -80.26 + Math.random()*0.1;
-              const inside = isInsideGeofence(lat, lon);
               const empId = c.supervisor_id || `emp-${i}`;
-              const st = employeeAnalyticsEnabled ? updateEmployeeState(empId, lat, lon) : undefined;
+              const pos = empLatest.find(e => e.employee_id === empId);
+              if (!pos) return null;
+              const inside = isInsideGeofence(pos.latitude, pos.longitude);
+              const st = employeeAnalyticsEnabled ? updateEmployeeState(empId, pos.latitude, pos.longitude) : undefined;
               return (
                 <Popover key={`emp-${empId}`}>
                   <PopoverTrigger asChild>
-                    <Marker position={[lat, lon] as any} icon={DefaultIcon} />
+                    <Marker position={[pos.latitude, pos.longitude] as any} icon={DefaultIcon}>
+                    </Marker>
                   </PopoverTrigger>
                   <PopoverContent className="w-96">
                     <UICard className="p-3 space-y-2">
@@ -828,19 +890,18 @@ const UnifiedMap: React.FC = () => {
                         <div className="font-semibold">Employee {empId}</div>
                         <div className={`text-xs ${inside?'text-success':'text-destructive'}`}>{inside ? 'In Zone' : 'Out of Zone'}</div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>State: {st?.state || 'n/a'}</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>Speed: {st ? `${st.mph.toFixed(1)} mph` : 'n/a'}</div>
                         <div>Travel: {Math.floor((employeeTravelSeconds[empId]||0)/60)}m</div>
-                        <div>Tasks: {Math.round(Math.random()*5)}</div>
-                        <div>Compliance: {90 + Math.round(Math.random()*10)}%</div>
-                        <div>Productivity: {70 + Math.round(Math.random()*30)}%</div>
+                        <div>Tasks: n/a</div>
+                        <div>Compliance: n/a</div>
+                        <div>Productivity: n/a</div>
                       </div>
                       <div className="flex flex-wrap gap-2 pt-2">
                         <Button size="sm" onClick={() => clockIn(empId)} variant="outline">Clock In</Button>
                         <Button size="sm" onClick={() => clockOut(empId)} variant="outline">Clock Out</Button>
                         {!inside && (
-                          <Button size="sm" onClick={() => notifyAdminOutOfBounds(empId, lat, lon)} variant="destructive">Notify Admin</Button>
+                          <Button size="sm" onClick={() => notifyAdminOutOfBounds(empId, pos.latitude, pos.longitude)} variant="destructive">Notify Admin</Button>
                         )}
                         <Button size="sm" variant="outline"><Mail className="w-3 h-3 mr-1" /> Email</Button>
                         <Button size="sm" variant="outline"><MessageSquare className="w-3 h-3 mr-1" /> Message</Button>
@@ -854,9 +915,16 @@ const UnifiedMap: React.FC = () => {
             })}
 
             {/* Alerts */}
-            {showAlerts && alerts.map((a, i) => (
-              <Marker key={`alert-${a.id || i}`} position={[36.61 + Math.random()*0.15, -80.24 + Math.random()*0.15] as any} icon={DefaultIcon} />
-            ))}
+            {showAlerts && alerts.map((a, i) => {
+              let latlon: [number, number] | null = null;
+              if (a.related_entity_type === 'vehicle' && a.related_entity_id) {
+                const v = vehicles.find(vv => vv.vehicle_id === a.related_entity_id || vv.vehicle_id === a.related_entity_id);
+                if (v?.location_coordinates) latlon = [v.location_coordinates.coordinates[1], v.location_coordinates.coordinates[0]];
+              }
+              return latlon ? (
+                <Marker key={`alert-${a.id || i}`} position={latlon as any} icon={DefaultIcon} />
+              ) : null;
+            })}
 
           </MapContainer>
           <div className="absolute right-4 bottom-4 z-[1000] flex flex-col gap-2">

@@ -39,7 +39,7 @@ class RealtimeService {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'gps_locations'
+          table: 'gps_tracking'
         },
         (payload) => callback(payload.new as GPSTracking)
       )
@@ -48,7 +48,7 @@ class RealtimeService {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'gps_locations'
+          table: 'gps_tracking'
         },
         (payload) => callback(payload.new as GPSTracking)
       )
