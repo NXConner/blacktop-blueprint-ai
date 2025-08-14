@@ -20,6 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMapEvents } from 'react-leaflet';
 import { segmentImage, generateText } from '@/integrations/huggingface/hf-client';
+import { vectorizeMaskToPolygon, type GeoBounds } from '@/lib/mask-vectorizer';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -552,12 +553,18 @@ const UnifiedMap: React.FC = () => {
     try {
       setHfBusy(true);
       const mask = await segmentImage(file);
-      // TODO: convert mask to polygon. For now, use current drawn polygon if any and persist
-      if (asphaltPolygon.length >= 3) {
-        await api.siteOutlines.create({ project_id: null, outline: asphaltPolygon });
-        toast({ title: 'Outline saved', description: 'Persisted to site_outlines' });
+      // Convert mask to polygon using current viewport bounds
+      const map = mapRef.current;
+      if (!map) { toast({ title: 'Map not ready', variant: 'destructive' }); return; }
+      const b = map.getBounds();
+      const bounds: GeoBounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
+      const poly = await vectorizeMaskToPolygon(mask, bounds, 127);
+      if (poly.length >= 3) {
+        setAsphaltPolygon(poly as any);
+        await api.siteOutlines.create({ project_id: null, outline: poly });
+        toast({ title: 'Outline saved', description: 'Vectorized and persisted to site_outlines' });
       } else {
-        toast({ title: 'Mask received', description: 'Draw a polygon to save outline' });
+        toast({ title: 'No outline detected', variant: 'destructive' });
       }
     } catch (e) {
       toast({ title: 'AI error', description: (e as Error).message, variant: 'destructive' });
