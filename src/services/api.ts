@@ -349,15 +349,120 @@ export const gpsApi = {
 
   async getCurrentLocations(): Promise<ApiResponse<GPSTracking[]>> {
     try {
-      const { data, error } = await supabase
-        .rpc('get_latest_vehicle_locations');
+      // Prefer RPC if available
+      try {
+        const { data, error } = await supabase
+          .rpc('get_latest_vehicle_locations');
+        if (error) throw error;
+        const mapped = (data || []).map((r: any) => ({
+          id: crypto.randomUUID(),
+          vehicle_id: r.vehicle_id,
+          location_coordinates: r.location_coordinates,
+          speed: r.speed,
+          heading: r.heading,
+          altitude: r.altitude,
+          timestamp: r.timestamp,
+          accuracy: r.accuracy,
+        }));
+        return { data: mapped, success: true };
+      } catch {
+        // Fallback: take latest per vehicle from gps_tracking
+        const { data, error } = await supabase
+          .from('gps_tracking')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(500);
+        if (error) throw error;
+        return { data: data || [], success: true };
+      }
+    } catch (error) {
+      return { data: [], success: false, message: (error as Error).message };
+    }
+  }
+};
 
+// Employee Tracking API
+export const employeeTrackingApi = {
+  async getLatest(): Promise<ApiResponse<{ employee_id: string; latitude: number; longitude: number; speed?: number; heading?: number; recorded_at: string; }[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_latest_employee_positions');
       if (error) throw error;
       return { data: data || [], success: true };
     } catch (error) {
-      return { data: [], success: false, message: error.message };
+      return { data: [], success: false, message: (error as Error).message };
     }
-  }
+  },
+  async ping(payload: { employee_id: string; latitude: number; longitude: number; speed?: number; heading?: number; accuracy?: number }): Promise<ApiResponse<null>> {
+    try {
+      const { error } = await supabase.from('employee_tracking').insert({
+        employee_id: payload.employee_id,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        speed: payload.speed,
+        heading: payload.heading,
+        accuracy: payload.accuracy,
+      });
+      if (error) throw error;
+      return { data: null, success: true };
+    } catch (error) {
+      return { data: null, success: false, message: (error as Error).message };
+    }
+  },
+};
+
+// Geofence API
+export const geofenceApi = {
+  async list(): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase.from('geofences').select('*').eq('is_active', true);
+      if (error) throw error;
+      return { data: data || [], success: true };
+    } catch (error) {
+      return { data: [], success: false, message: (error as Error).message };
+    }
+  },
+  async create(input: { name: string; center_latitude: number; center_longitude: number; radius: number; type: 'work_site'|'depot'|'restricted'|'maintenance' }): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase.from('geofences').insert({ ...input, is_active: true }).select().single();
+      if (error) throw error;
+      return { data, success: true };
+    } catch (error) {
+      return { data: null, success: false, message: (error as Error).message };
+    }
+  },
+  async events(fenceId: string, hours = 24): Promise<ApiResponse<any[]>> {
+    try {
+      const since = new Date(Date.now() - hours*3600*1000).toISOString();
+      const { data, error } = await supabase.from('geofence_events').select('*').eq('fence_id', fenceId).gte('occurred_at', since).order('occurred_at', { ascending: false });
+      if (error) throw error;
+      return { data: data || [], success: true };
+    } catch (error) {
+      return { data: [], success: false, message: (error as Error).message };
+    }
+  },
+};
+
+// Site Outlines API
+export const siteOutlinesApi = {
+  async create(params: { project_id: string | null; outline: number[][]; created_by?: string }): Promise<ApiResponse<any>> {
+    try {
+      // outline as array of [lat, lon] -> convert to WKT POLYGON or GeoJSON
+      const ring = params.outline.map(([lat, lon]) => [lon, lat]);
+      if (ring.length && (ring[0][0] !== ring[ring.length-1][0] || ring[0][1] !== ring[ring.length-1][1])) {
+        ring.push(ring[0]);
+      }
+      const geojson = { type: 'Polygon', coordinates: [ring] } as any;
+      const { data, error } = await supabase.from('site_outlines').insert({
+        project_id: params.project_id,
+        outline: geojson as any,
+        created_by: params.created_by,
+      }).select().single();
+      if (error) throw error;
+      return { data, success: true };
+    } catch (error) {
+      return { data: null, success: false, message: (error as Error).message };
+    }
+  },
 };
 
 // Weather API
@@ -839,4 +944,7 @@ export const api = {
   userActivity: userActivityApi,
   inspections: inspectionsApi,
   vehicleDocuments: vehicleDocumentsApi,
+  employeeTracking: employeeTrackingApi,
+  geofences: geofenceApi,
+  siteOutlines: siteOutlinesApi,
 };
