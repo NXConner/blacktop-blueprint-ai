@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
+# Blacktop Blackout
 
-## Project info
+## Development
 
-**URL**: https://lovable.dev/projects/cea7de70-d300-4fee-8dba-50f1bf2a1555
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/cea7de70-d300-4fee-8dba-50f1bf2a1555) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+- Node.js 18+ and npm 10+
+- Install deps:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+npm ci
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Run dev server:
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+- Lint and type-check:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm run lint
+npx tsc --noEmit
+```
 
-**Use GitHub Codespaces**
+- Build production bundle:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+npm run build
+npm run preview
+```
 
-## What technologies are used for this project?
+## Environment
 
-This project is built with:
+Copy `.env.example` to `.env.local` and fill in values:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+cp .env.example .env.local
+```
 
-## How can I deploy this project?
+Required for auth/data:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-Simply open [Lovable](https://lovable.dev/projects/cea7de70-d300-4fee-8dba-50f1bf2a1555) and click on Share -> Publish.
+Optional feature keys (enable specific integrations):
+- `VITE_WEATHER_API_KEY`, `VITE_ROUTING_API_KEY`, `VITE_EIA_API_KEY`
+- `VITE_GSA_API_KEY`, `VITE_SAM_GOV_API_KEY`
+- `VITE_POINT_CLOUD_API_KEY`, `VITE_AI_ANALYSIS_API_KEY`
+- `VITE_HUGGINGFACE_TOKEN` (or `HUGGINGFACE_TOKEN`)
 
-## Can I connect a custom domain to my Lovable project?
+## Scripts
 
-Yes, you can!
+- `npm run dev`: Vite dev server on port 8080
+- `npm run build`: Production build
+- `npm run preview`: Preview built app
+- `npm run lint`: ESLint over the project
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- `src/pages/*`: Route components
+- `src/components/*`: UI and feature components
+- `src/services/*`: Business logic and data services
+- `src/integrations/*`: External APIs (Supabase, Hugging Face, etc.)
+- `src/lib/*`: Env helpers, utils, themes
+
+## Database (Supabase)
+
+SQL migrations are in `supabase/migrations`. Provision a Supabase project and apply migrations in order. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for local dev.
+
+## Notes
+
+- Some features are stubs or demos gated by environment variables. The app runs without keys, but certain actions will be disabled.

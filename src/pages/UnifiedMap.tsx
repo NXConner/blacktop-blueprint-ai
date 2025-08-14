@@ -205,7 +205,6 @@ const UnifiedMap: React.FC = () => {
     setGeofences([
       [ [c[0]-d, c[1]-d], [c[0]-d, c[1]+d], [c[0]+d, c[1]+d], [c[0]+d, c[1]-d] ] as any
     ]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isInsideGeofence = (lat: number, lon: number): boolean => {
@@ -448,7 +447,6 @@ const UnifiedMap: React.FC = () => {
       setCenter(REGION_CENTER);
       setHasAutoLocated(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Travel time tracking (employees)
