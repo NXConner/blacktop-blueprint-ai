@@ -25,6 +25,8 @@ import {
   Share
 } from 'lucide-react';
 import ReportingEngine from '@/components/reporting/ReportingEngine';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 
 const ReportingAnalytics: React.FC = () => {
   const [systemMetrics, setSystemMetrics] = useState({
@@ -406,7 +408,9 @@ const ReportingAnalytics: React.FC = () => {
       </Card>
 
       {/* Main Reporting Engine */}
-      <ReportingEngine />
+      <Defer timeout={300} fallback={<SkeletonLoader rows={4} className="mb-8" />}>
+        <ReportingEngine />
+      </Defer>
 
       {/* Insights & Recommendations */}
       <Card className="glass-card p-6 mt-8">
