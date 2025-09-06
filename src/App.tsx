@@ -17,6 +17,7 @@ import CommandMenu from "@/components/ui/CommandMenu";
 import { prefetchRoute } from './routes';
 import { useEffect } from 'react';
 import OfflineBanner from '@/components/ui/offline-banner';
+import ShortcutsHelp from '@/components/ui/ShortcutsHelp';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -104,6 +105,7 @@ const App = () => (
                 <RouteFocus />
                 <IdlePrefetch />
                 <CommandMenu />
+                <ShortcutsHelp />
                 <OfflineBanner />
                 <main id="main-content" className="lg:ml-72 pt-16 relative z-10 min-h-screen" aria-live="polite">
                   <Suspense fallback={<PageLoading text="Loading module..." /> }>
