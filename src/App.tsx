@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Navigation } from "@/components/layout/Navigation";
 import { ErrorBoundary, ErrorFallback } from "@/components/ui/error-boundary";
@@ -13,6 +13,11 @@ import { PageLoading } from "@/components/ui/loading";
 import { routes } from "./routes";
 import { toast } from "@/hooks/use-toast";
 import { RouteFocus } from "@/components/router/RouteFocus";
+import CommandMenu from "@/components/ui/CommandMenu";
+import { prefetchRoute } from './routes';
+import { useEffect } from 'react';
+import OfflineBanner from '@/components/ui/offline-banner';
+import ShortcutsHelp from '@/components/ui/ShortcutsHelp';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -58,6 +63,33 @@ function RouteBoundary({ children }: { children: JSX.Element }) {
   );
 }
 
+function IdlePrefetch() {
+  useEffect(() => {
+    const topPaths = ['/', '/overwatch', '/pavement-scan', '/atlas-hub', '/ai-optimization', '/catalog'];
+    const cb = () => {
+      for (const p of topPaths) prefetchRoute(p);
+    };
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(cb, { timeout: 1500 });
+    } else {
+      setTimeout(cb, 1000);
+    }
+  }, []);
+  return null;
+}
+
+function ParticlesGuard() {
+  const { reducedMotion } = useTheme();
+  if (reducedMotion) return null;
+  return (
+    <ParticleSystem 
+      intensity="medium" 
+      interactive={true}
+      className="animate-fade-in"
+    />
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ErrorBoundary>
@@ -67,14 +99,14 @@ const App = () => (
             <div className="min-h-screen">
               <Toaster />
               <Sonner />
-              <ParticleSystem 
-                intensity="medium" 
-                interactive={true}
-                className="animate-fade-in"
-              />
+              <ParticlesGuard />
               <BrowserRouter>
                 <Navigation />
                 <RouteFocus />
+                <IdlePrefetch />
+                <CommandMenu />
+                <ShortcutsHelp />
+                <OfflineBanner />
                 <main id="main-content" className="lg:ml-72 pt-16 relative z-10 min-h-screen" aria-live="polite">
                   <Suspense fallback={<PageLoading text="Loading module..." /> }>
                     <Routes>

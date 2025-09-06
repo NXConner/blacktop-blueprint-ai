@@ -17,6 +17,8 @@ import {
   Phone
 } from 'lucide-react';
 import CrewDeployment from '@/components/crew/CrewDeployment';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 import { api } from '@/services/api';
 
 const CrewManagement: React.FC = () => {
@@ -185,7 +187,9 @@ const CrewManagement: React.FC = () => {
 
           {/* Deployment Center Tab */}
           <TabsContent value="deployment">
-            <CrewDeployment className="w-full" />
+            <Defer timeout={250} fallback={<SkeletonLoader rows={3} className="mb-4" />}>
+              <CrewDeployment className="w-full" />
+            </Defer>
           </TabsContent>
 
           {/* Workforce Analytics Tab */}

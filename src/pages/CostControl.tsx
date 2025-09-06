@@ -19,6 +19,8 @@ import {
   Fuel
 } from 'lucide-react';
 import CostAnalyzer from '@/components/cost/CostAnalyzer';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 import { fuelPriceService } from '@/services/fuel-price';
 
 const CostControl: React.FC = () => {
@@ -278,7 +280,9 @@ const CostControl: React.FC = () => {
 
           {/* Cost Analyzer Tab */}
           <TabsContent value="analyzer">
-            <CostAnalyzer className="w-full" />
+            <Defer timeout={300} fallback={<SkeletonLoader rows={4} className="mb-4" />}>
+              <CostAnalyzer className="w-full" />
+            </Defer>
           </TabsContent>
 
           {/* Financial Reports Tab */}

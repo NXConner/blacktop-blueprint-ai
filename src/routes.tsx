@@ -33,6 +33,7 @@ const UnifiedMap = lazy(() => import('./pages/UnifiedMap'));
 const EmployeeCompliance = lazy(() => import('./pages/EmployeeCompliance'));
 const VeteransDashboard = lazy(() => import('./pages/VeteransDashboard'));
 const IndustryStandards = lazy(() => import('./pages/IndustryStandards'));
+const Offline = lazy(() => import('./pages/Offline'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -61,6 +62,7 @@ export const routes: AppRoute[] = [
   { path: '/employee-compliance', element: EmployeeCompliance, requiresAuth: true },
   { path: '/veterans', element: VeteransDashboard },
   { path: '/standards', element: IndustryStandards },
+  { path: '/offline', element: Offline },
   { path: '*', element: NotFound },
 ];
 
@@ -92,6 +94,7 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/employee-compliance': () => import('./pages/EmployeeCompliance'),
   '/veterans': () => import('./pages/VeteransDashboard'),
   '/standards': () => import('./pages/IndustryStandards'),
+  '/offline': () => import('./pages/Offline'),
 };
 
 export function prefetchRoute(path: string): Promise<void> {
@@ -100,3 +103,34 @@ export function prefetchRoute(path: string): Promise<void> {
 }
 
 export const protectedPaths = routes.filter(r => r.requiresAuth).map(r => r.path);
+
+// Human-friendly titles per route for document titles and command menu
+export const routeTitles: Record<string, string> = {
+  '/': 'Dashboard',
+  '/overwatch': 'OverWatch',
+  '/pavement-scan': 'Pavement Scan',
+  '/atlas-hub': 'Atlas Hub',
+  '/crew-management': 'Crew Management',
+  '/weather-station': 'Weather Station',
+  '/cost-control': 'Cost Control',
+  '/mobile-app': 'Mobile App',
+  '/ai-optimization': 'AI Optimization',
+  '/reporting-analytics': 'Reporting & Analytics',
+  '/security-compliance': 'Security & Compliance',
+  '/catalog': 'Marketplace',
+  '/marketplace': 'Marketplace',
+  '/estimator': 'Estimator',
+  '/payroll': 'Payroll',
+  '/materials': 'Materials',
+  '/estimates': 'Estimates',
+  '/invoices': 'Invoices',
+  '/fleet-fuel': 'Fleet Fuel',
+  '/supplier-receipts': 'Supplier Receipts',
+  '/unified-map': 'Unified Map',
+  '/downloads': 'Downloads',
+  '/settings': 'Settings',
+  '/employee-compliance': 'Employee Compliance',
+  '/veterans': 'Veterans',
+  '/standards': 'Industry Standards',
+  '/offline': 'Offline',
+};

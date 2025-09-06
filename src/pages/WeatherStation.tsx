@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import WeatherMonitor from '@/components/weather/WeatherMonitor';
 import RadarMap from '@/components/map/RadarMap';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 import { getGeofenceWeatherRisk } from '@/services/geofence';
 
 const WeatherStation: React.FC = () => {
@@ -249,12 +251,16 @@ const WeatherStation: React.FC = () => {
 
           {/* Weather Monitor Tab */}
           <TabsContent value="monitor">
-            <WeatherMonitor className="w-full" />
+            <Defer timeout={200} fallback={<SkeletonLoader rows={3} className="mb-4" />}>
+              <WeatherMonitor className="w-full" />
+            </Defer>
           </TabsContent>
 
           {/* Radar Tab */}
           <TabsContent value="radar">
-            <RadarMap className="w-full" />
+            <Defer timeout={250} fallback={<SkeletonLoader rows={2} className="mb-4" variant="card" />}>
+              <RadarMap className="w-full" />
+            </Defer>
           </TabsContent>
 
           {/* Environmental Analysis Tab */}

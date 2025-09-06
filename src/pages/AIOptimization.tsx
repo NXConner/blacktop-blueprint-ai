@@ -21,6 +21,8 @@ import {
   Truck
 } from 'lucide-react';
 import OptimizationEngine from '@/components/ai/OptimizationEngine';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 
 const AIOptimization: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState({
@@ -354,7 +356,9 @@ const AIOptimization: React.FC = () => {
       </Card>
 
       {/* Main AI Optimization Engine */}
-      <OptimizationEngine />
+      <Defer timeout={300} fallback={<SkeletonLoader rows={4} className="mb-8" />}>
+        <OptimizationEngine />
+      </Defer>
 
       {/* Additional AI Insights */}
       <Card className="glass-card p-6 mt-8">

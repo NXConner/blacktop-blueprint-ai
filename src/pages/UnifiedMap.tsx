@@ -21,6 +21,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMapEvents } from 'react-leaflet';
 import { segmentImage, generateText } from '@/integrations/huggingface/hf-client';
 import { vectorizeMaskToPolygon, type GeoBounds } from '@/lib/mask-vectorizer';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 
 const DefaultIcon = L.icon({ iconUrl, iconRetinaUrl, shadowUrl, iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon as any;
@@ -792,12 +794,14 @@ const UnifiedMap: React.FC = () => {
               <TileLayer attribution='&copy; Thunderforest' url="https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=YOUR_API_KEY" />
             )}
 
-            {overlayTopo && (
-              <TileLayer attribution='&copy; OpenTopoMap' opacity={overlayTopoOpacity} url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" />
-            )}
-            {overlayTonerLines && (
-              <TileLayer attribution='&copy; Stamen' opacity={overlayTonerOpacity} url="https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}.png" />
-            )}
+            <Defer timeout={250} fallback={<SkeletonLoader rows={2} className="m-4" variant="card" />}>
+              {overlayTopo && (
+                <TileLayer attribution='&copy; OpenTopoMap' opacity={overlayTopoOpacity} url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" />
+              )}
+              {overlayTonerLines && (
+                <TileLayer attribution='&copy; Stamen' opacity={overlayTonerOpacity} url="https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}.png" />
+              )}
+            </Defer>
 
             {radarEnabled && (
               <WMSTileLayer
@@ -808,9 +812,11 @@ const UnifiedMap: React.FC = () => {
             )}
 
             {/* Geofences */}
-            {geofenceEnabled && geofences.map((poly, idx) => (
-              <Polyline key={`geo-${idx}`} positions={poly} pathOptions={{ color: '#f59e0b', weight: 2, dashArray: '4 4' }} />
-            ))}
+            <Defer timeout={200} fallback={null}>
+              {geofenceEnabled && geofences.map((poly, idx) => (
+                <Polyline key={`geo-${idx}`} positions={poly} pathOptions={{ color: '#f59e0b', weight: 2, dashArray: '4 4' }} />
+              ))}
+            </Defer>
 
             {/* Auto Asphalt Detected Overlay */}
             {autoAsphaltOverlay && asphaltPolygon.length > 0 && (
@@ -829,9 +835,11 @@ const UnifiedMap: React.FC = () => {
             ))}
 
             {/* Route polyline */}
-            {routeInfo && (
-              <Polyline positions={routeInfo.coords} pathOptions={{ color: '#6366f1', weight: 4 }} />
-            )}
+            <Defer timeout={200} fallback={null}>
+              {routeInfo && (
+                <Polyline positions={routeInfo.coords} pathOptions={{ color: '#6366f1', weight: 4 }} />
+              )}
+            </Defer>
 
             {/* Pins */}
             {pins.map(([la, lo], idx) => (

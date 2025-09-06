@@ -17,6 +17,8 @@ import {
   Calculator
 } from 'lucide-react';
 import TerrainMapper from '@/components/atlas-hub/TerrainMapper';
+import Defer from '@/components/ui/Defer';
+import { SkeletonLoader } from '@/components/ui/loading';
 import { api } from '@/services/api';
 import { Project, AtlasPointCloud } from '@/types/database';
 
@@ -180,10 +182,12 @@ const AtlasHub: React.FC = () => {
 
           {/* Terrain Mapper Tab */}
           <TabsContent value="mapper" className="space-y-6">
-            <TerrainMapper 
-              projectId={selectedProject}
-              className="w-full"
-            />
+            <Defer timeout={300} fallback={<SkeletonLoader rows={4} className="mb-4" />}>
+              <TerrainMapper 
+                projectId={selectedProject}
+                className="w-full"
+              />
+            </Defer>
           </TabsContent>
 
           {/* Point Cloud Data Tab */}
