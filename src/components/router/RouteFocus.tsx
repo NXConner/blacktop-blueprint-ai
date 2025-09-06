@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { routeTitles } from '@/routes';
 
 export function RouteFocus() {
   const location = useLocation();
@@ -17,6 +18,12 @@ export function RouteFocus() {
       const timeout = setTimeout(() => main.removeAttribute('tabindex'), 100);
       return () => clearTimeout(timeout);
     }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const baseTitle = 'ISAC OS';
+    const title = routeTitles[location.pathname] || 'App';
+    document.title = `${title} • ${baseTitle}`;
   }, [location.pathname]);
 
   return null;

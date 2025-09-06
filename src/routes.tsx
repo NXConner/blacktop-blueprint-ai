@@ -100,3 +100,33 @@ export function prefetchRoute(path: string): Promise<void> {
 }
 
 export const protectedPaths = routes.filter(r => r.requiresAuth).map(r => r.path);
+
+// Human-friendly titles per route for document titles and command menu
+export const routeTitles: Record<string, string> = {
+  '/': 'Dashboard',
+  '/overwatch': 'OverWatch',
+  '/pavement-scan': 'Pavement Scan',
+  '/atlas-hub': 'Atlas Hub',
+  '/crew-management': 'Crew Management',
+  '/weather-station': 'Weather Station',
+  '/cost-control': 'Cost Control',
+  '/mobile-app': 'Mobile App',
+  '/ai-optimization': 'AI Optimization',
+  '/reporting-analytics': 'Reporting & Analytics',
+  '/security-compliance': 'Security & Compliance',
+  '/catalog': 'Marketplace',
+  '/marketplace': 'Marketplace',
+  '/estimator': 'Estimator',
+  '/payroll': 'Payroll',
+  '/materials': 'Materials',
+  '/estimates': 'Estimates',
+  '/invoices': 'Invoices',
+  '/fleet-fuel': 'Fleet Fuel',
+  '/supplier-receipts': 'Supplier Receipts',
+  '/unified-map': 'Unified Map',
+  '/downloads': 'Downloads',
+  '/settings': 'Settings',
+  '/employee-compliance': 'Employee Compliance',
+  '/veterans': 'Veterans',
+  '/standards': 'Industry Standards',
+};
