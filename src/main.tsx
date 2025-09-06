@@ -3,6 +3,7 @@ import App from './App.tsx'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 import { toast } from 'sonner'
+import { initAnalytics } from '@/lib/analytics'
 
 createRoot(document.getElementById("root")!).render(<App />);
 
@@ -22,3 +23,5 @@ const updateSW = registerSW({
     toast.success('App is ready to work offline');
   },
 });
+
+initAnalytics();

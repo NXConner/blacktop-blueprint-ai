@@ -24,15 +24,39 @@ export function CommandMenu() {
 
   React.useEffect(() => {
     setOpen(false);
+    try {
+      const raw = localStorage.getItem('recent-routes');
+      const recent: string[] = raw ? JSON.parse(raw) : [];
+      const next = [location.pathname, ...recent.filter(p => p !== location.pathname)].slice(0, 8);
+      localStorage.setItem('recent-routes', JSON.stringify(next));
+    } catch {}
   }, [location.pathname]);
 
   const entries = Object.entries(routeTitles);
+  let recent: string[] = [];
+  try {
+    recent = JSON.parse(localStorage.getItem('recent-routes') || '[]');
+  } catch {}
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Search commands and pages…" autoFocus />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
+        {recent.length > 0 && (
+          <CommandGroup heading="Recent">
+            {recent.map((path) => (
+              <CommandItem
+                key={`recent-${path}`}
+                value={`${routeTitles[path] || path} ${path}`}
+                onMouseEnter={() => prefetchRoute(path)}
+                onSelect={() => navigate(path)}
+              >
+                {routeTitles[path] || path}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
         <CommandGroup heading="Navigate">
           {entries.map(([path, title]) => (
             <CommandItem

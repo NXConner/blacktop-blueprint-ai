@@ -33,6 +33,7 @@ const UnifiedMap = lazy(() => import('./pages/UnifiedMap'));
 const EmployeeCompliance = lazy(() => import('./pages/EmployeeCompliance'));
 const VeteransDashboard = lazy(() => import('./pages/VeteransDashboard'));
 const IndustryStandards = lazy(() => import('./pages/IndustryStandards'));
+const Offline = lazy(() => import('./pages/Offline'));
 
 export const routes: AppRoute[] = [
   { path: '/', element: Index },
@@ -61,6 +62,7 @@ export const routes: AppRoute[] = [
   { path: '/employee-compliance', element: EmployeeCompliance, requiresAuth: true },
   { path: '/veterans', element: VeteransDashboard },
   { path: '/standards', element: IndustryStandards },
+  { path: '/offline', element: Offline },
   { path: '*', element: NotFound },
 ];
 
@@ -92,6 +94,7 @@ export const routeLoaders: Record<string, () => Promise<unknown>> = {
   '/employee-compliance': () => import('./pages/EmployeeCompliance'),
   '/veterans': () => import('./pages/VeteransDashboard'),
   '/standards': () => import('./pages/IndustryStandards'),
+  '/offline': () => import('./pages/Offline'),
 };
 
 export function prefetchRoute(path: string): Promise<void> {
@@ -129,4 +132,5 @@ export const routeTitles: Record<string, string> = {
   '/employee-compliance': 'Employee Compliance',
   '/veterans': 'Veterans',
   '/standards': 'Industry Standards',
+  '/offline': 'Offline',
 };
