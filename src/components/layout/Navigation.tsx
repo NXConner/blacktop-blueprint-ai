@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Menu, 
@@ -214,6 +214,7 @@ export function Navigation({ className }: NavigationProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const location = useLocation();
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
   const { user, signOut } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
@@ -271,6 +272,30 @@ export function Navigation({ className }: NavigationProps) {
 
   const handleMarkAllAsRead = () => {
     markAllAsRead();
+  };
+
+  useEffect(() => {
+    const onBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      (window as any).__deferredPrompt = e;
+    };
+    const onInstalled = () => {
+      setInstallPrompt(null);
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstall as any);
+    window.addEventListener('appinstalled', onInstalled as any);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall as any);
+      window.removeEventListener('appinstalled', onInstalled as any);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
   };
 
   return (
@@ -344,6 +369,18 @@ export function Navigation({ className }: NavigationProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {installPrompt && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleInstallClick}
+              className="glass-card hover:glow-accent min-h-[44px] min-w-[44px]"
+              aria-label="Install App"
+              title="Install App"
+            >
+              <Download className="h-5 w-5" />
+            </Button>
+          )}
           {/* Notifications Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

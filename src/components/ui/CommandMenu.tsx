@@ -2,11 +2,14 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { routeTitles, prefetchRoute } from '@/routes';
+import { useTheme } from '@/contexts/ThemeContext';
+import { toast } from 'sonner';
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toggleDarkMode, reducedMotion, setReducedMotion } = useTheme();
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -55,6 +58,26 @@ export function CommandMenu() {
             }
           }}>
             Scroll to top
+          </CommandItem>
+          <CommandItem onSelect={() => toggleDarkMode()}>
+            Toggle dark mode
+          </CommandItem>
+          <CommandItem onSelect={() => setReducedMotion(!reducedMotion)}>
+            {reducedMotion ? 'Enable motion effects' : 'Reduce motion'}
+          </CommandItem>
+          <CommandItem onSelect={() => navigate('/settings')}>
+            Open Settings
+          </CommandItem>
+          <CommandItem onSelect={async () => {
+            const dp: any = (window as any).__deferredPrompt;
+            if (dp) {
+              await dp.prompt();
+              await dp.userChoice;
+            } else {
+              toast('Install prompt not available');
+            }
+          }}>
+            Install App
           </CommandItem>
         </CommandGroup>
       </CommandList>

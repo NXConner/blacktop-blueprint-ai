@@ -1,12 +1,24 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { registerSW } from 'virtual:pwa-register'
+import { toast } from 'sonner'
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Register service worker for PWA (vite-plugin-pwa)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
-}
+// PWA update & offline notifications
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    toast('Update available', {
+      action: {
+        label: 'Update',
+        onClick: () => updateSW(true),
+      },
+      description: 'A new version is ready to install',
+    });
+  },
+  onOfflineReady() {
+    toast.success('App is ready to work offline');
+  },
+});
